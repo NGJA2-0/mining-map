@@ -523,6 +523,14 @@ export default function NewRecordPage() {
                     onChange={handleChange("proposedDepth")}
                   />
                 </Field>
+                <Field label="ඉඩමේ වගාව">
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={form.landCultivation}
+                    onChange={handleChange("landCultivation")}
+                  />
+                </Field>
                 <Field label="කැපීමට අදහස් කරන පතල් ප්‍රමාණය (ව.අ.)">
                   <input
                     type="text"
