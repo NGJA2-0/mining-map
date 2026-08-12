@@ -51,6 +51,7 @@ const initialState = {
   backhoeCount: "",
   gerumCount: "",
   recommendationDate: "",
+  chairmanApproval: "",
 };
 
 const SRI_LANKA_DISTRICTS = [
@@ -707,6 +708,28 @@ export default function NewRecordPage() {
                     අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර)
                   </p>
                 </div>
+              </div>
+            </section>
+
+            {/* Chairman & CEO approval */}
+            <section className="flex flex-col gap-5">
+              <p className="font-sinhala text-sm font-semibold text-ink">
+                සභාපති හා ප්‍රධාන විධායක නිලධාරි අනුමැතිය
+              </p>
+              <div className="border-t border-ink" />
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-sinhala text-sm text-ink">
+                  ඉහත නිර්දේශය අනුමත
+                </p>
+                <select
+                  className={`${inputClass} w-32`}
+                  value={form.chairmanApproval}
+                  onChange={handleChange("chairmanApproval")}
+                >
+                  <option value="" hidden></option>
+                  <option value="කරමි">කරමි</option>
+                  <option value="නොකරමි">නොකරමි</option>
+                </select>
               </div>
             </section>
 
