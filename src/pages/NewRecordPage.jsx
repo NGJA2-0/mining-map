@@ -291,7 +291,7 @@ export default function NewRecordPage() {
                     value={form.district}
                     onChange={handleDistrictChange}
                   >
-                    <option value="">තෝරන්න</option>
+                    <option value="" hidden></option>
                     {SRI_LANKA_DISTRICTS.map((d) => (
                       <option key={d} value={d}>
                         {d}
@@ -306,7 +306,7 @@ export default function NewRecordPage() {
                     onChange={handleChange("regionalOffice")}
                     disabled={!form.district}
                   >
-                    <option value="">තෝරන්න</option>
+                    <option value="" hidden></option>
                     {(DS_DIVISIONS_BY_DISTRICT[form.district] || []).map((ds) => (
                       <option key={ds} value={ds}>
                         {ds}
@@ -330,16 +330,18 @@ export default function NewRecordPage() {
                     onChange={handleChange("landExtent")}
                   />
                 </Field>
-                <Field
-                  label="බලපත්‍රලාභියා ඉඩම් හිමිකරු ද? බදු ගැණුම්කරු ද? රජයේ ඉඩමක් ද? වෙන්දේසි ඉඩමක් ද?"
-                  full
-                >
-                  <input
-                    type="text"
+                <Field label="බලපත්‍රලාභියා" full>
+                  <select
                     className={inputClass}
                     value={form.licenseeType}
                     onChange={handleChange("licenseeType")}
-                  />
+                  >
+                    <option value="" hidden></option>
+                    <option value="ඉඩම් හිමිකරු">ඉඩම් හිමිකරු</option>
+                    <option value="බදු ගැණුම්කරු">බදු ගැණුම්කරු</option>
+                    <option value="රජයේ ඉඩමක්">රජයේ ඉඩමක්</option>
+                    <option value="වෙන්දේසි ඉඩමක්">වෙන්දේසි ඉඩමක්</option>
+                  </select>
                 </Field>
 
                 <Field label="ඉඩම් හිමිකරු නොවේ නම්, කැමැත්ත ප්‍රකාශිත ලිපියක් අමුණා තිබේද?">
