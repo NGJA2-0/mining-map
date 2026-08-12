@@ -13,6 +13,7 @@ const initialState = {
   expenseName: "",
   expenseTin: "",
   gmlNumber: "",
+  hasExpenseParty: false,
   district: "",
   village: "",
   regionalOffice: "",
@@ -69,6 +70,10 @@ export default function NewRecordPage() {
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleCheckboxChange = (field) => (e) => {
+    setForm((prev) => ({ ...prev, [field]: e.target.checked }));
   };
 
   const handleSubmit = async (e) => {
@@ -168,22 +173,38 @@ export default function NewRecordPage() {
                     onChange={handleChange("tin")}
                   />
                 </Field>
-                <Field label="වියදම් පාර්ශවයක් සිටී නම් , නම, ලිපිනය, දුරකථන අංකය" full>
-                  <textarea
-                    rows={2}
-                    className={inputClass}
-                    value={form.expenseName}
-                    onChange={handleChange("expenseName")}
-                  />
+                <Field label="වියදම් පාර්ශවයක් සිටී නම්" full>
+                  <label className="flex items-center gap-2 font-sinhala text-sm">
+                    <input
+                      type="checkbox"
+                      checked={form.hasExpenseParty}
+                      onChange={handleCheckboxChange("hasExpenseParty")}
+                      className="accent-teal"
+                    />
+                    ඔව්
+                  </label>
                 </Field>
-                <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={form.expenseTin}
-                    onChange={handleChange("expenseTin")}
-                  />
-                </Field>
+
+                {form.hasExpenseParty && (
+                  <>
+                    <Field label="වියදම් පාර්ශවයක් සිටී නම් , නම, ලිපිනය, දුරකථන අංකය" full>
+                      <textarea
+                        rows={2}
+                        className={inputClass}
+                        value={form.expenseName}
+                        onChange={handleChange("expenseName")}
+                      />
+                    </Field>
+                    <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
+                      <input
+                        type="text"
+                        className={inputClass}
+                        value={form.expenseTin}
+                        onChange={handleChange("expenseTin")}
+                      />
+                    </Field>
+                  </>
+                )}
                 <Field label="මැණික් ගැරීමේ බලපත්‍ර අංකය (GML)">
                   <input
                     type="text"
