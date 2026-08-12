@@ -4,6 +4,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
+import NewRecordPage from "./pages/NewRecordPage";
 import "./index.css";
 
 export default function App() {
@@ -21,6 +22,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/dashboard/new"
+            element={
+              <ProtectedRoute>
+                <NewRecordPage />
+              </ProtectedRoute>
+            }
+          />    
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import TopoBackground from "../components/common/TopoBackground";
 import Button from "../components/common/Button";
@@ -7,6 +8,7 @@ import Modal from "../components/common/Modal";
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-base text-ink">
@@ -50,8 +52,11 @@ export default function DashboardPage() {
         title="Choose an action"
       >
         <div className="flex flex-col gap-3 sm:flex-row">
-          {/* Wire these up once the record forms exist — no navigation yet */}
-          <Button variant="primary" className="flex-1">
+          <Button
+            variant="primary"
+            className="flex-1"
+            onClick={() => navigate("/dashboard/new")}
+          >
             New
           </Button>
           <Button variant="copper" className="flex-1">
