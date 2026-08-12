@@ -462,6 +462,7 @@ export default function NewRecordPage() {
                     ))}
                   </div>
                 </Field>
+                {form.conditionBreach === "yes" && (
                 <Field label="සිදු වී ඇත්නම් ඒ පිළිබඳ විස්තර">
                   <input
                     type="text"
@@ -470,6 +471,7 @@ export default function NewRecordPage() {
                     onChange={handleChange("conditionBreachDetails")}
                   />
                 </Field>
+                )}
 
                 <Field label="මෙම කාලය තුළ ඉඩමේ අයිතිය පිළිබඳ පැමිණිලි ලැබී තිබේද?">
                   <div className="flex gap-4 pt-1">
@@ -491,6 +493,7 @@ export default function NewRecordPage() {
                     ))}
                   </div>
                 </Field>
+                {form.ownershipComplaint === "yes" && (
                 <Field label="ලැබී ඇත්නම් ඒ පිළිබඳ විස්තර">
                   <input
                     type="text"
@@ -499,6 +502,7 @@ export default function NewRecordPage() {
                     onChange={handleChange("complaintDetails")}
                   />
                 </Field>
+                )}
               </div>
             </section>
             )}
