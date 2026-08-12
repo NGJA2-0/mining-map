@@ -406,15 +406,6 @@ export default function NewRecordPage() {
                     ))}
                   </div>
                 </Field>
-
-                <Field label="ඉඩමේ වගාව">
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={form.landCultivation}
-                    onChange={handleChange("landCultivation")}
-                  />
-                </Field>
               </div>
             </section>
 
