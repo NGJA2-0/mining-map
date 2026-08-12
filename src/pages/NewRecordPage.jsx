@@ -47,6 +47,44 @@ const initialState = {
   recommendation: "",
 };
 
+const SRI_LANKA_DISTRICTS = [
+  "අම්පාර", "අනුරාධපුරය", "බදුල්ල", "මඩකලපුව", "කොළඹ", "ගාල්ල", "ගම්පහ",
+  "හම්බන්තොට", "යාපනය", "කළුතර", "මහනුවර", "කෑගල්ල", "කිලිනොච්චිය",
+  "කුරුණෑගල", "මන්නාරම", "මාතලේ", "මාතර", "මොණරාගල", "මුලතිව්",
+  "නුවරඑළිය", "පොළොන්නරුව", "පුත්තලම", "රත්නපුර", "ත්‍රිකුණාමලය", "වවුනියාව",
+];
+
+// DS divisions grouped by district (English names, as commonly used on official forms).
+// NOTE: verify this list against the latest official DS division gazette before
+// relying on it for production — a few divisions get renamed/split over time.
+const DS_DIVISIONS_BY_DISTRICT = {
+  "කොළඹ": ["Colombo", "Thimbirigasyaya", "Kolonnawa", "Kaduwela", "Kesbewa", "Maharagama", "Homagama", "Sri Jayawardenepura Kotte", "Dehiwala-Mount Lavinia", "Moratuwa", "Padukka", "Seethawaka", "Ratmalana"],
+  "ගම්පහ": ["Gampaha", "Negombo", "Ja-Ela", "Wattala", "Katana", "Divulapitiya", "Mirigama", "Minuwangoda", "Attanagalla", "Dompe", "Biyagama", "Kelaniya", "Mahara"],
+  "කළුතර": ["Kalutara", "Beruwala", "Panadura", "Bandaragama", "Horana", "Bulathsinhala", "Millaniya", "Palindanuwara", "Agalawatta", "Matugama", "Walallavita", "Ingiriya", "Dodangoda", "Madurawela"],
+  "මහනුවර": ["Kandy Four Gravets", "Gangawata Korale", "Pathadumbara", "Udunuwara", "Yatinuwara", "Harispattuwa", "Udapalatha", "Akurana", "Doluwa", "Panvila", "Minipe", "Medadumbara", "Hatharaliyadda", "Deltota", "Kundasale", "Thumpane", "Pathahewaheta", "Ganga Ihala Korale", "Poojapitiya", "Wattegama"],
+  "මාතලේ": ["Matale", "Rattota", "Ukuwela", "Pallepola", "Yatawatta", "Naula", "Galewela", "Dambulla", "Wilgamuwa", "Ambanganga Korale", "Laggala-Pallegama"],
+  "නුවරඑළිය": ["Nuwara Eliya", "Hanguranketha", "Walapane", "Kotmale", "Ambagamuwa"],
+  "ගාල්ල": ["Galle Four Gravets", "Bope-Poddala", "Akmeemana", "Yakkalamulla", "Baddegama", "Elpitiya", "Nagoda", "Neluwa", "Thawalama", "Bentota", "Balapitiya", "Ambalangoda", "Karandeniya", "Habaraduwa", "Imaduwa", "Welivitiya-Divithura", "Hikkaduwa", "Gonapinuwala", "Niyagama"],
+  "මාතර": ["Matara Four Gravets", "Devinuwara", "Weligama", "Akuressa", "Kamburupitiya", "Kotapola", "Pasgoda", "Pitabeddara", "Malimbada", "Mulatiyana", "Athuraliya", "Hakmana", "Thihagoda", "Dickwella", "Kirinda Puhulwella", "Welipitiya"],
+  "හම්බන්තොට": ["Hambantota", "Tangalle", "Tissamaharama", "Ambalantota", "Beliatta", "Walasmulla", "Weeraketiya", "Angunukolapelessa", "Sooriyawewa", "Lunugamvehera", "Katuwana", "Thanamalwila"],
+  "යාපනය": ["Jaffna", "Nallur", "Kopay", "Uduvil", "Tellippalai", "Sandilipay", "Chavakachcheri", "Point Pedro", "Karainagar", "Kayts", "Velanai", "Delft", "Vadamarachchi North", "Vadamarachchi East", "Thenmarachchi"],
+  "කිලිනොච්චිය": ["Kilinochchi", "Karachchi", "Pachchilaipalli", "Poonakary"],
+  "මන්නාරම": ["Mannar Town", "Manthai West", "Nanaddan", "Madhu", "Musali"],
+  "වවුනියාව": ["Vavuniya", "Vavuniya North", "Vavuniya South", "Vengalacheddikulam"],
+  "මුලතිව්": ["Manthai East", "Maritimepattu", "Oddusuddan", "Puthukkudiyiruppu", "Thunukkai"],
+  "මඩකලපුව": ["Manmunai North", "Manmunai Pattu", "Manmunai South & Eruvil Pattu", "Manmunai West", "Manmunai South West", "Koralai Pattu", "Koralai Pattu North", "Koralai Pattu South", "Koralai Pattu West", "Koralai Pattu Central", "Eravur Pattu", "Eravur Town", "Porativu Pattu", "Kattankudy"],
+  "අම්පාර": ["Ampara", "Uhana", "Damana", "Mahaoya", "Padiyathalawa", "Dehiattakandiya", "Addalachchenai", "Akkaraipattu", "Sainthamaruthu", "Ninthavur", "Kalmunai", "Karaitivu", "Sammanthurai", "Alayadivembu", "Thirukkovil", "Pottuvil", "Lahugala", "Navithanveli", "Uhana"].filter((v, i, a) => a.indexOf(v) === i),
+  "ත්‍රිකුණාමලය": ["Trincomalee Town and Gravets", "Kinniya", "Muttur", "Kuchchaveli", "Gomarankadawala", "Morawewa", "Thambalagamuwa", "Kantale", "Seruvila", "Padavi Sri Pura", "Verugal"],
+  "කුරුණෑගල": ["Kurunegala", "Mallawapitiya", "Mawathagama", "Polgahawela", "Wariyapola", "Pannala", "Ridigama", "Ibbagamuwa", "Alawwa", "Bingiriya", "Kuliyapitiya East", "Kuliyapitiya West", "Bamunakotuwa", "Katupotha", "Panduwasnuwara East", "Panduwasnuwara West", "Nikaweratiya", "Mahawa", "Galgamuwa", "Ganewatta", "Giribawa", "Ehetuwewa", "Polpithigama", "Rasnayakapura", "Weerambugedara", "Kotavehera", "Maspotha", "Narammala", "Kobeigane", "Ambanpola"],
+  "පුත්තලම": ["Puttalam", "Kalpitiya", "Wanathavilluwa", "Karuwalagaswewa", "Anamaduwa", "Nattandiya", "Mundalama", "Chilaw", "Arachchikattuwa", "Madampe", "Wennappuwa", "Mahawewa"],
+  "අනුරාධපුරය": ["Nuwaragam Palatha East", "Nuwaragam Palatha Central", "Kekirawa", "Palagala", "Thalawa", "Mihintale", "Rambewa", "Galenbindunuwewa", "Kahatagasdigiliya", "Horowpothana", "Mahavilachchiya", "Medawachchiya", "Padaviya", "Galnewa", "Ipalogama", "Nachchaduwa", "Thirappane", "Kebithigollewa", "Rajanganaya", "Eppawala", "Nochchiyagama", "Palugaswewa"],
+  "පොළොන්නරුව": ["Thamankaduwa", "Hingurakgoda", "Medirigiriya", "Lankapura", "Elahera", "Dimbulagala", "Welikanda"],
+  "බදුල්ල": ["Badulla", "Bandarawela", "Haputale", "Ella", "Lunugala", "Mahiyanganaya", "Meegahakivula", "Passara", "Rideemaliyadda", "Soranathota", "Uva-Paranagama", "Welimada", "Kandaketiya", "Haldummulla", "Hali-Ela"],
+  "මොණරාගල": ["Monaragala", "Wellawaya", "Buttala", "Kataragama", "Bibile", "Medagama", "Madulla", "Siyambalanduwa", "Badalkumbura", "Sevanagala", "Thanamalwila"],
+  "රත්නපුර": ["Ratnapura", "Balangoda", "Eheliyagoda", "Kalawana", "Kuruvita", "Nivithigala", "Pelmadulla", "Kolonna", "Kahawatta", "Elapatha", "Ayagama", "Godakawela", "Imbulpe", "Opanayaka", "Weligepola", "Kiriella"],
+  "කෑගල්ල": ["Kegalle", "Mawanella", "Rambukkana", "Warakapola", "Ruwanwella", "Yatiyantota", "Deraniyagala", "Galigamuwa", "Bulathkohupitiya", "Dehiowita", "Aranayaka"],
+};
+
 const yesNo = [
   { value: "yes", label: "ඔව්" },
   { value: "no", label: "නැත" },
@@ -76,6 +114,12 @@ export default function NewRecordPage() {
 
   const handleCheckboxChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.checked }));
+  };
+
+  const handleDistrictChange = (e) => {
+    const { value } = e.target;
+    // reset the DS division since it depends on the selected district
+    setForm((prev) => ({ ...prev, district: value, regionalOffice: "" }));
   };
 
   const handleSubmit = async (e) => {
@@ -242,12 +286,33 @@ export default function NewRecordPage() {
               </h3>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="දිස්ත්‍රික්කය">
-                  <input
-                    type="text"
+                  <select
                     className={inputClass}
                     value={form.district}
-                    onChange={handleChange("district")}
-                  />
+                    onChange={handleDistrictChange}
+                  >
+                    <option value="">තෝරන්න</option>
+                    {SRI_LANKA_DISTRICTS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="ප්‍රාදේශීය කාර්යාලය">
+                  <select
+                    className={inputClass}
+                    value={form.regionalOffice}
+                    onChange={handleChange("regionalOffice")}
+                    disabled={!form.district}
+                  >
+                    <option value="">තෝරන්න</option>
+                    {(DS_DIVISIONS_BY_DISTRICT[form.district] || []).map((ds) => (
+                      <option key={ds} value={ds}>
+                        {ds}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="ගම">
                   <input
@@ -255,14 +320,6 @@ export default function NewRecordPage() {
                     className={inputClass}
                     value={form.village}
                     onChange={handleChange("village")}
-                  />
-                </Field>
-                <Field label="ප්‍රාදේශීය කාර්යාලය">
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={form.regionalOffice}
-                    onChange={handleChange("regionalOffice")}
                   />
                 </Field>
                 <Field label="ඉඩමේ වපසරිය">
