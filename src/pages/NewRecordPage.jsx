@@ -90,9 +90,9 @@ const yesNo = [
   { value: "no", label: "නැත" },
 ];
 
-function Field({ label, children, full = false }) {
+function Field({ label, children, full = false, className = "" }) {
   return (
-    <div className={`flex flex-col gap-1.5 ${full ? "sm:col-span-2" : ""}`}>
+    <div className={`flex flex-col gap-1.5 ${full ? "sm:col-span-2" : ""} ${className}`}>
       <label className="font-sinhala text-sm text-ink-muted">{label}</label>
       {children}
     </div>
@@ -442,36 +442,38 @@ export default function NewRecordPage() {
                   />
                 </Field>
 
-                <Field label="එම කාලය තුළ කොන්දේසි කඩකිරීම් සිදුවී ඇත්ද?">
-                  <div className="flex gap-4 pt-1">
-                    {yesNo.map((opt) => (
-                      <label
-                        key={opt.value}
-                        className="flex items-center gap-2 font-sinhala text-sm"
-                      >
-                        <input
-                          type="radio"
-                          name="conditionBreach"
-                          value={opt.value}
-                          checked={form.conditionBreach === opt.value}
-                          onChange={handleChange("conditionBreach")}
-                          className="accent-teal"
-                        />
-                        {opt.label}
-                      </label>
-                    ))}
-                  </div>
-                </Field>
-                {form.conditionBreach === "yes" && (
-                <Field label="සිදු වී ඇත්නම් ඒ පිළිබඳ විස්තර">
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={form.conditionBreachDetails}
-                    onChange={handleChange("conditionBreachDetails")}
-                  />
-                </Field>
-                )}
+                <div className="sm:col-span-2 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <Field label="එම කාලය තුළ කොන්දේසි කඩකිරීම් සිදුවී ඇත්ද?">
+                    <div className="flex gap-4 pt-1">
+                      {yesNo.map((opt) => (
+                        <label
+                          key={opt.value}
+                          className="flex items-center gap-2 font-sinhala text-sm"
+                        >
+                          <input
+                            type="radio"
+                            name="conditionBreach"
+                            value={opt.value}
+                            checked={form.conditionBreach === opt.value}
+                            onChange={handleChange("conditionBreach")}
+                            className="accent-teal"
+                          />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+                  </Field>
+                  {form.conditionBreach === "yes" && (
+                    <Field label="සිදු වී ඇත්නම් ඒ පිළිබඳ විස්තර">
+                      <input
+                        type="text"
+                        className={inputClass}
+                        value={form.conditionBreachDetails}
+                        onChange={handleChange("conditionBreachDetails")}
+                      />
+                    </Field>
+                  )}
+                </div>
 
                 <Field label="මෙම කාලය තුළ ඉඩමේ අයිතිය පිළිබඳ පැමිණිලි ලැබී තිබේද?">
                   <div className="flex gap-4 pt-1">
