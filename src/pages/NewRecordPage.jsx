@@ -139,7 +139,7 @@ export default function NewRecordPage() {
                     onChange={handleChange("nic")}
                   />
                 </Field>
-                <Field label="දේශීය ආදායම් දෙපාර්තමේන්තුවෙන් ලබාගත් TIN">
+                <Field label="දේශීය ආදායම් දෙපාර්තමේන්තුවෙන් ලබාගත් බදු ගෙවන්නන් සඳහා හඳුනාගැනීමේ අංකය (TIN)">
                   <input
                     type="text"
                     className={inputClass}
@@ -147,7 +147,7 @@ export default function NewRecordPage() {
                     onChange={handleChange("tin")}
                   />
                 </Field>
-                <Field label="වියදම් පාර්ශවයේ නම, ලිපිනය, දුරකථන අංකය" full>
+                <Field label="වියදම් පාර්ශවයක් සිටී නම් , නම, ලිපිනය, දුරකථන අංකය" full>
                   <textarea
                     rows={2}
                     className={inputClass}
@@ -155,7 +155,7 @@ export default function NewRecordPage() {
                     onChange={handleChange("expenseName")}
                   />
                 </Field>
-                <Field label="වියදම් පාර්ශවයේ TIN">
+                <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
                   <input
                     type="text"
                     className={inputClass}
@@ -178,7 +178,7 @@ export default function NewRecordPage() {
             {/* Land details */}
             <section className="flex flex-col gap-5">
               <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
-                ඉඩම පිළිබඳ තොරතුරු
+                මැණික් ගැරීමේ බලපත්‍රලත් ඉඩම පිහිටි
               </h3>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="දිස්ත්‍රික්කය">
