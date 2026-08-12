@@ -531,23 +531,6 @@ export default function NewRecordPage() {
                     onChange={handleChange("landCultivation")}
                   />
                 </Field>
-                <Field label="කැපීමට අදහස් කරන පතල් ප්‍රමාණය (ව.අ.)">
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={form.proposedExtent}
-                    onChange={handleChange("proposedExtent")}
-                  />
-                </Field>
-                <Field label="ආපසු මුදල් සේවා ගාස්තුව">
-                  <input
-                    type="text"
-                    className={inputClass}
-                    placeholder="NGJA/16.2/2018/Backhoe III චක්‍රලේඛය ප්‍රකාරව"
-                    value={form.refundServiceFee}
-                    onChange={handleChange("refundServiceFee")}
-                  />
-                </Field>
               </div>
 
               <h4 className="mt-2 font-sinhala text-sm font-medium text-ink-muted">
@@ -624,6 +607,26 @@ export default function NewRecordPage() {
                     className={inputClass}
                     value={form.boundaryOther}
                     onChange={handleChange("boundaryOther")}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <Field label="කැපීමට අදහස් කරන පතල් ප්‍රමාණය (ව.අ.)">
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={form.proposedExtent}
+                    onChange={handleChange("proposedExtent")}
+                  />
+                </Field>
+                <Field label="ඇප මුදල් සේවා ගාස්තුව">
+                  <input
+                    type="text"
+                    className={inputClass}
+                    placeholder="NGJA/16.2/2018/Backhoe III චක්‍රලේඛය ප්‍රකාරව"
+                    value={form.refundServiceFee}
+                    onChange={handleChange("refundServiceFee")}
                   />
                 </Field>
               </div>
