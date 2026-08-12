@@ -6,6 +6,8 @@ import Button from "../components/common/Button";
 
 const initialState = {
   applicantName: "",
+  applicantAddress: "",
+  applicantPhone: "",
   nic: "",
   tin: "",
   expenseName: "",
@@ -122,15 +124,34 @@ export default function NewRecordPage() {
               <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
                 අයදුම්කරු පිළිබඳ තොරතුරු
               </h3>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Field label="ඉල්ලුම්කරුගේ නම, ලිපිනය, දුරකථන අංකය" full>
-                  <textarea
-                    rows={2}
+              <div className="flex flex-col gap-5">
+                <Field label="ඉල්ලුම්කරුගේ නම">
+                  <input
+                    type="text"
                     className={inputClass}
                     value={form.applicantName}
                     onChange={handleChange("applicantName")}
                   />
                 </Field>
+                <Field label="ඉල්ලුම්කරුගේ ලිපිනය">
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={form.applicantAddress}
+                    onChange={handleChange("applicantAddress")}
+                  />
+                </Field>
+                <Field label="ඉල්ලුම්කරුගේ දුරකථන අංකය">
+                  <input
+                    type="tel"
+                    className={inputClass}
+                    value={form.applicantPhone}
+                    onChange={handleChange("applicantPhone")}
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="ඉල්ලුම්කරුගේ හැඳුනුම්පත් අංකය">
                   <input
                     type="text"
