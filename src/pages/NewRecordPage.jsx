@@ -52,6 +52,7 @@ const initialState = {
   gerumCount: "",
   recommendationDate: "",
   chairmanApproval: "",
+  chairmanApprovalDate: "",
 };
 
 const SRI_LANKA_DISTRICTS = [
@@ -730,6 +731,24 @@ export default function NewRecordPage() {
                   <option value="කරමි">කරමි</option>
                   <option value="නොකරමි">නොකරමි</option>
                 </select>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
+                <Field label="දිනය:-" className="sm:w-48">
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={form.chairmanApprovalDate}
+                    onChange={handleChange("chairmanApprovalDate")}
+                  />
+                </Field>
+
+                <div className="flex flex-col items-center gap-1 sm:items-end">
+                  <div className="h-12 w-56 border-b border-ink" />
+                  <p className="font-sinhala text-sm text-ink-muted">
+                    සභාපති හා ප්‍රධාන විධායක නිලධාරි
+                  </p>
+                </div>
               </div>
             </section>
 
