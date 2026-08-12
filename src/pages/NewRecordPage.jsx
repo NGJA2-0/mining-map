@@ -757,6 +757,7 @@ export default function NewRecordPage() {
               <Button
                 type="button"
                 variant="ghost"
+                className="border border-line !text-ink hover:!bg-line/20"
                 onClick={() => navigate("/dashboard")}
               >
                 අවලංගු කරන්න
