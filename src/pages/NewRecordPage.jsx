@@ -11,6 +11,8 @@ const initialState = {
   nic: "",
   tin: "",
   expenseName: "",
+  expenseAddress: "",
+  expensePhone: "",
   expenseTin: "",
   gmlNumber: "",
   hasExpenseParty: false,
@@ -187,12 +189,28 @@ export default function NewRecordPage() {
 
                 {form.hasExpenseParty && (
                   <>
-                    <Field label="වියදම් පාර්ශවයක් සිටී නම් , නම, ලිපිනය, දුරකථන අංකය" full>
-                      <textarea
-                        rows={2}
+                    <Field label="වියදම් පාර්ශවයේ නම" full>
+                      <input
+                        type="text"
                         className={inputClass}
                         value={form.expenseName}
                         onChange={handleChange("expenseName")}
+                      />
+                    </Field>
+                    <Field label="වියදම් පාර්ශවයේ ලිපිනය" full>
+                      <input
+                        type="text"
+                        className={inputClass}
+                        value={form.expenseAddress}
+                        onChange={handleChange("expenseAddress")}
+                      />
+                    </Field>
+                    <Field label="වියදම් පාර්ශවයේ දුරකථන අංකය" full>
+                      <input
+                        type="tel"
+                        className={inputClass}
+                        value={form.expensePhone}
+                        onChange={handleChange("expensePhone")}
                       />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
