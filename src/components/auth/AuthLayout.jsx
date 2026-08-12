@@ -17,9 +17,6 @@ export default function AuthLayout({
       <div className="relative hidden w-full items-end overflow-hidden bg-[#EAECEE] p-10 text-ink lg:flex lg:w-2/5">
         <TopoBackground className="text-copper/70" />
         <div className="relative z-10">
-          <p className="font-mono text-xs uppercase tracking-widest text-copper">
-            SITE-04 · Field Operations
-          </p>
           <h1 className="mt-3 font-display text-4xl font-semibold leading-tight">
             Mining Map
           </h1>

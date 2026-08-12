@@ -13,9 +13,6 @@ export default function DashboardPage() {
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-8">
           <div>
-            <p className="font-mono text-xs uppercase tracking-widest text-copper">
-              SITE-04 · Dashboard
-            </p>
             <h1 className="mt-1 font-display text-xl font-semibold sm:text-2xl">
               Mining Map
             </h1>
