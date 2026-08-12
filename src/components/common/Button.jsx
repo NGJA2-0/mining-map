@@ -16,11 +16,11 @@ export default function Button({
 
   const variants = {
     primary:
-      "bg-amber text-base shadow-[0_0_0_1px_rgba(232,163,61,0.4)] hover:bg-amber-dark focus-visible:outline-amber",
+      "bg-amber text-ink shadow-[0_0_0_1px_rgba(193,131,42,0.35)] hover:bg-amber-dark focus-visible:outline-amber",
     copper:
-      "bg-copper text-ink shadow-[0_0_0_1px_rgba(193,102,47,0.4)] hover:brightness-110 focus-visible:outline-copper",
+      "bg-copper text-white shadow-[0_0_0_1px_rgba(184,90,41,0.35)] hover:brightness-110 focus-visible:outline-copper",
     secondary:
-      "bg-transparent text-ink border border-line hover:border-amber hover:text-amber focus-visible:outline-amber",
+      "bg-transparent text-ink border border-line hover:border-copper hover:text-copper focus-visible:outline-copper",
     ghost: "bg-transparent text-ink-muted hover:text-ink",
   };
 

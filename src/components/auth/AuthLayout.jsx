@@ -14,10 +14,10 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen w-full flex-col lg:flex-row">
       {/* Brand panel — hidden on mobile, shown from lg breakpoint up */}
-      <div className="relative hidden w-full items-end overflow-hidden bg-[#101317] p-10 text-ink lg:flex lg:w-2/5">
-        <TopoBackground className="text-teal" />
+      <div className="relative hidden w-full items-end overflow-hidden bg-[#EAECEE] p-10 text-ink lg:flex lg:w-2/5">
+        <TopoBackground className="text-copper/70" />
         <div className="relative z-10">
-          <p className="font-mono text-xs uppercase tracking-widest text-amber">
+          <p className="font-mono text-xs uppercase tracking-widest text-copper">
             SITE-04 · Field Operations
           </p>
           <h1 className="mt-3 font-display text-4xl font-semibold leading-tight">
@@ -32,7 +32,7 @@ export default function AuthLayout({
 
       {/* Form panel */}
       <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden bg-base px-4 py-10 sm:px-8">
-        <div className="absolute inset-0 text-teal/30 lg:hidden">
+        <div className="absolute inset-0 text-copper/25 lg:hidden">
           <TopoBackground />
         </div>
         <div className="relative z-10 w-full max-w-sm">
@@ -41,7 +41,7 @@ export default function AuthLayout({
               Mining Map
             </p>
             {eyebrow && (
-              <p className="mt-4 font-mono text-xs uppercase tracking-widest text-amber lg:mt-0">
+              <p className="mt-4 font-mono text-xs uppercase tracking-widest text-copper lg:mt-0">
                 {eyebrow}
               </p>
             )}
@@ -60,7 +60,7 @@ export default function AuthLayout({
               {footerText}{" "}
               <Link
                 to={footerLinkTo}
-                className="font-medium text-amber hover:underline"
+                className="font-medium text-copper hover:underline"
               >
                 {footerLinkText}
               </Link>
