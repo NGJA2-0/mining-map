@@ -410,6 +410,7 @@ export default function NewRecordPage() {
             </section>
 
             {/* Previous license history */}
+            {form.existingPits === "yes" && (
             <section className="flex flex-col gap-5">
               <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
                 පෙර බලපත්‍රය පිළිබඳ තොරතුරු
@@ -500,6 +501,7 @@ export default function NewRecordPage() {
                 </Field>
               </div>
             </section>
+            )}
 
             {/* Mining proposal */}
             <section className="flex flex-col gap-5">
