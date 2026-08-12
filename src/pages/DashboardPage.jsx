@@ -59,7 +59,7 @@ export default function DashboardPage() {
           >
             New
           </Button>
-          <Button variant="copper" className="flex-1">
+          <Button variant="copper" className="flex-1" onClick={() => navigate("/dashboard/update")}>
             Update
           </Button>
         </div>

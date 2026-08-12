@@ -113,7 +113,7 @@ const inputClass =
 const inlineInputClass =
   "mx-1 inline-block w-24 rounded border border-line bg-base px-2 py-0.5 align-baseline font-sinhala text-sm text-ink outline-none transition focus:border-teal focus:ring-1 focus:ring-teal";
 
-export default function NewRecordPage() {
+export default function UpdateRecordPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState(initialState);
@@ -154,7 +154,7 @@ export default function NewRecordPage() {
               Signed in as {user?.email}
             </p>
             <h1 className="mt-1 font-display text-xl font-semibold sm:text-2xl">
-              New Site Record
+              Update Site Record
             </h1>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
@@ -174,7 +174,7 @@ export default function NewRecordPage() {
                 ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය
               </p>
               <h2 className="mt-1 font-sinhala text-lg font-semibold sm:text-xl">
-                යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම (නව)
+                යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය දීර්ඝ කිරීම (වාර්ෂික)
               </h2>
               <p className="mt-1 font-sinhala text-xs text-ink-muted">
                 අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) නිර්දේශය

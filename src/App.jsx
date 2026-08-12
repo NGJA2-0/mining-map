@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import NewRecordPage from "./pages/NewRecordPage";
+import UpdateRecordPage from "./pages/UpdateRecordPage";
 import "./index.css";
 
 export default function App() {
@@ -27,6 +28,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <NewRecordPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/update"
+            element={
+              <ProtectedRoute>
+                <UpdateRecordPage />
               </ProtectedRoute>
             }
           />    
