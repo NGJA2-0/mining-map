@@ -45,6 +45,11 @@ const initialState = {
   proposedExtent: "",
   refundServiceFee: "",
   recommendation: "",
+  ngjaRefNumber: "",
+  maxExtentVA: "",
+  maxPcCount: "",
+  backhoeCount: "",
+  gerumCount: "",
 };
 
 const SRI_LANKA_DISTRICTS = [
@@ -101,6 +106,9 @@ function Field({ label, children, full = false, className = "" }) {
 
 const inputClass =
   "w-full rounded-md border border-line bg-base px-3 py-2 font-sinhala text-sm text-ink placeholder:text-ink-muted/60 outline-none transition focus:border-teal focus:ring-1 focus:ring-teal";
+
+const inlineInputClass =
+  "mx-1 inline-block w-24 rounded border border-line bg-base px-2 py-0.5 align-baseline font-sinhala text-sm text-ink outline-none transition focus:border-teal focus:ring-1 focus:ring-teal";
 
 export default function NewRecordPage() {
   const { user } = useAuth();
@@ -632,19 +640,55 @@ export default function NewRecordPage() {
               </div>
             </section>
 
-            {/* Recommendation */}
+            {/* Engineer's recommendation paragraph with inline inputs */}
             <section className="flex flex-col gap-5">
               <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
                 නිර්දේශය
               </h3>
-              <Field label="නිර්දේශය">
-                <textarea
-                  rows={4}
-                  className={inputClass}
-                  value={form.recommendation}
-                  onChange={handleChange("recommendation")}
+              <p className="font-sinhala text-sm leading-8 text-ink">
+                කෑණීම් ඉංජිනේරු නිර්දේශයන්ට (NGJA/16.2/Backhoe/MER/
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.ngjaRefNumber}
+                  onChange={handleChange("ngjaRefNumber")}
                 />
-              </Field>
+                ) යටත්ව වරකට උපරිමය
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inlineInputClass}
+                  value={form.maxExtentVA}
+                  onChange={handleChange("maxExtentVA")}
+                />
+                ව.අ ක් දක්වා පතසක් කෑණීම සිදුකිරීම සඳහා උපරිමය
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={inlineInputClass}
+                  value={form.maxPcCount}
+                  onChange={handleChange("maxPcCount")}
+                />
+                PC ක් දක්වා වන
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={inlineInputClass}
+                  value={form.backhoeCount}
+                  onChange={handleChange("backhoeCount")}
+                />
+                බැකෝ යන්ත්‍ර ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={inlineInputClass}
+                  value={form.gerumCount}
+                  onChange={handleChange("gerumCount")}
+                />
+                ගැරුම් යන්ත්‍ර ක් යොදා ගැනීමටත් අවශ්‍ය පරිදි ජල පොම්ප යොදා
+                ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට තාක්ෂණික
+                අනුමැතියට ඉදිරිපත් කරමි.
+              </p>
             </section>
 
             {/* Actions */}
