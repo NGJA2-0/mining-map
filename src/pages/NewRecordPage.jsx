@@ -50,6 +50,7 @@ const initialState = {
   maxPcCount: "",
   backhoeCount: "",
   gerumCount: "",
+  recommendationDate: "",
 };
 
 const SRI_LANKA_DISTRICTS = [
@@ -653,7 +654,7 @@ export default function NewRecordPage() {
                   value={form.ngjaRefNumber}
                   onChange={handleChange("ngjaRefNumber")}
                 />
-                ) යටත්ව වරකට උපරිමය
+                ) යටත්ව වරකට උපරිමය ව.අ
                 <input
                   type="number"
                   step="0.01"
@@ -661,7 +662,7 @@ export default function NewRecordPage() {
                   value={form.maxExtentVA}
                   onChange={handleChange("maxExtentVA")}
                 />
-                ව.අ ක් දක්වා පතසක් කෑණීම සිදුකිරීම සඳහා උපරිමය
+                ක් දක්වා පතසක් කෑණීම සිදුකිරීම සඳහා උපරිමය PC
                 <input
                   type="text"
                   inputMode="numeric"
@@ -669,7 +670,7 @@ export default function NewRecordPage() {
                   value={form.maxPcCount}
                   onChange={handleChange("maxPcCount")}
                 />
-                PC ක් දක්වා වන
+                ක් දක්වා වන බැකෝ යන්ත්‍ර
                 <input
                   type="text"
                   inputMode="numeric"
@@ -677,7 +678,7 @@ export default function NewRecordPage() {
                   value={form.backhoeCount}
                   onChange={handleChange("backhoeCount")}
                 />
-                බැකෝ යන්ත්‍ර ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා
+                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
                 <input
                   type="text"
                   inputMode="numeric"
@@ -685,10 +686,28 @@ export default function NewRecordPage() {
                   value={form.gerumCount}
                   onChange={handleChange("gerumCount")}
                 />
-                ගැරුම් යන්ත්‍ර ක් යොදා ගැනීමටත් අවශ්‍ය පරිදි ජල පොම්ප යොදා
-                ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට තාක්ෂණික
+                ක් යොදා ගැනීමටත් අවශ්‍ය පරිදි ජල පොම්ප යොදා
+                ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට කාරුණික
                 අනුමැතියට ඉදිරිපත් කරමි.
               </p>
+
+              <div className="mt-4 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
+                <Field label="දිනය:-" className="sm:w-48">
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={form.recommendationDate}
+                    onChange={handleChange("recommendationDate")}
+                  />
+                </Field>
+
+                <div className="flex flex-col items-center gap-1 sm:items-end">
+                  <div className="h-12 w-56 border-b border-ink" />
+                  <p className="font-sinhala text-sm text-ink-muted">
+                    අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර)
+                  </p>
+                </div>
+              </div>
             </section>
 
             {/* Actions */}
