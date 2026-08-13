@@ -9,7 +9,7 @@ export default function SignupForm() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
-    email: "",
+    nic: "",
     password: "",
     confirm: "",
   });
@@ -22,14 +22,14 @@ export default function SignupForm() {
     e.preventDefault();
     const nextErrors = {};
     if (!form.name) nextErrors.name = "Name is required";
-    if (!form.email) nextErrors.email = "Email is required";
+    if (!form.nic) nextErrors.nic = "NIC is required";
     if (!form.password) nextErrors.password = "Password is required";
     if (form.confirm !== form.password)
       nextErrors.confirm = "Passwords do not match";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    signup(form.email);
+    signup(form.nic);
     navigate("/dashboard");
   };
 
@@ -45,14 +45,14 @@ export default function SignupForm() {
         error={errors.name}
       />
       <Input
-        id="email"
-        name="email"
-        type="email"
-        label="Email"
-        placeholder="you@sitecrew.com"
-        value={form.email}
+        id="nic"
+        name="nic"
+        type="text"
+        label="NIC"
+        placeholder="123456789V"
+        value={form.nic}
         onChange={handleChange}
-        error={errors.email}
+        error={errors.nic}
       />
       <Input
         id="password"

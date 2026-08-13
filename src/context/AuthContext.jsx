@@ -14,8 +14,8 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   // No backend yet — these just set local state so the flow can be wired up now
-  const login = (email) => setUser({ email });
-  const signup = (email) => setUser({ email });
+  const login = (nic) => setUser({ nic });
+  const signup = (nic) => setUser({ nic });
   const logout = () => setUser(null);
 
   return (

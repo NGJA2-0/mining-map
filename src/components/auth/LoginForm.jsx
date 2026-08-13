@@ -7,7 +7,7 @@ import Button from "../common/Button";
 export default function LoginForm() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ nic: "", password: "" });
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) =>
@@ -16,26 +16,26 @@ export default function LoginForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const nextErrors = {};
-    if (!form.email) nextErrors.email = "Email is required";
+    if (!form.nic) nextErrors.nic = "NIC is required";
     if (!form.password) nextErrors.password = "Password is required";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    login(form.email);
+    login(form.nic);
     navigate("/dashboard");
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       <Input
-        id="email"
-        name="email"
-        type="email"
-        label="Email"
-        placeholder="you@sitecrew.com"
-        value={form.email}
+        id="nic"
+        name="nic"
+        type="text"
+        label="NIC"
+        placeholder="123456789V"
+        value={form.nic}
         onChange={handleChange}
-        error={errors.email}
+        error={errors.nic}
       />
       <Input
         id="password"
