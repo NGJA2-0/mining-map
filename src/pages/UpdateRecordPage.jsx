@@ -15,6 +15,7 @@ const initialState = {
   expensePhone: "",
   expenseTin: "",
   gmlNumber: "",
+  gpsPoints: [{ latitude: "", longitude: "" }],
   hasExpenseParty: false,
   district: "",
   village: "",
@@ -125,6 +126,30 @@ export default function UpdateRecordPage() {
 
   const handleCheckboxChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.checked }));
+  };
+
+  const handleGpsChange = (index, field) => (e) => {
+    const { value } = e.target;
+    setForm((prev) => {
+      const gpsPoints = prev.gpsPoints.map((point, i) =>
+        i === index ? { ...point, [field]: value } : point
+      );
+      return { ...prev, gpsPoints };
+    });
+  };
+
+  const addGpsPoint = () => {
+    setForm((prev) => {
+      if (prev.gpsPoints.length >= 4) return prev;
+      return { ...prev, gpsPoints: [...prev.gpsPoints, { latitude: "", longitude: "" }] };
+    });
+  };
+
+  const removeGpsPoint = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      gpsPoints: prev.gpsPoints.filter((_, i) => i !== index),
+    }));
   };
 
   const handleDistrictChange = (e) => {
@@ -286,6 +311,73 @@ export default function UpdateRecordPage() {
                     value={form.gmlNumber}
                     onChange={handleChange("gmlNumber")}
                   />
+                </Field>
+
+                <Field label="G. P. S." full>
+                  <div className="flex flex-col gap-3">
+                    {form.gpsPoints.map((point, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-col gap-3 rounded-lg border border-line bg-base/60 p-4 sm:flex-row sm:items-center"
+                      >
+                        <div className="flex items-center gap-2 sm:w-24 shrink-0">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal/10 font-mono text-xs font-semibold text-teal">
+                            {index + 1}
+                          </span>
+                          <span className="font-sinhala text-xs text-ink-muted">
+                            {index === 0 ? (
+                              <span className="text-red-500">අවශ්‍යයි</span>
+                            ) : (
+                              "විකල්ප"
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="grid flex-1 grid-cols-2 gap-3">
+                          <div className="flex flex-col gap-1">
+                            <label className="font-sinhala text-xs text-ink-muted">අක්ෂාංශ</label>
+                            <input
+                              type="text"
+                              className={inputClass}
+                              required={index === 0}
+                              value={point.latitude}
+                              onChange={handleGpsChange(index, "latitude")}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="font-sinhala text-xs text-ink-muted">දේශාංෂ</label>
+                            <input
+                              type="text"
+                              className={inputClass}
+                              required={index === 0}
+                              value={point.longitude}
+                              onChange={handleGpsChange(index, "longitude")}
+                            />
+                          </div>
+                        </div>
+
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => removeGpsPoint(index)}
+                            className="self-start font-sinhala text-xs text-ink-muted transition hover:text-red-500 sm:self-center"
+                          >
+                            ඉවත් කරන්න
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                    {form.gpsPoints.length < 4 && (
+                      <button
+                        type="button"
+                        onClick={addGpsPoint}
+                        className="self-start font-sinhala text-sm font-medium text-teal transition hover:underline"
+                      >
+                        + තවත් ලක්ෂ්‍යයක් එකතු කරන්න
+                      </button>
+                    )}
+                  </div>
                 </Field>
               </div>
             </section>
