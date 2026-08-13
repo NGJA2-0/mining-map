@@ -958,14 +958,14 @@ export default function NewRecordPage() {
                   value={form.riverbankProtectionAmount}
                   onChange={handleChange("riverbankProtectionAmount")}
                 />
-                මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා
+                ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා
                 <input
                   type="text"
                   className={inlineInputClass}
                   value={form.specialCaseAmount}
                   onChange={handleChange("specialCaseAmount")}
                 />
-                මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා
+                ඇප මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා
                 ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට කාරුණික
                 අනුමැතියට ඉදිරිපත් කරමි.
               </p>
