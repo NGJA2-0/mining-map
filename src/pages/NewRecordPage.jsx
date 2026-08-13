@@ -15,6 +15,16 @@ const initialState = {
   expensePhone: "",
   expenseTin: "",
   gmlNumber: "",
+  gpsPoints: [
+    { latitude: "", longitude: "" },
+    { latitude: "", longitude: "" },
+    { latitude: "", longitude: "" },
+    { latitude: "", longitude: "" },
+  ],
+  landName: "",
+  landNature: "",
+  landNatureCondition: "",
+  landNatureAttachment: null,
   hasExpenseParty: false,
   district: "",
   village: "",
@@ -50,6 +60,11 @@ const initialState = {
   maxPcCount: "",
   backhoeCount: "",
   gerumCount: "",
+  adumMachineCount: "",
+  silageExtent: "",
+  depositAmount: "",
+  riverbankProtectionAmount: "",
+  specialCaseAmount: "",
   recommendationDate: "",
   chairmanApproval: "",
   chairmanApprovalDate: "",
@@ -125,6 +140,20 @@ export default function NewRecordPage() {
 
   const handleCheckboxChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.checked }));
+  };
+
+  const handleFileChange = (field) => (e) => {
+    setForm((prev) => ({ ...prev, [field]: e.target.files?.[0] || null }));
+  };
+
+  const handleGpsChange = (index, field) => (e) => {
+    const { value } = e.target;
+    setForm((prev) => {
+      const gpsPoints = prev.gpsPoints.map((point, i) =>
+        i === index ? { ...point, [field]: value } : point
+      );
+      return { ...prev, gpsPoints };
+    });
   };
 
   const handleDistrictChange = (e) => {
@@ -287,6 +316,170 @@ export default function NewRecordPage() {
                     onChange={handleChange("gmlNumber")}
                   />
                 </Field>
+
+                <Field label="G. P. S." full>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {form.gpsPoints.map((point, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-col gap-3 rounded-md border border-line p-3"
+                      >
+                        <p className="font-sinhala text-xs font-medium text-ink-muted">
+                          ලක්ෂ්‍යය {index + 1}
+                        </p>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <Field label="අක්ෂාංශ">
+                            <input
+                              type="text"
+                              className={inputClass}
+                              value={point.latitude}
+                              onChange={handleGpsChange(index, "latitude")}
+                            />
+                          </Field>
+                          <Field label="දේශාංෂ">
+                            <input
+                              type="text"
+                              className={inputClass}
+                              value={point.longitude}
+                              onChange={handleGpsChange(index, "longitude")}
+                            />
+                          </Field>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Field>
+
+                <Field label="ඉඩමේ නම" full>
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={form.landName}
+                    onChange={handleChange("landName")}
+                  />
+                </Field>
+
+                <Field label="ඉඩමේ ස්වභාවය" full>
+                  <div className="flex gap-4 pt-1">
+                    <label className="flex items-center gap-2 font-sinhala text-sm">
+                      <input
+                        type="radio"
+                        name="landNature"
+                        value="goda"
+                        checked={form.landNature === "goda"}
+                        onChange={handleChange("landNature")}
+                        className="accent-teal"
+                      />
+                      ගොඩ ඉඩමක්
+                    </label>
+                    <label className="flex items-center gap-2 font-sinhala text-sm">
+                      <input
+                        type="radio"
+                        name="landNature"
+                        value="kumbura"
+                        checked={form.landNature === "kumbura"}
+                        onChange={handleChange("landNature")}
+                        className="accent-teal"
+                      />
+                      කුඹුරු ඉඩමක්
+                    </label>
+                  </div>
+                </Field>
+
+                {form.landNature === "goda" && (
+                  <Field label="බලපත්‍රය අවුරුදු 03 ක් පැරණි රත්නපුර පිහිටි ඉඩමක්" full>
+                    <div className="flex gap-4 pt-1">
+                      {yesNo.map((opt) => (
+                        <label
+                          key={opt.value}
+                          className="flex items-center gap-2 font-sinhala text-sm"
+                        >
+                          <input
+                            type="radio"
+                            name="landNatureCondition"
+                            value={opt.value}
+                            checked={form.landNatureCondition === opt.value}
+                            onChange={handleChange("landNatureCondition")}
+                            className="accent-teal"
+                          />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+                    {form.landNatureCondition === "yes" && (
+                      <div className="mt-2 flex flex-col gap-1.5">
+                        <label className="font-sinhala text-sm text-ink-muted">
+                          ලිඛිත සාක්ෂි
+                        </label>
+                        <input
+                          type="file"
+                          className={inputClass}
+                          onChange={handleFileChange("landNatureAttachment")}
+                        />
+                      </div>
+                    )}
+                    {form.landNatureCondition === "no" && (
+                      <div className="mt-2 flex flex-col gap-1.5">
+                        <label className="font-sinhala text-sm text-ink-muted">
+                          දිවුරුම් ප්‍රකාශය
+                        </label>
+                        <input
+                          type="file"
+                          className={inputClass}
+                          onChange={handleFileChange("landNatureAttachment")}
+                        />
+                      </div>
+                    )}
+                  </Field>
+                )}
+
+                {form.landNature === "kumbura" && (
+                  <Field label="බලපත්‍රය අවුරුදු 05 ක් පැරණි රත්නපුර පිහිටි ඉඩමක්" full>
+                    <div className="flex gap-4 pt-1">
+                      {yesNo.map((opt) => (
+                        <label
+                          key={opt.value}
+                          className="flex items-center gap-2 font-sinhala text-sm"
+                        >
+                          <input
+                            type="radio"
+                            name="landNatureCondition
+                            "
+                            value={opt.value}
+                            checked={form.landNatureCondition === opt.value}
+                            onChange={handleChange("landNatureCondition")}
+                            className="accent-teal"
+                          />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+                    {form.landNatureCondition === "yes" && (
+                      <div className="mt-2 flex flex-col gap-1.5">
+                        <label className="font-sinhala text-sm text-ink-muted">
+                          ලිඛිත සාක්ෂි
+                        </label>
+                        <input
+                          type="file"
+                          className={inputClass}
+                          onChange={handleFileChange("landNatureAttachment")}
+                        />
+                      </div>
+                    )}
+                    {form.landNatureCondition === "no" && (
+                      <div className="mt-2 flex flex-col gap-1.5">
+                        <label className="font-sinhala text-sm text-ink-muted">
+                          දිවුරුම් ප්‍රකාශය
+                        </label>
+                        <input
+                          type="file"
+                          className={inputClass}
+                          onChange={handleFileChange("landNatureAttachment")}
+                        />
+                      </div>
+                    )}
+                  </Field>
+                )}
               </div>
             </section>
 
@@ -680,7 +873,7 @@ export default function NewRecordPage() {
                   value={form.backhoeCount}
                   onChange={handleChange("backhoeCount")}
                 />
-                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
+               ක් යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
                 <input
                   type="text"
                   inputMode="numeric"
@@ -688,7 +881,43 @@ export default function NewRecordPage() {
                   value={form.gerumCount}
                   onChange={handleChange("gerumCount")}
                 />
-                ක් යොදා ගැනීමටත් අවශ්‍ය පරිදි ජල පොම්ප යොදා
+                ක් යොදා ගැනීමටත් ඇදුම් යන්ත්‍ර
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={inlineInputClass}
+                  value={form.adumMachineCount}
+                  onChange={handleChange("adumMachineCount")}
+                />
+                යොදා ගැනීමටත්, රොන් මඩ වලවල් පවත්වා ගැනීමට ව.අ.
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.silageExtent}
+                  onChange={handleChange("silageExtent")}
+                />
+                කට ඇප මුදල් 
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.depositAmount}
+                  onChange={handleChange("depositAmount")}
+                />
+                ක් තැන්පත් කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීමට
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.riverbankProtectionAmount}
+                  onChange={handleChange("riverbankProtectionAmount")}
+                />
+                මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.specialCaseAmount}
+                  onChange={handleChange("specialCaseAmount")}
+                />
+                මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා
                 ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට කාරුණික
                 අනුමැතියට ඉදිරිපත් කරමි.
               </p>
