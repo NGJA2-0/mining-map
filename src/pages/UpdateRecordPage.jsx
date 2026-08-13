@@ -151,7 +151,7 @@ export default function UpdateRecordPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-8">
           <div>
             <p className="font-mono text-xs uppercase tracking-widest text-ink-muted">
-              Signed in as {user?.email}
+              Signed in as {user?.nic}
             </p>
             <h1 className="mt-1 font-display text-xl font-semibold sm:text-2xl">
               Update Site Record

@@ -7,35 +7,47 @@ import Button from "../common/Button";
 export default function LoginForm() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ nic: "", password: "" });
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setApiError("");
+
+    // Client-side validation
     const nextErrors = {};
-    if (!form.email) nextErrors.email = "Email is required";
+    if (!form.nic) nextErrors.nic = "NIC is required";
     if (!form.password) nextErrors.password = "Password is required";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    login(form.email);
-    navigate("/dashboard");
+    try {
+      setLoading(true);
+      await login({ nic: form.nic, password: form.password });
+      navigate("/dashboard");
+    } catch (err) {
+      setApiError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       <Input
-        id="email"
-        name="email"
-        type="email"
-        label="Email"
-        placeholder="you@sitecrew.com"
-        value={form.email}
+        id="nic"
+        name="nic"
+        type="text"
+        label="NIC"
+        placeholder="123456789V"
+        value={form.nic}
         onChange={handleChange}
-        error={errors.email}
+        error={errors.nic}
       />
       <Input
         id="password"
@@ -47,8 +59,13 @@ export default function LoginForm() {
         onChange={handleChange}
         error={errors.password}
       />
-      <Button type="submit" size="lg" className="mt-2 w-full">
-        Sign in
+
+      {apiError && (
+        <p className="text-sm text-red-500 -mt-1">{apiError}</p>
+      )}
+
+      <Button type="submit" size="lg" className="mt-2 w-full" disabled={loading}>
+        {loading ? "Signing in…" : "Sign in"}
       </Button>
     </form>
   );

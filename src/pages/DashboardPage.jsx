@@ -30,7 +30,7 @@ export default function DashboardPage() {
           <TopoBackground className="text-teal/15" />
           <div className="relative z-10 flex flex-col items-start gap-4">
             <p className="font-mono text-xs uppercase tracking-widest text-ink-muted">
-              Signed in as {user?.email}
+              Signed in as {user?.nic}
             </p>
             <h2 className="font-display text-2xl font-semibold sm:text-3xl">
               Site records
