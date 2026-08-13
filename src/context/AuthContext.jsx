@@ -44,8 +44,27 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  // Login — backend integration to be added separately
-  const login = (nic) => setUser({ nic });
+  /**
+   * Calls POST /api/login and stores the returned user + token.
+   * Throws an Error with a user-facing message on failure.
+   */
+  const login = async ({ nic, password }) => {
+    const res = await fetch(`${BASE_URL}/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nic, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Login failed. Please try again.");
+    }
+
+    setToken(data.token);
+    setUser(data.user);
+    return data;
+  };
 
   const logout = () => {
     setUser(null);
