@@ -223,6 +223,40 @@ export default function DashboardPage() {
             <p className="max-w-md text-sm text-ink-muted">
               Log a new survey entry or update an existing site record.
             </p>
+
+            <div className="mt-2 flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative flex-1 sm:max-w-sm">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search by TIN number"
+                  className="w-full rounded-md border border-line bg-base py-2.5 pl-10 pr-4 font-mono text-sm text-ink placeholder:font-sans placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
+                />
+              </div>
+
+              <Button
+                variant="secondary"
+                size="md"
+                className="w-full sm:w-auto !text-ink"
+                onClick={() => navigate("/dashboard/map")}
+              >
+                View map
+              </Button>
+            </div>
           </div>
         </div>
       </main>
