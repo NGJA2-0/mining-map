@@ -45,8 +45,13 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-base text-ink">
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-8">
-          <div>
-            <h1 className="mt-1 font-display text-xl font-semibold sm:text-2xl">
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo.jpg"
+              alt="Mining Map logo"
+              className="h-8 w-8 rounded-md object-cover sm:h-9 sm:w-9"
+            />
+            <h1 className="font-display text-xl font-semibold sm:text-2xl">
               Mining Map
             </h1>
           </div>
