@@ -446,7 +446,7 @@ export default function UpdateRecordPage() {
                     {form.isRatnapuraLand === "yes" && (
                       <div className="mt-3 flex flex-col gap-4">
                         <p className="font-sinhala text-sm text-ink">
-                          බලපත්‍රය අවුරුදු 03 ක් පැරණි රත්නපුර පිහිටි ඉඩමකි.
+                          බලපත්‍රය අවුරුදු 03 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
                         </p>
                         <div className="flex flex-col gap-1.5">
                           <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
@@ -490,7 +490,7 @@ export default function UpdateRecordPage() {
                     {form.isRatnapuraLand === "yes" && (
                       <div className="mt-3 flex flex-col gap-4">
                         <p className="font-sinhala text-sm text-ink">
-                          බලපත්‍රය අවුරුදු 05 ක් පැරණි රත්නපුර පිහිටි ඉඩමකි.
+                          බලපත්‍රය අවුරුදු 05 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
                         </p>
                         <div className="flex flex-col gap-1.5">
                           <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
