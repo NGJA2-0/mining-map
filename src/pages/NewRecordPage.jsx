@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import TopoBackground from "../components/common/TopoBackground";
 import Button from "../components/common/Button";
 
@@ -130,7 +132,7 @@ const inlineInputClass =
   "mx-1 inline-block w-24 rounded border border-line bg-base px-2 py-0.5 align-baseline font-sinhala text-sm text-ink outline-none transition focus:border-teal focus:ring-1 focus:ring-teal";
 
 export default function NewRecordPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState(initialState);
   const [saving, setSaving] = useState(false);
@@ -177,13 +179,122 @@ export default function NewRecordPage() {
     setForm((prev) => ({ ...prev, district: value, regionalOffice: "" }));
   };
 
-  const handleSubmit = async (e) => {
+  // Fields the backend expects as int/float64 rather than string.
+// If any of these turn out to be wrong, just remove them from this list.
+// Only these two are numeric in the Go struct (ExtensionCount *int, ProposedDepth *float64).
+// Every other "count"/"amount"/"boundary" field is a plain string on the backend — leave them as-is.
+const NUMERIC_FIELDS = ["extensionCount", "proposedDepth"];
+
+// Converts "" -> undefined (field omitted), "10" -> 10, leaves non-numeric strings untouched.
+const toNumberOrUndefined = (value) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  const n = Number(value);
+  return Number.isNaN(n) ? value : n;
+};
+
+const uploadFile = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${BASE_URL}/api/uploads`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  if (!res.ok) throw new Error("File upload failed");
+  const data = await res.json();
+  return data.url; // adjust if your upload API returns a different field name
+};
+
+const validateForm = () => {
+  const errors = [];
+  const requiredAlways = [
+    "applicantName", "applicantAddress", "applicantPhone", "nic",
+    "gmlNumber", "landName", "landNature", "isRatnapuraLand",
+    "district", "regionalOffice", "licenseeType", "existingPits",
+  ];
+  requiredAlways.forEach((f) => {
+    if (!form[f] || String(form[f]).trim() === "") errors.push(f);
+  });
+
+  if (!form.gpsPoints.some((p) => p.latitude && p.longitude)) {
+    errors.push("gpsPoints");
+  }
+
+  if (form.hasExpenseParty) {
+    ["expenseName", "expenseAddress", "expensePhone"].forEach((f) => {
+      if (!form[f]) errors.push(f);
+    });
+  }
+
+  if (form.isRatnapuraLand === "yes") {
+    if (!form.writtenEvidenceAttachment) errors.push("writtenEvidenceAttachment");
+    if (!form.affidavitAttachment) errors.push("affidavitAttachment");
+  }
+
+  if (form.existingPits === "yes") {
+    ["prevLicenseFirstDate", "extensionCount", "minedGemValue", "conditionBreach", "ownershipComplaint"].forEach((f) => {
+      if (!form[f] && form[f] !== 0) errors.push(f);
+    });
+    if (form.conditionBreach === "yes" && !form.conditionBreachDetails) errors.push("conditionBreachDetails");
+    if (form.ownershipComplaint === "yes" && !form.complaintDetails) errors.push("complaintDetails");
+  }
+
+  return errors;
+};
+
+const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const errors = validateForm();
+    if (errors.length > 0) {
+      alert("කරුණාකර අවශ්‍ය සියලුම ක්ෂේත්‍ර පුරවන්න.");
+      console.warn("Missing/invalid fields:", errors);
+      return;
+    }
+
     setSaving(true);
     try {
-      // TODO: wire up to backend endpoint
-      console.log("New record submission:", form);
+      let writtenEvidenceAttachmentUrl;
+      let affidavitAttachmentUrl;
+
+      if (form.isRatnapuraLand === "yes") {
+        [writtenEvidenceAttachmentUrl, affidavitAttachmentUrl] = await Promise.all([
+          uploadFile(form.writtenEvidenceAttachment),
+          uploadFile(form.affidavitAttachment),
+        ]);
+      }
+
+      const payload = {
+        ...form,
+        gpsPoints: form.gpsPoints.filter((p) => p.latitude && p.longitude),
+        writtenEvidenceAttachmentUrl,
+        affidavitAttachmentUrl,
+      };
+
+      NUMERIC_FIELDS.forEach((field) => {
+        payload[field] = toNumberOrUndefined(payload[field]);
+      });
+      delete payload.writtenEvidenceAttachment;
+      delete payload.affidavitAttachment;
+
+      const res = await fetch(`${BASE_URL}/api/mining-licenses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.message || "Failed to save record");
+      }
+
       navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Something went wrong while saving.");
     } finally {
       setSaving(false);
     }
