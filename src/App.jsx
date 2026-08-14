@@ -6,6 +6,7 @@ import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import NewRecordPage from "./pages/NewRecordPage";
 import UpdateRecordPage from "./pages/UpdateRecordPage";
+import SearchResultPage from "./pages/SearchResultPage";
 import "./index.css";
 
 export default function App() {
@@ -38,7 +39,15 @@ export default function App() {
                 <UpdateRecordPage />
               </ProtectedRoute>
             }
-          />    
+          />
+          <Route
+            path="/dashboard/search-result"
+            element={
+              <ProtectedRoute>
+                <SearchResultPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
