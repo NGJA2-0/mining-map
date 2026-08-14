@@ -802,14 +802,14 @@ export default function UpdateRecordPage() {
                   value={form.depositAmount}
                   onChange={handleChange("depositAmount")}
                 />
-                ක් තැන්පත් කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීමට
+                ක් තැන්පත් කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීම සඳහා
                 <input
                   type="text"
                   className={inlineInputClass}
                   value={form.riverbankProtectionAmount}
                   onChange={handleChange("riverbankProtectionAmount")}
                 />
-                ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා
+                ක ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේෂ අවස්ථා සඳහා
                 <input
                   type="text"
                   className={inlineInputClass}
