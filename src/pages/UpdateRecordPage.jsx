@@ -16,6 +16,11 @@ const initialState = {
   expenseTin: "",
   gmlNumber: "",
   gpsPoints: [{ latitude: "", longitude: "" }],
+  landName: "",
+  landNature: "",
+  isRatnapuraLand: "",
+  writtenEvidenceAttachment: null,
+  affidavitAttachment: null,
   hasExpenseParty: false,
   district: "",
   village: "",
@@ -126,6 +131,10 @@ export default function UpdateRecordPage() {
 
   const handleCheckboxChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.checked }));
+  };
+
+  const handleFileChange = (field) => (e) => {
+    setForm((prev) => ({ ...prev, [field]: e.target.files?.[0] || null }));
   };
 
   const handleGpsChange = (index, field) => (e) => {
@@ -379,6 +388,130 @@ export default function UpdateRecordPage() {
                     )}
                   </div>
                 </Field>
+
+                <Field label="ඉඩමේ නම" full>
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={form.landName}
+                    onChange={handleChange("landName")}
+                  />
+                </Field>
+
+                <Field label="ඉඩමේ ස්වභාවය" full>
+                  <div className="flex gap-4 pt-1">
+                    <label className="flex items-center gap-2 font-sinhala text-sm">
+                      <input
+                        type="radio"
+                        name="landNature"
+                        value="goda"
+                        checked={form.landNature === "goda"}
+                        onChange={handleChange("landNature")}
+                        className="accent-teal"
+                      />
+                      ගොඩ ඉඩමක්
+                    </label>
+                    <label className="flex items-center gap-2 font-sinhala text-sm">
+                      <input
+                        type="radio"
+                        name="landNature"
+                        value="kumbura"
+                        checked={form.landNature === "kumbura"}
+                        onChange={handleChange("landNature")}
+                        className="accent-teal"
+                      />
+                      කුඹුරු ඉඩමක්
+                    </label>
+                  </div>
+                </Field>
+
+                {form.landNature === "goda" && (
+                  <Field label="ඉඩම රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත්ද?" full>
+                    <div className="flex gap-4 pt-1">
+                      {yesNo.map((opt) => (
+                        <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
+                          <input
+                            type="radio"
+                            name="isRatnapuraLand"
+                            value={opt.value}
+                            checked={form.isRatnapuraLand === opt.value}
+                            onChange={handleChange("isRatnapuraLand")}
+                            className="accent-teal"
+                          />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+
+                    {form.isRatnapuraLand === "yes" && (
+                      <div className="mt-3 flex flex-col gap-4">
+                        <p className="font-sinhala text-sm text-ink">
+                          බලපත්‍රය අවුරුදු 03 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
+                        </p>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
+                          <input
+                            type="file"
+                            className={inputClass}
+                            onChange={handleFileChange("writtenEvidenceAttachment")}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
+                          <input
+                            type="file"
+                            className={inputClass}
+                            onChange={handleFileChange("affidavitAttachment")}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </Field>
+                )}
+
+                {form.landNature === "kumbura" && (
+                  <Field label="ඉඩම රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත්ද?" full>
+                    <div className="flex gap-4 pt-1">
+                      {yesNo.map((opt) => (
+                        <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
+                          <input
+                            type="radio"
+                            name="isRatnapuraLand"
+                            value={opt.value}
+                            checked={form.isRatnapuraLand === opt.value}
+                            onChange={handleChange("isRatnapuraLand")}
+                            className="accent-teal"
+                          />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+
+                    {form.isRatnapuraLand === "yes" && (
+                      <div className="mt-3 flex flex-col gap-4">
+                        <p className="font-sinhala text-sm text-ink">
+                          බලපත්‍රය අවුරුදු 05 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
+                        </p>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
+                          <input
+                            type="file"
+                            className={inputClass}
+                            onChange={handleFileChange("writtenEvidenceAttachment")}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
+                          <input
+                            type="file"
+                            className={inputClass}
+                            onChange={handleFileChange("affidavitAttachment")}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </Field>
+                )}
               </div>
             </section>
 
@@ -772,7 +905,7 @@ export default function UpdateRecordPage() {
                   value={form.backhoeCount}
                   onChange={handleChange("backhoeCount")}
                 />
-                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
+                ක් යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
                 <input
                   type="text"
                   inputMode="numeric"
@@ -780,7 +913,43 @@ export default function UpdateRecordPage() {
                   value={form.gerumCount}
                   onChange={handleChange("gerumCount")}
                 />
-                ක් යොදා ගැනීමටත් අවශ්‍ය පරිදි ජල පොම්ප යොදා
+                ක් යොදා ගැනීමටත් ඇදුම් යන්ත්‍ර
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={inlineInputClass}
+                  value={form.adumMachineCount}
+                  onChange={handleChange("adumMachineCount")}
+                />
+                යොදා ගැනීමටත්, රොන් මඩ වලවල් පවත්වා ගැනීමට ව.අ.
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.silageExtent}
+                  onChange={handleChange("silageExtent")}
+                />
+                කට ඇප මුදල්
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.depositAmount}
+                  onChange={handleChange("depositAmount")}
+                />
+                ක් තැන්පත් කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීම සඳහා
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.riverbankProtectionAmount}
+                  onChange={handleChange("riverbankProtectionAmount")}
+                />
+                ක ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේෂ අවස්ථා සඳහා
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.specialCaseAmount}
+                  onChange={handleChange("specialCaseAmount")}
+                />
+                ඇප මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා
                 ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට කාරුණික
                 අනුමැතියට ඉදිරිපත් කරමි.
               </p>
