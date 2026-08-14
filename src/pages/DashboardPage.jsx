@@ -196,6 +196,16 @@ export default function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-8">
+        <div className="mb-2 flex justify-center sm:justify-end">
+          <Button
+            onClick={() => setOpen(true)}
+            size="md"
+            className="w-full sm:w-auto !text-ink"
+          >
+            Add / Update record
+          </Button>
+        </div>
+
         <div className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 sm:p-10">
           <TopoBackground className="text-teal/15" />
           <div className="relative z-10 flex flex-col items-start gap-4">
@@ -208,9 +218,6 @@ export default function DashboardPage() {
             <p className="max-w-md text-sm text-ink-muted">
               Log a new survey entry or update an existing site record.
             </p>
-            <Button onClick={() => setOpen(true)} size="lg" className="mt-2">
-              Open actions
-            </Button>
           </div>
         </div>
       </main>
