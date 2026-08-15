@@ -75,6 +75,14 @@ body {
 .a4-row-label { color: #6b7280; }
 .a4-row-value { text-align: right; }
 
+.a4-note {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  padding: 6px 0;
+  border-bottom: 1px dotted #e5e7eb;
+  color: #111827;
+}
+
 @media print {
   body * { visibility: hidden; }
   #a4-preview-sheet, #a4-preview-sheet * { visibility: visible; }
