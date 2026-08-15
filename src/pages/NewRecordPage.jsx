@@ -69,6 +69,7 @@ const initialState = {
   depositAmount: "",
   riverbankProtectionAmount: "",
   specialCaseAmount: "",
+  directorApproval: "",
   recommendationDate: "",
   chairmanApproval: "",
   chairmanApprovalDate: "",
@@ -1076,6 +1077,21 @@ export default function NewRecordPage() {
                 අනුමැතියට ඉදිරිපත් කරමි.
               </p>
 
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-sinhala text-sm text-ink">
+                  ඉහත නිර්දේශය
+                </p>
+                <select
+                  className={`${inputClass} w-40`}
+                  value={form.directorApproval}
+                  onChange={handleChange("directorApproval")}
+                >
+                  <option value="" hidden></option>
+                  <option value="අනුමත කරමි">අනුමත කරමි</option>
+                  <option value="අනුමත නොකරමි">අනුමත නොකරමි</option>
+                </select>
+              </div>
+
               <div className="mt-4 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
                 <Field label="දිනය:-" className="sm:w-48">
                   <input
@@ -1159,7 +1175,7 @@ export default function NewRecordPage() {
             </div>
           </form>
           {showPreview && (
-            <div className="mt-8">
+            <div className="mt-8 a4-preview-wrapper">
               <div className="mb-4 flex justify-end print:hidden">
                 <Button type="button" variant="primary" onClick={() => window.print()}>
                   මුද්‍රණය කරන්න / PDF බාගන්න

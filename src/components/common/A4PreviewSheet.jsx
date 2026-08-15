@@ -18,6 +18,7 @@ function Section({ title, children }) {
 
 const yesNoLabel = (v) => (v === "yes" ? "ඔව්" : v === "no" ? "නැත" : "—");
 const fileLabel = (f) => (f?.name ? f.name : "—");
+const blank = (v) => (v !== undefined && v !== null && String(v).trim() !== "" ? v : "________");
 
 export default function A4PreviewSheet({ form }) {
     return (
@@ -114,17 +115,24 @@ export default function A4PreviewSheet({ form }) {
                 <Row label="ඇප මුදල් සේවා ගාස්තුව" value={form.refundServiceFee} />
             </Section>
 
-            <Section title="නිර්දේශය">
-                <Row label="NGJA/16.2/Backhoe/MER/ අංකය" value={form.ngjaRefNumber} />
-                <Row label="උපරිම ව.අ." value={form.maxExtentVA} />
-                <Row label="උපරිම PC ගණන" value={form.maxPcCount} />
-                <Row label="බැකෝ යන්ත්‍ර ගණන" value={form.backhoeCount} />
-                <Row label="ගැරුම් යන්ත්‍ර ගණන" value={form.gerumCount} />
-                <Row label="ඇදුම් යන්ත්‍ර ගණන" value={form.adumMachineCount} />
-                <Row label="රොන් මඩ වලවල් ව.අ." value={form.silageExtent} />
-                <Row label="ඇප මුදල (තැන්පත්)" value={form.depositAmount} />
-                <Row label="ඉවුරු ආරක්ෂණ ඇප මුදල" value={form.riverbankProtectionAmount} />
-                <Row label="විශේශ අවස්ථා ඇප මුදල" value={form.specialCaseAmount} />
+            <div className="a4-section">
+                <h3 className="a4-section-title">නිර්දේශය</h3>
+                <p className="a4-paragraph">
+                    කෑණීම් ඉංජිනේරු නිර්දේශයන්ට (NGJA/16.2/Backhoe/MER/{blank(form.ngjaRefNumber)}) යටත්ව
+                    වරකට උපරිමය ව.අ {blank(form.maxExtentVA)} ක් දක්වා පතසක් කෑණීම සිදුකිරීම සඳහා
+                    උපරිමය PC {blank(form.maxPcCount)} ක් දක්වා වන බැකෝ යන්ත්‍ර {blank(form.backhoeCount)} ක්
+                    යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර {blank(form.gerumCount)} ක් යොදා ගැනීමටත්
+                    ඇදුම් යන්ත්‍ර {blank(form.adumMachineCount)} යොදා ගැනීමටත්, රොන් මඩ වලවල් පවත්වා
+                    ගැනීමට ව.අ. {blank(form.silageExtent)} කට ඇප මුදල් {blank(form.depositAmount)} ක් තැන්පත්
+                    කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීම සඳහා {blank(form.riverbankProtectionAmount)} ක
+                    ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා {blank(form.specialCaseAmount)} ඇප
+                    මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා ගැනීමටත් අවසර ලබා දීම සුදුසු බවට
+                    නිර්දේශ කොට කාරුණික අනුමැතියට ඉදිරිපත් කරමි.
+                </p>
+            </div>
+
+            <Section title="අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) අනුමැතිය">
+                <Row label="අනුමැතිය" value={form.directorApproval} />
                 <Row label="දිනය" value={form.recommendationDate} />
             </Section>
 

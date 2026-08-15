@@ -82,6 +82,11 @@ body {
   border-bottom: 1px dotted #e5e7eb;
   color: #111827;
 }
+.a4-paragraph {
+  margin: 0;
+  text-align: justify;
+  line-height: 1.7;
+}
 
 @media print {
   @page {
@@ -104,5 +109,39 @@ body {
     min-height: 0 !important;
     box-shadow: none !important;
     margin: 0 !important;
+    padding: 6mm 8mm !important;
+    font-size: 10.5px !important;
+    line-height: 1.4 !important;
+  }
+  .a4-header h2 {
+    font-size: 14px !important;
+    margin: 2px 0 !important;
+  }
+  .a4-header p {
+    font-size: 10px !important;
+    margin: 1px 0 !important;
+  }
+  .a4-section {
+    margin-bottom: 7px !important;
+    page-break-inside: avoid;
+  }
+  .a4-section-title {
+    font-size: 11px !important;
+    padding-bottom: 2px !important;
+    margin-bottom: 4px !important;
+  }
+  .a4-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 2px 20px !important;
+  }
+  .a4-row {
+    padding: 1.5px 0 !important;
+  }
+  .a4-note {
+    padding: 4px 0 !important;
+  }
+  .a4-paragraph {
+    font-size: 10.5px !important;
+    line-height: 1.5 !important;
   }
 }
