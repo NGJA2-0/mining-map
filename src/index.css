@@ -84,14 +84,25 @@ body {
 }
 
 @media print {
-  body * { visibility: hidden; }
-  #a4-preview-sheet, #a4-preview-sheet * { visibility: visible; }
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .print-hide {
+    display: none !important;
+  }
+  .a4-preview-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
   #a4-preview-sheet {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 210mm;
-    min-height: 297mm;
-    box-shadow: none;
+    width: 100% !important;
+    min-height: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
   }
 }

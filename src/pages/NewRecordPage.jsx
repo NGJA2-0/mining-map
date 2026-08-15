@@ -304,7 +304,7 @@ export default function NewRecordPage() {
 
   return (
     <div className="min-h-screen bg-base text-ink">
-      <header className="border-b border-line">
+      <header className="print-hide border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-8">
           <div>
             <p className="font-mono text-xs uppercase tracking-widest text-ink-muted">
@@ -324,7 +324,7 @@ export default function NewRecordPage() {
         <div className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 sm:p-10">
           <TopoBackground className="text-teal/15" />
 
-          <form onSubmit={handleSubmit} className="relative z-10 flex flex-col gap-10">
+          <form onSubmit={handleSubmit} className="print-hide relative z-10 flex flex-col gap-10">
             {/* Header block */}
             <div className="text-center">
               <p className="font-sinhala text-sm text-ink-muted">
