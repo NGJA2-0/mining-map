@@ -4,6 +4,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
+import MiningMapPage from "./pages/MiningMapPage";
 import NewRecordPage from "./pages/NewRecordPage";
 import UpdateRecordPage from "./pages/UpdateRecordPage";
 import SearchResultPage from "./pages/SearchResultPage";
@@ -48,6 +49,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/dashboard/map" element={<MiningMapPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
