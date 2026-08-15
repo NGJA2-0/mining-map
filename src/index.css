@@ -41,3 +41,49 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+.a4-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  background: #fff;
+  color: #111827;
+  padding: 14mm 12mm;
+  margin: 0 auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.a4-header { text-align: center; margin-bottom: 16px; }
+.a4-header h2 { font-size: 16px; font-weight: 600; margin: 4px 0; }
+.a4-section { margin-bottom: 14px; }
+.a4-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-bottom: 1px solid #d1d5db;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+.a4-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+.a4-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px dotted #e5e7eb;
+  padding: 3px 0;
+}
+.a4-row-label { color: #6b7280; }
+.a4-row-value { text-align: right; }
+
+@media print {
+  body * { visibility: hidden; }
+  #a4-preview-sheet, #a4-preview-sheet * { visibility: visible; }
+  #a4-preview-sheet {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 210mm;
+    min-height: 297mm;
+    box-shadow: none;
+  }
+}
