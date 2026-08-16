@@ -83,7 +83,7 @@ export default function MiningMapPage() {
   const [selectedMine, setSelectedMine] = useState(null);
 
   const [district, setDistrict] = useState("");
-  const [village, setVillage] = useState("");
+  const [regionalOffice, setRegionalOffice] = useState("");
   const [search, setSearch] = useState(""); // matched against tin / nic / gmlNumber / landName
 
   const fetchMines = useCallback(async (params = {}) => {
@@ -92,15 +92,8 @@ export default function MiningMapPage() {
     try {
       const qs = new URLSearchParams();
       if (params.district) qs.set("district", params.district);
-      if (params.village) qs.set("village", params.village);
-      if (params.search) {
-        // Backend takes separate tin/nic/gmlNumber/landName params — send the
-        // same search text on all four; each is an independent optional filter
-        // so this works as an OR-ish "search anything" box in practice as long
-        // as the backend doesn't AND them together. If it does AND them, swap
-        // this for one field at a time or add a combined "q" param backend-side.
-        qs.set("landName", params.search);
-      }
+      if (params.regionalOffice) qs.set("regionalOffice", params.regionalOffice);
+      if (params.search) qs.set("q", params.search);
       const url = `${BASE_URL}/api/mining-licenses/map${qs.toString() ? `?${qs}` : ""}`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) {
@@ -131,20 +124,20 @@ export default function MiningMapPage() {
     () => [...new Set(allMines.map((m) => m.district).filter(Boolean))].sort(),
     [allMines]
   );
-  const villageOptions = useMemo(() => {
-    const pool = district ? allMines.filter((m) => m.district === district) : allMines;
-    return [...new Set(pool.map((m) => m.village).filter(Boolean))].sort();
-  }, [allMines, district]);
+  const regionalOfficeOptions = useMemo(
+    () => [...new Set(allMines.map((m) => m.regionalOffice).filter(Boolean))].sort(),
+    [allMines]
+  );
 
   const handleSearch = async () => {
     setSelectedMine(null);
-    const data = await fetchMines({ district, village, search: search.trim() });
+    const data = await fetchMines({ district, regionalOffice, search: search.trim() });
     setMines(data);
   };
 
   const handleClear = async () => {
     setDistrict("");
-    setVillage("");
+    setRegionalOffice("");
     setSearch("");
     setSelectedMine(null);
     const data = await fetchMines();
@@ -207,12 +200,12 @@ export default function MiningMapPage() {
           </select>
 
           <select
-            value={village}
-            onChange={(e) => setVillage(e.target.value)}
+            value={regionalOffice}
+            onChange={(e) => setRegionalOffice(e.target.value)}
             style={inputStyle}
           >
-            <option value="">All villages</option>
-            {villageOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+            <option value="">All regional offices</option>
+            {regionalOfficeOptions.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
 
           <input
