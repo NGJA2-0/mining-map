@@ -154,14 +154,15 @@ export default function MiningMapPage() {
   <style>{`
   .leaflet-tooltip.mine-tooltip {
     background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 10px 12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+    border: 1px solid var(--color-line, #e5e7eb);
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.18);
     font-family: inherit;
   }
   .leaflet-tooltip.mine-tooltip::before {
-    border-top-color: #e5e7eb;
+    border-top-color: var(--color-line, #e5e7eb);
   }
 `}</style>
 
@@ -293,13 +294,53 @@ export default function MiningMapPage() {
                   eventHandlers={{ click: () => setSelectedMine(mine) }}
                 >
                   <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
-                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", minWidth: "180px" }}>
-                      <strong style={{ fontSize: "13px", color: "#1a1a1a" }}>{mine.applicantName || "—"}</strong>
-                      <span style={{ fontSize: "11px", color: "#4b5563" }}>NIC: {mine.nic || "—"}</span>
-                      <span style={{ fontSize: "11px", color: "#4b5563" }}>TIN: {mine.tin || "—"}</span>
-                      <span style={{ fontSize: "11px", color: "#4b5563" }}>GML: {mine.gmlNumber || "—"}</span>
-                      <span style={{ fontSize: "11px", color: "#4b5563" }}>License type: {mine.licenseeType || "—"}</span>
-                      <span style={{ fontSize: "11px", color: "#4b5563" }}>Cultivation: {mine.landCultivation || "—"}</span>
+                    <div style={{ width: "220px", fontFamily: "inherit" }}>
+                      {/* header strip */}
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: "10px",
+                        padding: "10px 12px",
+                        background: "linear-gradient(135deg, var(--color-teal, #0d9488), var(--color-copper, #b85a29))",
+                        borderRadius: "8px 8px 0 0",
+                      }}>
+                        <div style={{
+                          width: "30px", height: "30px", borderRadius: "50%",
+                          background: "rgba(255,255,255,0.22)", color: "#fff",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontWeight: "700", fontSize: "12px", flexShrink: 0,
+                        }}>
+                          {(mine.applicantName || "?").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                        </div>
+                        <span style={{ fontWeight: "700", fontSize: "13px", color: "#fff", lineHeight: "1.2" }}>
+                          {mine.applicantName || "—"}
+                        </span>
+                      </div>
+
+                      {/* details */}
+                      <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                        {[
+                          { label: "NIC", value: mine.nic },
+                          { label: "TIN", value: mine.tin },
+                          { label: "GML", value: mine.gmlNumber },
+                          { label: "License type", value: mine.licenseeType },
+                          { label: "Cultivation", value: mine.landCultivation },
+                        ].filter((r) => r.value).map((r) => (
+                          <div key={r.label} style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
+                            <span style={{
+                              fontSize: "10px", fontWeight: "700", letterSpacing: "0.05em",
+                              textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)",
+                              whiteSpace: "nowrap",
+                            }}>
+                              {r.label}
+                            </span>
+                            <span style={{
+                              fontSize: "12px", fontWeight: "600", color: "var(--color-ink, #1a1a1a)",
+                              textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            }}>
+                              {r.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </Tooltip>
                 </Marker>
