@@ -2,8 +2,18 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
-import "leaflet-defaulticon-compatibility";
+import L from "leaflet";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/common/Button";
 
@@ -13,13 +23,11 @@ const DEFAULT_ZOOM = 8;
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 
-// Your DB stores gpsPoints as { latitude: <actually lng>, longitude: <actually lat> }.
-// Swap here until the write path is fixed.
 function getLatLng(mine) {
   const point = mine.gpsPoints?.[0];
   if (!point) return null;
-  const lat = Number(point.longitude);
-  const lng = Number(point.latitude);
+  const lat = Number(point.latitude);
+  const lng = Number(point.longitude);
   if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
   return [lat, lng];
 }
