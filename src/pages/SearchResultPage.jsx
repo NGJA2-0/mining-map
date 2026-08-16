@@ -348,7 +348,7 @@ export default function SearchResultPage() {
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-8">
 
         {/* ── record metadata banner ── */}
-        <div style={{
+        <div className="print-hide" style={{
           display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between",
           gap: "12px", padding: "14px 20px", marginBottom: "20px",
           borderRadius: "10px", background: "var(--color-surface)",
@@ -383,7 +383,7 @@ export default function SearchResultPage() {
 
         {/* ── success banner ── */}
         {submitSuccess && (
-          <div style={{
+          <div className="print-hide" style={{
             display: "flex", alignItems: "center", gap: "12px",
             padding: "14px 20px", borderRadius: "10px", marginBottom: "20px",
             background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.3)",
@@ -858,7 +858,7 @@ export default function SearchResultPage() {
                   මුද්‍රණය කරන්න / PDF බාගන්න
                 </Button>
               </div>
-              <A4PreviewSheet form={form} />
+              <A4PreviewSheet form={form} isResubmit />
             </div>
           )}
         </div>

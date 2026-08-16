@@ -20,12 +20,15 @@ const yesNoLabel = (v) => (v === "yes" ? "ඔව්" : v === "no" ? "නැත" 
 const fileLabel = (f) => (f?.name ? f.name : "—");
 const blank = (v) => (v !== undefined && v !== null && String(v).trim() !== "" ? v : "________");
 
-export default function A4PreviewSheet({ form }) {
+export default function A4PreviewSheet({ form, isResubmit = false }) {
     return (
         <div id="a4-preview-sheet" className="a4-sheet">
             <div className="a4-header">
                 <p>ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</p>
-                <h2>යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම (නව)</h2>
+                <h2>
+                  යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම
+                  {isResubmit ? " (නැවත ඉදිරිපත් කිරීම)" : " (නව)"}
+                </h2>
                 <p>අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) නිර්දේශය</p>
             </div>
 
