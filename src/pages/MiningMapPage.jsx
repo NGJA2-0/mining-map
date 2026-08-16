@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -75,7 +75,7 @@ function MineListItem({ mine, active, onClick }) {
 export default function MiningMapPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
-
+  const [mapView, setMapView] = useState("street"); // "street" | "satellite"
   const [allMines, setAllMines] = useState([]);   // unfiltered, fetched once — powers dropdowns
   const [mines, setMines] = useState([]);          // currently displayed set
   const [loading, setLoading] = useState(true);
@@ -158,6 +158,20 @@ export default function MiningMapPage() {
     fontFamily: "inherit", outline: "none",
   };
 
+  <style>{`
+  .leaflet-tooltip.mine-tooltip {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+    font-family: inherit;
+  }
+  .leaflet-tooltip.mine-tooltip::before {
+    border-top-color: #e5e7eb;
+  }
+`}</style>
+
   return (
     <div className="min-h-screen bg-base text-ink">
       {/* header */}
@@ -172,7 +186,7 @@ export default function MiningMapPage() {
               fontFamily: "inherit",
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
             Back to dashboard
           </button>
           <h1 className="font-display text-lg font-semibold sm:text-xl">Mine locations</h1>
@@ -213,8 +227,16 @@ export default function MiningMapPage() {
           <Button variant="primary" size="md" onClick={handleSearch} disabled={loading}>
             {loading ? "Searching…" : "Search"}
           </Button>
-          <Button variant="secondary" size="md" onClick={handleClear} disabled={loading}>
+          <Button className="!text-ink" variant="secondary" size="md" onClick={handleClear} disabled={loading}>
             Clear
+          </Button>
+          <Button
+            variant="secondary"
+            className="!text-ink"
+            size="md"
+            onClick={() => setMapView((v) => (v === "street" ? "satellite" : "street"))}
+          >
+            {mapView === "street" ? "Satellite view" : "Street view"}
           </Button>
         </div>
 
@@ -256,10 +278,17 @@ export default function MiningMapPage() {
         {/* map */}
         <div style={{ flex: "2 1 480px", minWidth: "300px", height: "70vh", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--color-line, #e5e7eb)" }}>
           <MapContainer center={SRI_LANKA_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+            {mapView === "street" ? (
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            ) : (
+              <TileLayer
+                attribution='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              />
+            )}
             <FlyToMine mine={selectedMine} />
             {mines.map((mine) => {
               const latLng = getLatLng(mine);
@@ -270,15 +299,16 @@ export default function MiningMapPage() {
                   position={latLng}
                   eventHandlers={{ click: () => setSelectedMine(mine) }}
                 >
-                  <Popup>
-                    <strong>{mine.applicantName || "—"}</strong><br />
-                    Land: {mine.landName || "—"}<br />
-                    GML: {mine.gmlNumber || "—"}<br />
-                    TIN: {mine.tin || "—"}<br />
-                    NIC: {mine.nic || "—"}<br />
-                    District: {mine.district || "—"}<br />
-                    Village: {mine.village || "—"}
-                  </Popup>
+                  <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", minWidth: "180px" }}>
+                      <strong style={{ fontSize: "13px", color: "#1a1a1a" }}>{mine.applicantName || "—"}</strong>
+                      <span style={{ fontSize: "11px", color: "#4b5563" }}>NIC: {mine.nic || "—"}</span>
+                      <span style={{ fontSize: "11px", color: "#4b5563" }}>TIN: {mine.tin || "—"}</span>
+                      <span style={{ fontSize: "11px", color: "#4b5563" }}>GML: {mine.gmlNumber || "—"}</span>
+                      <span style={{ fontSize: "11px", color: "#4b5563" }}>License type: {mine.licenseeType || "—"}</span>
+                      <span style={{ fontSize: "11px", color: "#4b5563" }}>Cultivation: {mine.landCultivation || "—"}</span>
+                    </div>
+                  </Tooltip>
                 </Marker>
               );
             })}
