@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import TopoBackground from "../components/common/TopoBackground";
+import A4PreviewSheet from "../components/common/A4PreviewSheet";
 import Button from "../components/common/Button";
 
 /* ─────────────────────── constants (same as NewRecordPage) ─────────────────────── */
@@ -45,7 +46,7 @@ const DS_DIVISIONS_BY_DISTRICT = {
 
 const yesNo = [
   { value: "yes", label: "ඔව්" },
-  { value: "no",  label: "නැත" },
+  { value: "no", label: "නැත" },
 ];
 
 const NUMERIC_FIELDS = ["extensionCount", "proposedDepth"];
@@ -58,73 +59,74 @@ const toNumberOrUndefined = (value) => {
 
 /* ─── map API record → form state ─── */
 const mapRecordToForm = (r) => ({
-  applicantName:            r.applicantName            || "",
-  applicantAddress:         r.applicantAddress         || "",
-  applicantPhone:           r.applicantPhone           || "",
-  nic:                      r.nic                      || "",
-  tin:                      r.tin                      || "",
-  expenseName:              r.expenseName              || "",
-  expenseAddress:           r.expenseAddress           || "",
-  expensePhone:             r.expensePhone             || "",
-  expenseTin:               r.expenseTin               || "",
-  gmlNumber:                r.gmlNumber                || "",
+  applicantName: r.applicantName || "",
+  applicantAddress: r.applicantAddress || "",
+  applicantPhone: r.applicantPhone || "",
+  nic: r.nic || "",
+  tin: r.tin || "",
+  expenseName: r.expenseName || "",
+  expenseAddress: r.expenseAddress || "",
+  expensePhone: r.expensePhone || "",
+  expenseTin: r.expenseTin || "",
+  gmlNumber: r.gmlNumber || "",
   gpsPoints:
     Array.isArray(r.gpsPoints) && r.gpsPoints.length > 0
       ? r.gpsPoints
       : [
-          { latitude: "", longitude: "" },
-          { latitude: "", longitude: "" },
-          { latitude: "", longitude: "" },
-          { latitude: "", longitude: "" },
-        ],
-  landName:                 r.landName                 || "",
-  landNature:               r.landNature               || "",
-  isRatnapuraLand:          r.isRatnapuraLand          || "",
+        { latitude: "", longitude: "" },
+        { latitude: "", longitude: "" },
+        { latitude: "", longitude: "" },
+        { latitude: "", longitude: "" },
+      ],
+  landName: r.landName || "",
+  landNature: r.landNature || "",
+  isRatnapuraLand: r.isRatnapuraLand || "",
   writtenEvidenceAttachment: null,
-  affidavitAttachment:       null,
-  hasExpenseParty:          r.hasExpenseParty          || false,
-  district:                 r.district                 || "",
-  village:                  r.village                  || "",
-  regionalOffice:           r.regionalOffice           || "",
-  licenseeType:             r.licenseeType             || "",
-  consentLetterAttached:    r.consentLetterAttached    || "",
-  govLandAct:               r.govLandAct               || "",
-  landExtent:               r.landExtent               || "",
-  existingPits:             r.existingPits             || "",
-  prevLicenseFirstDate:     r.prevLicenseFirstDate     || "",
-  extensionCount:           r.extensionCount != null   ? String(r.extensionCount) : "",
-  minedGemValue:            r.minedGemValue            || "",
-  conditionBreach:          r.conditionBreach          || "",
-  conditionBreachDetails:   r.conditionBreachDetails   || "",
-  ownershipComplaint:       r.ownershipComplaint       || "",
-  complaintDetails:         r.complaintDetails         || "",
-  proposedDepth:            r.proposedDepth   != null  ? String(r.proposedDepth) : "",
-  landCultivation:          r.landCultivation          || "",
-  boundaryNorth:            r.boundaryNorth            || "",
-  boundarySouth:            r.boundarySouth            || "",
-  boundaryEast:             r.boundaryEast             || "",
-  boundaryWest:             r.boundaryWest             || "",
-  boundaryHouses:           r.boundaryHouses           || "",
-  boundaryElectricPoles:    r.boundaryElectricPoles    || "",
-  boundaryWater:            r.boundaryWater            || "",
-  boundaryOther:            r.boundaryOther            || "",
-  boundaryRoads:            r.boundaryRoads            || "",
-  proposedExtent:           r.proposedExtent           || "",
-  refundServiceFee:         r.refundServiceFee         || "",
-  recommendation:           r.recommendation           || "",
-  ngjaRefNumber:            r.ngjaRefNumber            || "",
-  maxExtentVA:              r.maxExtentVA              || "",
-  maxPcCount:               r.maxPcCount               || "",
-  backhoeCount:             r.backhoeCount             || "",
-  gerumCount:               r.gerumCount               || "",
-  adumMachineCount:         r.adumMachineCount         || "",
-  silageExtent:             r.silageExtent             || "",
-  depositAmount:            r.depositAmount            || "",
-  riverbankProtectionAmount:r.riverbankProtectionAmount|| "",
-  specialCaseAmount:        r.specialCaseAmount        || "",
-  recommendationDate:       r.recommendationDate       || "",
-  chairmanApproval:         r.chairmanApproval         || "",
-  chairmanApprovalDate:     r.chairmanApprovalDate     || "",
+  affidavitAttachment: null,
+  hasExpenseParty: r.hasExpenseParty || false,
+  district: r.district || "",
+  village: r.village || "",
+  regionalOffice: r.regionalOffice || "",
+  licenseeType: r.licenseeType || "",
+  consentLetterAttached: r.consentLetterAttached || "",
+  govLandAct: r.govLandAct || "",
+  landExtent: r.landExtent || "",
+  existingPits: r.existingPits || "",
+  prevLicenseFirstDate: r.prevLicenseFirstDate || "",
+  extensionCount: r.extensionCount != null ? String(r.extensionCount) : "",
+  minedGemValue: r.minedGemValue || "",
+  conditionBreach: r.conditionBreach || "",
+  conditionBreachDetails: r.conditionBreachDetails || "",
+  ownershipComplaint: r.ownershipComplaint || "",
+  complaintDetails: r.complaintDetails || "",
+  proposedDepth: r.proposedDepth != null ? String(r.proposedDepth) : "",
+  landCultivation: r.landCultivation || "",
+  boundaryNorth: r.boundaryNorth || "",
+  boundarySouth: r.boundarySouth || "",
+  boundaryEast: r.boundaryEast || "",
+  boundaryWest: r.boundaryWest || "",
+  boundaryHouses: r.boundaryHouses || "",
+  boundaryElectricPoles: r.boundaryElectricPoles || "",
+  boundaryWater: r.boundaryWater || "",
+  boundaryOther: r.boundaryOther || "",
+  boundaryRoads: r.boundaryRoads || "",
+  proposedExtent: r.proposedExtent || "",
+  refundServiceFee: r.refundServiceFee || "",
+  recommendation: r.recommendation || "",
+  ngjaRefNumber: r.ngjaRefNumber || "",
+  maxExtentVA: r.maxExtentVA || "",
+  maxPcCount: r.maxPcCount || "",
+  backhoeCount: r.backhoeCount || "",
+  gerumCount: r.gerumCount || "",
+  adumMachineCount: r.adumMachineCount || "",
+  silageExtent: r.silageExtent || "",
+  depositAmount: r.depositAmount || "",
+  riverbankProtectionAmount: r.riverbankProtectionAmount || "",
+  specialCaseAmount: r.specialCaseAmount || "",
+  directorApproval: r.directorApproval || "",
+  recommendationDate: r.recommendationDate || "",
+  chairmanApproval: r.chairmanApproval || "",
+  chairmanApprovalDate: r.chairmanApprovalDate || "",
 });
 
 /* ─────────────────────── UI helpers ─────────────────────── */
@@ -145,10 +147,10 @@ const inlineInputClass =
   "mx-1 inline-block w-24 rounded border border-line bg-base px-2 py-0.5 align-baseline font-sinhala text-sm text-ink outline-none transition focus:border-teal focus:ring-1 focus:ring-teal";
 
 const STATUS_CFG = {
-  draft:     { label: "Draft",     bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
-  submitted: { label: "Submitted", bg: "rgba(59,130,246,0.12)",  color: "#2563eb" },
-  approved:  { label: "Approved",  bg: "rgba(16,185,129,0.12)",  color: "#059669" },
-  rejected:  { label: "Rejected",  bg: "rgba(220,38,38,0.12)",   color: "#dc2626" },
+  draft: { label: "Draft", bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
+  submitted: { label: "Submitted", bg: "rgba(59,130,246,0.12)", color: "#2563eb" },
+  approved: { label: "Approved", bg: "rgba(16,185,129,0.12)", color: "#059669" },
+  rejected: { label: "Rejected", bg: "rgba(220,38,38,0.12)", color: "#dc2626" },
 };
 
 /* ─────────────────────── page component ─────────────────────── */
@@ -169,6 +171,7 @@ export default function SearchResultPage() {
   );
   const [saving, setSaving] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   if (!record) return null; // while redirecting
 
@@ -326,7 +329,7 @@ export default function SearchResultPage() {
   return (
     <div className="min-h-screen bg-base text-ink">
       {/* ── header ── */}
-      <header className="border-b border-line">
+      <header className="print-hide border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-8">
           <div>
             <p className="font-mono text-xs uppercase tracking-widest text-ink-muted">
@@ -345,7 +348,7 @@ export default function SearchResultPage() {
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-8">
 
         {/* ── record metadata banner ── */}
-        <div style={{
+        <div className="print-hide" style={{
           display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between",
           gap: "12px", padding: "14px 20px", marginBottom: "20px",
           borderRadius: "10px", background: "var(--color-surface)",
@@ -355,10 +358,10 @@ export default function SearchResultPage() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
             {[
               { key: "Record ID", val: record.id },
-              { key: "TIN",       val: record.tin },
-              { key: "GML",       val: record.gmlNumber },
-              { key: "Created",   val: createdDate },
-              { key: "By",        val: record.createdBy },
+              { key: "TIN", val: record.tin },
+              { key: "GML", val: record.gmlNumber },
+              { key: "Created", val: createdDate },
+              { key: "By", val: record.createdBy },
             ].filter(f => f.val).map(({ key, val }) => (
               <div key={key} style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                 <span style={{ fontSize: "10px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted)" }}>{key}</span>
@@ -380,14 +383,14 @@ export default function SearchResultPage() {
 
         {/* ── success banner ── */}
         {submitSuccess && (
-          <div style={{
+          <div className="print-hide" style={{
             display: "flex", alignItems: "center", gap: "12px",
             padding: "14px 20px", borderRadius: "10px", marginBottom: "20px",
             background: "rgba(16,185,129,0.10)", border: "1px solid rgba(16,185,129,0.3)",
             color: "#059669", fontWeight: "600", fontSize: "14px",
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6 9 17l-5-5"/>
+              <path d="M20 6 9 17l-5-5" />
             </svg>
             Record resubmitted successfully! Redirecting to dashboard…
           </div>
@@ -397,7 +400,7 @@ export default function SearchResultPage() {
         <div className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 sm:p-10">
           <TopoBackground className="text-teal/15" />
 
-          <form onSubmit={handleSubmit} className="relative z-10 flex flex-col gap-10">
+          <form onSubmit={handleSubmit} className="print-hide relative z-10 flex flex-col gap-10">
             {/* Header block */}
             <div className="text-center">
               <p className="font-sinhala text-sm text-ink-muted">
@@ -708,15 +711,15 @@ export default function SearchResultPage() {
               </h4>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {[
-                  { field: "boundaryNorth",         label: "උතුරට (අඩි)" },
-                  { field: "boundarySouth",         label: "දකුණට (අඩි)" },
-                  { field: "boundaryEast",          label: "නැගෙනහිරට (අඩි)" },
-                  { field: "boundaryWest",          label: "බස්නාහිරට (අඩි)" },
-                  { field: "boundaryHouses",        label: "නිවාසවලට (අඩි)" },
+                  { field: "boundaryNorth", label: "උතුරට (අඩි)" },
+                  { field: "boundarySouth", label: "දකුණට (අඩි)" },
+                  { field: "boundaryEast", label: "නැගෙනහිරට (අඩි)" },
+                  { field: "boundaryWest", label: "බස්නාහිරට (අඩි)" },
+                  { field: "boundaryHouses", label: "නිවාසවලට (අඩි)" },
                   { field: "boundaryElectricPoles", label: "විදුලි කණුවලට (අඩි)" },
-                  { field: "boundaryWater",         label: "ගංගා සහ ජල දෙහයන්ට (අඩි)" },
-                  { field: "boundaryRoads",         label: "මාර්ගවලට (අඩි)" },
-                  { field: "boundaryOther",         label: "වෙනත්" },
+                  { field: "boundaryWater", label: "ගංගා සහ ජල දෙහයන්ට (අඩි)" },
+                  { field: "boundaryRoads", label: "මාර්ගවලට (අඩි)" },
+                  { field: "boundaryOther", label: "වෙනත්" },
                 ].map(({ field, label }) => (
                   <Field key={field} label={label}>
                     <input type="text" className={inputClass} value={form[field]} onChange={handleChange(field)} />
@@ -764,6 +767,20 @@ export default function SearchResultPage() {
                 ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට කාරුණික
                 අනුමැතියට ඉදිරිපත් කරමි.
               </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-sinhala text-sm text-ink">
+                  ඉහත නිර්දේශය
+                </p>
+                <select
+                  className={`${inputClass} w-40`}
+                  value={form.directorApproval}
+                  onChange={handleChange("directorApproval")}
+                >
+                  <option value="" hidden></option>
+                  <option value="අනුමත කරමි">අනුමත කරමි</option>
+                  <option value="අනුමත නොකරමි">අනුමත නොකරමි</option>
+                </select>
+              </div>
 
               <div className="mt-4 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
                 <Field label="දිනය:-" className="sm:w-48">
@@ -813,6 +830,14 @@ export default function SearchResultPage() {
                 අවලංගු කරන්න
               </Button>
               <Button
+                type="button"
+                variant="ghost"
+                className="border border-line !text-ink hover:!bg-line/20"
+                onClick={() => setShowPreview((prev) => !prev)}
+              >
+                {showPreview ? "පෙරදසුන සඟවන්න" : "පෙරදසුන"}
+              </Button>
+              <Button
                 type="submit"
                 variant="primary"
                 disabled={saving || submitSuccess}
@@ -826,6 +851,16 @@ export default function SearchResultPage() {
               </Button>
             </div>
           </form>
+          {showPreview && (
+            <div className="mt-8 a4-preview-wrapper">
+              <div className="mb-4 flex justify-end print:hidden">
+                <Button type="button" variant="primary" onClick={() => window.print()}>
+                  මුද්‍රණය කරන්න / PDF බාගන්න
+                </Button>
+              </div>
+              <A4PreviewSheet form={form} isResubmit />
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import A4PreviewSheet from "../components/common/A4PreviewSheet";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import TopoBackground from "../components/common/TopoBackground";
@@ -68,6 +69,7 @@ const initialState = {
   depositAmount: "",
   riverbankProtectionAmount: "",
   specialCaseAmount: "",
+  directorApproval: "",
   recommendationDate: "",
   chairmanApproval: "",
   chairmanApprovalDate: "",
@@ -136,6 +138,7 @@ export default function NewRecordPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState(initialState);
   const [saving, setSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -180,69 +183,69 @@ export default function NewRecordPage() {
   };
 
   // Fields the backend expects as int/float64 rather than string.
-// If any of these turn out to be wrong, just remove them from this list.
-// Only these two are numeric in the Go struct (ExtensionCount *int, ProposedDepth *float64).
-// Every other "count"/"amount"/"boundary" field is a plain string on the backend — leave them as-is.
-const NUMERIC_FIELDS = ["extensionCount", "proposedDepth"];
+  // If any of these turn out to be wrong, just remove them from this list.
+  // Only these two are numeric in the Go struct (ExtensionCount *int, ProposedDepth *float64).
+  // Every other "count"/"amount"/"boundary" field is a plain string on the backend — leave them as-is.
+  const NUMERIC_FIELDS = ["extensionCount", "proposedDepth"];
 
-// Converts "" -> undefined (field omitted), "10" -> 10, leaves non-numeric strings untouched.
-const toNumberOrUndefined = (value) => {
-  if (value === "" || value === null || value === undefined) return undefined;
-  const n = Number(value);
-  return Number.isNaN(n) ? value : n;
-};
+  // Converts "" -> undefined (field omitted), "10" -> 10, leaves non-numeric strings untouched.
+  const toNumberOrUndefined = (value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    const n = Number(value);
+    return Number.isNaN(n) ? value : n;
+  };
 
-const uploadFile = async (file) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch(`${BASE_URL}/api/uploads`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
-  if (!res.ok) throw new Error("File upload failed");
-  const data = await res.json();
-  return data.url; // adjust if your upload API returns a different field name
-};
-
-const validateForm = () => {
-  const errors = [];
-  const requiredAlways = [
-    "applicantName", "applicantAddress", "applicantPhone", "nic",
-    "gmlNumber", "landName", "landNature", "isRatnapuraLand",
-    "district", "regionalOffice", "licenseeType", "existingPits",
-  ];
-  requiredAlways.forEach((f) => {
-    if (!form[f] || String(form[f]).trim() === "") errors.push(f);
-  });
-
-  if (!form.gpsPoints.some((p) => p.latitude && p.longitude)) {
-    errors.push("gpsPoints");
-  }
-
-  if (form.hasExpenseParty) {
-    ["expenseName", "expenseAddress", "expensePhone"].forEach((f) => {
-      if (!form[f]) errors.push(f);
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${BASE_URL}/api/uploads`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
-  }
+    if (!res.ok) throw new Error("File upload failed");
+    const data = await res.json();
+    return data.url; // adjust if your upload API returns a different field name
+  };
 
-  if (form.isRatnapuraLand === "yes") {
-    if (!form.writtenEvidenceAttachment) errors.push("writtenEvidenceAttachment");
-    if (!form.affidavitAttachment) errors.push("affidavitAttachment");
-  }
-
-  if (form.existingPits === "yes") {
-    ["prevLicenseFirstDate", "extensionCount", "minedGemValue", "conditionBreach", "ownershipComplaint"].forEach((f) => {
-      if (!form[f] && form[f] !== 0) errors.push(f);
+  const validateForm = () => {
+    const errors = [];
+    const requiredAlways = [
+      "applicantName", "applicantAddress", "applicantPhone", "nic",
+      "gmlNumber", "landName", "landNature", "isRatnapuraLand",
+      "district", "regionalOffice", "licenseeType", "existingPits",
+    ];
+    requiredAlways.forEach((f) => {
+      if (!form[f] || String(form[f]).trim() === "") errors.push(f);
     });
-    if (form.conditionBreach === "yes" && !form.conditionBreachDetails) errors.push("conditionBreachDetails");
-    if (form.ownershipComplaint === "yes" && !form.complaintDetails) errors.push("complaintDetails");
-  }
 
-  return errors;
-};
+    if (!form.gpsPoints.some((p) => p.latitude && p.longitude)) {
+      errors.push("gpsPoints");
+    }
 
-const handleSubmit = async (e) => {
+    if (form.hasExpenseParty) {
+      ["expenseName", "expenseAddress", "expensePhone"].forEach((f) => {
+        if (!form[f]) errors.push(f);
+      });
+    }
+
+    if (form.isRatnapuraLand === "yes") {
+      if (!form.writtenEvidenceAttachment) errors.push("writtenEvidenceAttachment");
+      if (!form.affidavitAttachment) errors.push("affidavitAttachment");
+    }
+
+    if (form.existingPits === "yes") {
+      ["prevLicenseFirstDate", "extensionCount", "minedGemValue", "conditionBreach", "ownershipComplaint"].forEach((f) => {
+        if (!form[f] && form[f] !== 0) errors.push(f);
+      });
+      if (form.conditionBreach === "yes" && !form.conditionBreachDetails) errors.push("conditionBreachDetails");
+      if (form.ownershipComplaint === "yes" && !form.complaintDetails) errors.push("complaintDetails");
+    }
+
+    return errors;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const errors = validateForm();
@@ -302,7 +305,7 @@ const handleSubmit = async (e) => {
 
   return (
     <div className="min-h-screen bg-base text-ink">
-      <header className="border-b border-line">
+      <header className="print-hide border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-8">
           <div>
             <p className="font-mono text-xs uppercase tracking-widest text-ink-muted">
@@ -322,7 +325,7 @@ const handleSubmit = async (e) => {
         <div className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 sm:p-10">
           <TopoBackground className="text-teal/15" />
 
-          <form onSubmit={handleSubmit} className="relative z-10 flex flex-col gap-10">
+          <form onSubmit={handleSubmit} className="print-hide relative z-10 flex flex-col gap-10">
             {/* Header block */}
             <div className="text-center">
               <p className="font-sinhala text-sm text-ink-muted">
@@ -1074,6 +1077,21 @@ const handleSubmit = async (e) => {
                 අනුමැතියට ඉදිරිපත් කරමි.
               </p>
 
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-sinhala text-sm text-ink">
+                  ඉහත නිර්දේශය
+                </p>
+                <select
+                  className={`${inputClass} w-40`}
+                  value={form.directorApproval}
+                  onChange={handleChange("directorApproval")}
+                >
+                  <option value="" hidden></option>
+                  <option value="අනුමත කරමි">අනුමත කරමි</option>
+                  <option value="අනුමත නොකරමි">අනුමත නොකරමි</option>
+                </select>
+              </div>
+
               <div className="mt-4 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
                 <Field label="දිනය:-" className="sm:w-48">
                   <input
@@ -1143,11 +1161,29 @@ const handleSubmit = async (e) => {
               >
                 අවලංගු කරන්න
               </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="border border-line !text-ink hover:!bg-line/20"
+                onClick={() => setShowPreview((prev) => !prev)}
+              >
+                {showPreview ? "පෙරදසුන සඟවන්න" : "පෙරදසුන"}
+              </Button>
               <Button type="submit" variant="primary" disabled={saving}>
                 {saving ? "සුරකිමින්..." : "සුරකින්න"}
               </Button>
             </div>
           </form>
+          {showPreview && (
+            <div className="mt-8 a4-preview-wrapper">
+              <div className="mb-4 flex justify-end print:hidden">
+                <Button type="button" variant="primary" onClick={() => window.print()}>
+                  මුද්‍රණය කරන්න / PDF බාගන්න
+                </Button>
+              </div>
+              <A4PreviewSheet form={form} />
+            </div>
+          )}
         </div>
       </main>
     </div>
