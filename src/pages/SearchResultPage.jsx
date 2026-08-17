@@ -302,7 +302,7 @@ export default function SearchResultPage() {
       delete payload.writtenEvidenceAttachment;
       delete payload.affidavitAttachment;
 
-      const res = await fetch(`${BASE_URL}/api/mining-licenses`, {
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/${record.id}/edit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
