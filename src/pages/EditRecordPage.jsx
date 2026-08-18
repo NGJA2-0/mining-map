@@ -6,50 +6,15 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import TopoBackground from "../components/common/TopoBackground";
 import A4PreviewSheet from "../components/common/A4PreviewSheet";
 import Button from "../components/common/Button";
-
-/* ─────────────────────── constants (same as NewRecordPage) ─────────────────────── */
-
-const SRI_LANKA_DISTRICTS = [
-  "අම්පාර", "අනුරාධපුරය", "බදුල්ල", "මඩකලපුව", "කොළඹ", "ගාල්ල", "ගම්පහ",
-  "හම්බන්තොට", "යාපනය", "කළුතර", "මහනුවර", "කෑගල්ල", "කිලිනොච්චිය",
-  "කුරුණෑගල", "මන්නාරම", "මාතලේ", "මාතර", "මොණරාගල", "මුලතිව්",
-  "නුවරඑළිය", "පොළොන්නරුව", "පුත්තලම", "රත්නපුර", "ත්‍රිකුණාමලය", "වවුනියාව",
-];
-
-const DS_DIVISIONS_BY_DISTRICT = {
-  "කොළඹ": ["කොළඹ", "තිඹිරිගස්යාය", "කොලොන්නාව", "කඩුවෙල", "කැස්බෑව", "මහරගම", "හෝමාගම", "ශ්‍රී ජයවර්ධනපුර කෝට්ටේ", "දෙහිවල-ගල්කිස්ස", "මොරටුව", "පාදුක්ක", "සීතාවක", "රත්මලාන"],
-  "ගම්පහ": ["ගම්පහ", "මීගමුව", "ජා-ඇල", "වත්තල", "කටාන", "දිවුලපිටිය", "මිරිගම", "මිනුවන්ගොඩ", "අත්තනගල්ල", "දොම්පේ", "බියගම", "කැලණිය", "මහර"],
-  "කළුතර": ["කළුතර", "බේරුවල", "පානදුර", "බණ්ඩාරගම", "හෝරණ", "බුලත්සිංහල", "මිල්ලනිය", "පැලින්දනුවර", "අගලවත්ත", "මතුගම", "වලල්ලාවිට", "ඉංගිරිය", "දොඩංගොඩ", "මදුරාවෙල"],
-  "මහනුවර": ["මහනුවර හතරගම් කෝරළය", "ගඟවට කෝරළය", "පාතදුම්බර", "උඩුනුවර", "යටිනුවර", "හාරිස්පත්තුව", "උඩපළාත", "අකුරණ", "දොළුව", "පන්විල", "මිනිපේ", "මැදදුම්බර", "හතරලියද්ද", "දෙල්තොට", "කුණ්ඩසාලේ", "තුම්පනේ", "පතහේවහෙට", "ගඟ ඉහළ කෝරළය", "පූජාපිටිය", "වත්තේගම"],
-  "මාතලේ": ["මාතලේ", "රත්තොට", "උකුවෙල", "පල්ලේපොල", "යටවත්ත", "නාඑල", "ගලේවෙල", "දඹුල්ල", "විල්ගමුව", "අඹන්ගඟ කෝරළය", "ලග්ගල-පල්ලේගම"],
-  "නුවරඑළිය": ["නුවරඑළිය", "හඟුරන්කෙත", "වලපනේ", "කොත්මලේ", "අඹගමුව"],
-  "ගාල්ල": ["ගාල්ල හතරගම් කෝරළය", "බෝප-පොද්දල", "අක්මීමන", "යක්කලමුල්ල", "බද්දේගම", "එල්පිටිය", "නාගොඩ", "නෙළුව", "තවලම", "බෙන්තොට", "බලපිටිය", "අම්බලන්ගොඩ", "කරන්දෙණිය", "හබරාදුව", "ඉමදුව", "වැලිවිටිය-දිවිතුර", "හික්කඩුව", "ගොනාපිනුවල", "නියාගම"],
-  "මාතර": ["මාතර හතරගම් කෝරළය", "දෙවිනුවර", "වැලිගම", "අකුරැස්ස", "කඹුරුපිටිය", "කොටපොල", "පස්ගොඩ", "පිටබැද්දර", "මාලිම්බඩ", "මුලටියන", "අතුරලිය", "හක්මන", "තිහගොඩ", "දික්වැල්ල", "කිරින්ද පුහුල්වැල්ල", "වැලිපිටිය"],
-  "හම්බන්තොට": ["හම්බන්තොට", "තංගල්ල", "තිස්සමහාරාමය", "අම්බලන්තොට", "බෙලිඅත්ත", "වලස්මුල්ල", "වීරකැටිය", "අඟුණකොලපැලැස්ස", "සූරියවැව", "ලුණුගම්වෙහෙර", "කටුවන", "තණමල්විල"],
-  "යාපනය": ["යාපනය", "නල්ලූර්", "කොපායි", "උඩුවිල්", "තෙල්ලිප්පලෙයි", "සන්දිලිප්පායි", "චාවකච්චේරිය", "පොයින්ට් පේද්‍රෝ", "කාරයිනගර්", "කයිට්ස්", "වේලනෛ", "ඩෙල්ෆ්ට්", "උතුරු වඩමාරච්චිය", "නැගෙනහිර වඩමාරච්චිය", "තෙන්මරච්චිය"],
-  "කිලිනොච්චිය": ["කිලිනොච්චිය", "කරච්චි", "පච්චිලෛපල්ලි", "පූනාකරි"],
-  "මන්නාරම": ["මන්නාරම නගරය", "බටහිර මන්තෙයි", "නානට්ටාන්", "මඩු", "මුසලි"],
-  "වවුනියාව": ["වවුනියාව", "උතුරු වවුනියාව", "දකුණු වවුනියාව", "වෙන්ගලච්චෙට්ටිකුලම්"],
-  "මුලතිව්": ["නැගෙනහිර මන්තෙයි", "මරිතයිම්පට්ටු", "ඔද්දුසුඩාන්", "පුතුක්කුඩියිරුප්පු", "තුනුක්කායි"],
-  "මඩකලපුව": ["උතුරු මන්මුනෛ", "මන්මුනෛ පත්තු", "දකුණු මන්මුනෛ සහ එරුවිල් පත්තු", "බටහිර මන්මුනෛ", "නිරිතදිග මන්මුනෛ", "කෝරළෛ පත්තු", "උතුරු කෝරළෛ පත්තු", "දකුණු කෝරළෛ පත්තු", "බටහිර කෝරළෛ පත්තු", "මධ්‍යම කෝරළෛ පත්තු", "එරාවුර් පත්තු", "එරාවුර් නගරය", "පොරතිවු පත්තු", "කත්තන්කුඩි"],
-  "අම්පාර": ["අම්පාර", "උහන", "දමන", "මහඔය", "පඩියතලාව", "දෙහිආටකන්දිය", "අද්දාලච්චේන", "අක්කරෙයිපත්තුව", "සයින්දමරුදු", "නින්තාවූර්", "කල්මුණේ", "කරෛතිවු", "සම්මන්තුරේ", "අලෙයාඩිවෙම්බු", "තිරුක්කෝවිල්", "පොත්තුවිල්", "ලාහුගල", "නාවිතන්වෙලි"],
-  "ත්‍රිකුණාමලය": ["ත්‍රිකුණාමලය නගරය සහ ග්‍රාවට්ස්", "කින්නියා", "මුතූර්", "කුච්චවේලි", "ගෝමරන්කඩවල", "මොරවැව", "තඹලගමුව", "කන්තලේ", "සේරුවිල", "පදවි ශ්‍රී පුර", "වේරුගල්"],
-  "කුරුණෑගල": ["කුරුණෑගල", "මල්ලවපිටිය", "මාවතගම", "පොල්ගහවෙල", "වාරියපොල", "පන්නල", "රිදීගම", "ඉබ්බාගමුව", "අලව්ව", "බිංගිරිය", "නැගෙනහිර කුලියාපිටිය", "බටහිර කුලියාපිටිය", "බමුණකොටුව", "කටුපොත", "නැගෙනහිර පඬුවස්නුවර", "බටහිර පඬුවස්නුවර", "නිකවැරටිය", "මහව", "ගල්ගමුව", "ගනේවත්ත", "ගිරිබාව", "එහෙටුවෙව", "පොල්පිතිගම", "රස්නායකපුර", "වේරඹුගෙදර", "කොටවෙහෙර", "මාස්පොත", "නාරම්මල", "කොබෙයිගනේ", "අඹන්පොල"],
-  "පුත්තලම": ["පුත්තලම", "කල්පිටිය", "වනාතවිල්ලුව", "කරුවලගස්වැව", "අනමඩුව", "නාත්තණ්ඩිය", "මුන්දලම", "චිලාව", "අරච්චිකට්ටුව", "මාදම්පේ", "වෙන්නප්පුව", "මහව්ව"],
-  "අනුරාධපුරය": ["නුවරගම් පළාත නැගෙනහිර", "නුවරගම් පළාත මධ්‍යම", "කැකිරාව", "පලාගල", "තලාව", "මිහින්තලේ", "රඹෑව", "ගලෙන්බිඳුනුවැව", "කහටගස්දිගිලිය", "හොරොව්පොතාන", "මහාවිලච්චිය", "මැදවච්චිය", "පදවිය", "ගල්නෑව", "ඉපලෝගම", "නාච්චාදුව", "තිරප්පනේ", "කැබිතිගොල්ලෑව", "රාජාංගණය", "එප්පාවල", "නොච්චියාගම", "පලුගස්වැව"],
-  "පොළොන්නරුව": ["තාමන්කඩුව", "හිඟුරක්ගොඩ", "මැදිරිගිරිය", "ලංකාපුර", "ඇලහැර", "දිඹුලාගල", "වැලිකන්ද"],
-  "බදුල්ල": ["බදුල්ල", "බණ්ඩාරවෙල", "හපුතලේ", "ඇල්ල", "ලුණුගල", "මහියංගනය", "මීගහකිවුල", "පස්සර", "රිදීමාලියද්ද", "සොරණාතොට", "උව-පරණගම", "වැලිමඩ", "කන්දකැටිය", "හල්දුම්මුල්ල", "හාලි-ඇල"],
-  "මොණරාගල": ["මොණරාගල", "වැල්ලවාය", "බුත්තල", "කතරගම", "බිබිල", "මැදගම", "මඩුල්ල", "සියඹලාණ්ඩුව", "බදල්කුඹුර", "සෙවනගල", "තණමල්විල"],
-  "රත්නපුර": ["රත්නපුර", "බලංගොඩ", "එහෙළියගොඩ", "කලවාන", "කුරුවිට", "නිවිතිගල", "පැල්මඩුල්ල", "කොලොන්න", "කහවත්ත", "එලපාත", "අයගම", "ගොඩකවෙල", "ඉඹුල්පේ", "ඕපනායක", "වැලිගෙපොල", "කිරිඇල්ල"],
-  "කෑගල්ල": ["කෑගල්ල", "මාවනැල්ල", "රඹුක්කන", "වරකාපොල", "රුවන්වැල්ල", "යටියන්තොට", "දෙරණියගල", "ගාලිගමුව", "බුලත්කොහුපිටිය", "දෙහිඕවිට", "අරණායක"],
-};
+import GemSaleDetailsTable from "./GemSaleDetailsTable";
+import { SRI_LANKA_DISTRICTS, DS_DIVISIONS_BY_DISTRICT } from "./NewRecordPage";
 
 const yesNo = [
   { value: "yes", label: "ඔව්" },
   { value: "no", label: "නැත" },
 ];
 
-const NUMERIC_FIELDS = ["extensionCount", "proposedDepth"];
+const NUMERIC_FIELDS = ["extensionCount"];
 
 const toNumberOrUndefined = (value) => {
   if (value === "" || value === null || value === undefined) return undefined;
@@ -127,6 +92,7 @@ const mapRecordToForm = (r) => ({
   recommendationDate: r.recommendationDate || "",
   chairmanApproval: r.chairmanApproval || "",
   chairmanApprovalDate: r.chairmanApprovalDate || "",
+  gemSaleDetails: r.gemSaleDetails || { privateValue: "", auctionValue: "" },
 });
 
 /* ─────────────────────── UI helpers ─────────────────────── */
@@ -155,7 +121,7 @@ const STATUS_CFG = {
 
 /* ─────────────────────── page component ─────────────────────── */
 
-export default function SearchResultPage() {
+export default function EditRecordPage() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -259,8 +225,7 @@ export default function SearchResultPage() {
       ["prevLicenseFirstDate", "extensionCount", "minedGemValue", "conditionBreach", "ownershipComplaint"].forEach((f) => {
         if (!form[f] && form[f] !== 0) errors.push(f);
       });
-      if (form.conditionBreach === "yes" && !form.conditionBreachDetails) errors.push("conditionBreachDetails");
-      if (form.ownershipComplaint === "yes" && !form.complaintDetails) errors.push("complaintDetails");
+     // conditionBreachDetails / ownershipComplaint / complaintDetails no longer exist
     }
     return errors;
   };
@@ -336,7 +301,7 @@ export default function SearchResultPage() {
               Signed in as {user?.nic}
             </p>
             <h1 className="mt-1 font-display text-xl font-semibold sm:text-2xl">
-              Review &amp; Resubmit
+              Edit Site Record
             </h1>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
@@ -406,8 +371,8 @@ export default function SearchResultPage() {
               <p className="font-sinhala text-sm text-ink-muted">
                 ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය
               </p>
-              <h2 className="mt-1 font-sinhala text-lg font-semibold sm:text-xl">
-                යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම (නැවත ඉදිරිපත් කිරීම)
+             <h2 className="mt-1 font-sinhala text-lg font-semibold sm:text-xl">
+                යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම (සංස්කරණය)
               </h2>
               <p className="mt-1 font-sinhala text-xs text-ink-muted">
                 අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) නිර්දේශය
@@ -419,31 +384,31 @@ export default function SearchResultPage() {
               <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
                 අයදුම්කරු පිළිබඳ තොරතුරු
               </h3>
-              <div className="flex flex-col gap-5">
+                            <div className="flex flex-col gap-5">
                 <Field label="ඉල්ලුම්කරුගේ නම">
-                  <div className={inputClass}>{form.applicantName}</div>
+                  <input type="text" className={inputClass} value={form.applicantName} onChange={handleChange("applicantName")} />
                 </Field>
                 <Field label="ඉල්ලුම්කරුගේ ලිපිනය">
-                  <div className={inputClass}>{form.applicantAddress}</div>
+                  <input type="text" className={inputClass} value={form.applicantAddress} onChange={handleChange("applicantAddress")} />
                 </Field>
                 <Field label="ඉල්ලුම්කරුගේ දුරකථන අංකය">
-                  <div className={inputClass}>{form.applicantPhone}</div>
+                  <input type="tel" className={inputClass} value={form.applicantPhone} onChange={handleChange("applicantPhone")} />
                 </Field>
               </div>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="ඉල්ලුම්කරුගේ හැඳුනුම්පත් අංකය">
-                  <div className={inputClass}>{form.nic}</div>
+                  <input type="text" className={inputClass} value={form.nic} onChange={handleChange("nic")} />
                 </Field>
                 <Field label="දේශීය ආදායම් දෙපාර්තමේන්තුවෙන් ලබාගත් බදු ගෙවන්නන් සඳහා හඳුනාගැනීමේ අංකය (TIN)">
-                  <div className={inputClass}>{form.tin}</div>
+                  <input type="text" className={inputClass} value={form.tin} onChange={handleChange("tin")} />
                 </Field>
                 <Field label="වියදම් පාර්ශවයක් සිටී නම්" full>
                   <label className="flex items-center gap-2 font-sinhala text-sm">
                     <input
                       type="checkbox"
                       checked={form.hasExpenseParty}
-                      readOnly disabled
+                      onChange={handleCheckboxChange("hasExpenseParty")}
                       className="accent-teal"
                     />
                     ඔව්
@@ -453,22 +418,22 @@ export default function SearchResultPage() {
                 {form.hasExpenseParty && (
                   <>
                     <Field label="වියදම් පාර්ශවයේ නම" full>
-                      <div className={inputClass}>{form.expenseName}</div>
+                      <input type="text" className={inputClass} value={form.expenseName} onChange={handleChange("expenseName")} />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ ලිපිනය" full>
-                      <div className={inputClass}>{form.expenseAddress}</div>
+                      <input type="text" className={inputClass} value={form.expenseAddress} onChange={handleChange("expenseAddress")} />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ දුරකථන අංකය" full>
-                      <div className={inputClass}>{form.expensePhone}</div>
+                      <input type="tel" className={inputClass} value={form.expensePhone} onChange={handleChange("expensePhone")} />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
-                      <div className={inputClass}>{form.expenseTin}</div>
+                      <input type="text" className={inputClass} value={form.expenseTin} onChange={handleChange("expenseTin")} />
                     </Field>
                   </>
                 )}
 
                 <Field label="මැණික් ගැරීමේ බලපත්‍ර අංකය (GML)">
-                  <div className={inputClass}>{form.gmlNumber}</div>
+                  <input type="text" className={inputClass} value={form.gmlNumber} onChange={handleChange("gmlNumber")} />
                 </Field>
 
                 <Field label="G. P. S." full>
@@ -486,11 +451,23 @@ export default function SearchResultPage() {
                         <div className="grid flex-1 grid-cols-2 gap-3">
                           <div className="flex flex-col gap-1">
                             <label className="font-sinhala text-xs text-ink-muted">අක්ෂාංශ</label>
-                            <div className={inputClass}>{point.latitude}</div>
+                            <input
+                              type="text"
+                              className={inputClass}
+                              required={index === 0}
+                              value={point.latitude}
+                              onChange={handleGpsChange(index, "latitude")}
+                            />
                           </div>
                           <div className="flex flex-col gap-1">
                             <label className="font-sinhala text-xs text-ink-muted">දේශාංෂ</label>
-                            <div className={inputClass}>{point.longitude}</div>
+                            <input
+                              type="text"
+                              className={inputClass}
+                              required={index === 0}
+                              value={point.longitude}
+                              onChange={handleGpsChange(index, "longitude")}
+                            />
                           </div>
                         </div>
                         {index > 0 && (
@@ -517,17 +494,17 @@ export default function SearchResultPage() {
                 </Field>
 
                 <Field label="ඉඩමේ නම" full>
-                  <div className={inputClass}>{form.landName}</div>
+                  <input type="text" className={inputClass} value={form.landName} onChange={handleChange("landName")} />
                 </Field>
 
                 <Field label="ඉඩමේ ස්වභාවය" full>
                   <div className="flex gap-4 pt-1">
                     <label className="flex items-center gap-2 font-sinhala text-sm">
-                      <input type="radio" name="landNature" value="goda" checked={form.landNature === "goda"} readOnly disabled className="accent-teal" />
+                      <input type="radio" name="landNature" value="goda" checked={form.landNature === "goda"} onChange={handleChange("landNature")} className="accent-teal" />
                       ගොඩ ඉඩමක්
                     </label>
                     <label className="flex items-center gap-2 font-sinhala text-sm">
-                      <input type="radio" name="landNature" value="kumbura" checked={form.landNature === "kumbura"} readOnly disabled className="accent-teal" />
+                      <input type="radio" name="landNature" value="kumbura" checked={form.landNature === "kumbura"} onChange={handleChange("landNature")} className="accent-teal" />
                       කුඹුරු ඉඩමක්
                     </label>
                   </div>
@@ -538,7 +515,7 @@ export default function SearchResultPage() {
                     <div className="flex gap-4 pt-1">
                       {yesNo.map((opt) => (
                         <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                          <input type="radio" name="isRatnapuraLand" value={opt.value} checked={form.isRatnapuraLand === opt.value} readOnly disabled className="accent-teal" />
+                          <input type="radio" name="isRatnapuraLand" value={opt.value} checked={form.isRatnapuraLand === opt.value} onChange={handleChange("isRatnapuraLand")} className="accent-teal" />
                           {opt.label}
                         </label>
                       ))}
@@ -552,11 +529,11 @@ export default function SearchResultPage() {
                         </p>
                         <div className="flex flex-col gap-1.5">
                           <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
-                          <input type="file" className={inputClass} disabled />
+                          <input type="file" className={inputClass} onChange={handleFileChange("writtenEvidenceAttachment")} />
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
-                          <input type="file" className={inputClass} disabled />
+                          <input type="file" className={inputClass} onChange={handleFileChange("affidavitAttachment")} />
                         </div>
                       </div>
                     )}
@@ -570,28 +547,44 @@ export default function SearchResultPage() {
               <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
                 මැණික් ගැරීමේ බලපත්‍රලත් ඉඩම පිහිටි
               </h3>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="දිස්ත්‍රික්කය">
-                  <div className={inputClass}>{form.district}</div>
+                  <select className={inputClass} value={form.district} onChange={handleDistrictChange}>
+                    <option value="" hidden></option>
+                    {SRI_LANKA_DISTRICTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="ප්‍රාදේශීය කාර්යාලය">
-                  <div className={inputClass}>{form.regionalOffice}</div>
+                  <select className={inputClass} value={form.regionalOffice} onChange={handleChange("regionalOffice")} disabled={!form.district}>
+                    <option value="" hidden></option>
+                    {(DS_DIVISIONS_BY_DISTRICT[form.district] || []).map((ds) => (
+                      <option key={ds} value={ds}>{ds}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="ගම">
-                  <div className={inputClass}>{form.village}</div>
+                  <input type="text" className={inputClass} value={form.village} onChange={handleChange("village")} />
                 </Field>
                 <Field label="ඉඩමේ වපසරිය">
-                  <div className={inputClass}>{form.landExtent}</div>
+                  <input type="text" className={inputClass} value={form.landExtent} onChange={handleChange("landExtent")} />
                 </Field>
                 <Field label="බලපත්‍රලාභියා" full>
-                  <div className={inputClass}>{form.licenseeType}</div>
+                  <select className={inputClass} value={form.licenseeType} onChange={handleChange("licenseeType")}>
+                    <option value="" hidden></option>
+                    <option value="ඉඩම් හිමිකරු">ඉඩම් හිමිකරු</option>
+                    <option value="බදු ගැණුම්කරු">බදු ගැණුම්කරු</option>
+                    <option value="රජයේ ඉඩමක්">රජයේ ඉඩමක්</option>
+                    <option value="වෙන්දේසි ඉඩමක්">වෙන්දේසි ඉඩමක්</option>
+                  </select>
                 </Field>
 
                 <Field label="ඉඩම් හිමිකරු නොවේ නම්, කැමැත්ත ප්‍රකාශිත ලිපියක් අමුණා තිබේද?">
                   <div className="flex gap-4 pt-1">
                     {yesNo.map((opt) => (
                       <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                        <input type="radio" name="consentLetterAttached" value={opt.value} checked={form.consentLetterAttached === opt.value} readOnly disabled className="accent-teal" />
+                        <input type="radio" name="consentLetterAttached" value={opt.value} checked={form.consentLetterAttached === opt.value} onChange={handleChange("consentLetterAttached")} className="accent-teal" />
                         {opt.label}
                       </label>
                     ))}
@@ -602,76 +595,91 @@ export default function SearchResultPage() {
                   <div className="flex gap-4 pt-1">
                     {yesNo.map((opt) => (
                       <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                        <input type="radio" name="govLandAct" value={opt.value} checked={form.govLandAct === opt.value} readOnly disabled className="accent-teal" />
+                        <input type="radio" name="govLandAct" value={opt.value} checked={form.govLandAct === opt.value} onChange={handleChange("govLandAct")} className="accent-teal" />
                         {opt.label}
                       </label>
                     ))}
                   </div>
                 </Field>
 
-                <Field label="ඉඩමේ කපන ලද පතල් තිබේද?">
-                  <div className="flex gap-4 pt-1">
-                    {yesNo.map((opt) => (
-                      <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                        <input type="radio" name="existingPits" value={opt.value} checked={form.existingPits === opt.value} readOnly disabled className="accent-teal" />
-                        {opt.label}
-                      </label>
-                    ))}
-                  </div>
+                <Field label="දැනට කපා ඇති පතල් වලවල්වල වර්ග ප්‍රමාණය (මතුපිට)">
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={form.existingPits}
+                    onChange={handleChange("existingPits")}
+                  />
                 </Field>
               </div>
             </section>
 
             {/* Previous license history */}
-            {form.existingPits === "yes" && (
+            {form.existingPits && form.existingPits.trim() !== "" && (
               <section className="flex flex-col gap-5">
                 <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
                   පෙර බලපත්‍රය පිළිබඳ තොරතුරු
                 </h3>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <Field label="කලින් නිකුත් කර ඇති සාම්ප්‍රදායික පතල් බලපත්‍රය, පළමුව නිකුත් කළ දිනය">
-                    <div className={inputClass}>{form.prevLicenseFirstDate}</div>
+                  <Field label="රොන්මඩ වලවල් ලෙස පවත්වාගෙන යන වලවල්වල වර්ග ප්‍රමාණය (ව.අඩි)">
+                    <input
+                      type="text"
+                      className={inputClass}
+                      value={form.prevLicenseFirstDate}
+                      onChange={handleChange("prevLicenseFirstDate")}
+                    />
                   </Field>
-                  <Field label="මෙම බලපත්‍රය කී වතාවක් දීර්ඝ කර තිබේද?">
-                    <div className={inputClass}>{form.extensionCount}</div>
+                  <Field label="ගැඹුර ප්‍රමාණය">
+                    <input
+                      type="number"
+                      className={inputClass}
+                      value={form.extensionCount}
+                      onChange={handleChange("extensionCount")}
+                    />
                   </Field>
-                  <Field label="එම කාල සීමාව තුළ කෑණීම් කරන ලද මැණික්වල වටිනාකම">
-                    <div className={inputClass}>{form.minedGemValue}</div>
-                  </Field>
-
-                  <div className="sm:col-span-2 grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <Field label="එම කාලය තුළ කොන්දේසි කඩකිරීම් සිදුවී ඇත්ද?">
-                      <div className="flex gap-4 pt-1">
-                        {yesNo.map((opt) => (
-                          <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                            <input type="radio" name="conditionBreach" value={opt.value} checked={form.conditionBreach === opt.value} readOnly disabled className="accent-teal" />
-                            {opt.label}
-                          </label>
-                        ))}
-                      </div>
-                    </Field>
-                    {form.conditionBreach === "yes" && (
-                      <Field label="සිදු වී ඇත්නම් ඒ පිළිබඳ විස්තර">
-                        <div className={inputClass}>{form.conditionBreachDetails}</div>
-                      </Field>
-                    )}
-                  </div>
-
-                  <Field label="මෙම කාලය තුළ ඉඩමේ අයිතිය පිළිබඳ පැමිණිලි ලැබී තිබේද?">
+                  <Field label="පසුගිය මාස 03 ඇතුලතදී කොන්දේසි කඩකිරීම් ඇත්නම්">
                     <div className="flex gap-4 pt-1">
                       {yesNo.map((opt) => (
                         <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                          <input type="radio" name="ownershipComplaint" value={opt.value} checked={form.ownershipComplaint === opt.value} readOnly disabled className="accent-teal" />
+                          <input
+                            type="radio"
+                            name="minedGemValue"
+                            value={opt.value}
+                            checked={form.minedGemValue === opt.value}
+                            onChange={handleChange("minedGemValue")}
+                            className="accent-teal"
+                          />
                           {opt.label}
                         </label>
                       ))}
                     </div>
                   </Field>
-                  {form.ownershipComplaint === "yes" && (
-                    <Field label="ලැබී ඇත්නම් ඒ පිළිබඳ විස්තර">
-                      <div className={inputClass}>{form.complaintDetails}</div>
+
+                  <div className="sm:col-span-2">
+                    <Field label="අංක NGJA1/03/2025 දරන වක්‍රලේඛය මගින් නියම කර ඇති වාර්තා ඉදිරිපත් කර තිබේද?">
+                      <div className="flex gap-4 pt-1">
+                        {yesNo.map((opt) => (
+                          <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
+                            <input
+                              type="radio"
+                              name="conditionBreach"
+                              value={opt.value}
+                              checked={form.conditionBreach === opt.value}
+                              onChange={handleChange("conditionBreach")}
+                              className="accent-teal"
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
                     </Field>
-                  )}
+                  </div>
+                  <Field label="පවත්වා ඇති මැණික් ගල් වෙන්දේසි සම්බන්ධ විස්තර :-" full>
+                    <GemSaleDetailsTable
+                      value={form.gemSaleDetails}
+                      onChange={(next) => setForm((prev) => ({ ...prev, gemSaleDetails: next }))}
+                    />
+                  </Field>
+
                 </div>
               </section>
             )}
@@ -682,11 +690,8 @@ export default function SearchResultPage() {
                 කැණීම් යෝජනාව
               </h3>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Field label="පතල් කැපීමට යෝජිත ගැඹුර ප්‍රමාණය (පොළොව මතුපිට සිට අඩි)">
-                  <div className={inputClass}>{form.proposedDepth}</div>
-                </Field>
                 <Field label="ඉඩමේ වගාව">
-                  <div className={inputClass}>{form.landCultivation}</div>
+                  <input type="text" className={inputClass} value={form.landCultivation} onChange={handleChange("landCultivation")} />
                 </Field>
               </div>
 
@@ -704,19 +709,19 @@ export default function SearchResultPage() {
                   { field: "boundaryWater", label: "ගංගා සහ ජල දෙහයන්ට (අඩි)" },
                   { field: "boundaryRoads", label: "මාර්ගවලට (අඩි)" },
                   { field: "boundaryOther", label: "වෙනත්" },
-                ].map(({ field, label }) => (
+                 ].map(({ field, label }) => (
                   <Field key={field} label={label}>
-                    <div className={inputClass}>{form[field]}</div>
+                    <input type="text" className={inputClass} value={form[field]} onChange={handleChange(field)} />
                   </Field>
                 ))}
               </div>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="කැපීමට අදහස් කරන පතල් ප්‍රමාණය (ව.අ.)">
-                  <div className={inputClass}>{form.proposedExtent}</div>
+                  <input type="text" className={inputClass} value={form.proposedExtent} onChange={handleChange("proposedExtent")} />
                 </Field>
                 <Field label="ඇප මුදල් සේවා ගාස්තුව">
-                  <div className={inputClass}>{form.refundServiceFee}</div>
+                  <input type="text" className={inputClass} value={form.refundServiceFee} onChange={handleChange("refundServiceFee")} />
                 </Field>
               </div>
             </section>
@@ -726,27 +731,27 @@ export default function SearchResultPage() {
               <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
                 නිර්දේශය
               </h3>
-              <p className="font-sinhala text-sm leading-8 text-ink">
+             <p className="font-sinhala text-sm leading-8 text-ink">
                 කෑණීම් ඉංජිනේරු නිර්දේශයන්ට (NGJA/16.2/Backhoe/MER/
-                <span className={inlineInputClass}>{form.ngjaRefNumber}</span>
+                <input type="text" className={inlineInputClass} value={form.ngjaRefNumber} onChange={handleChange("ngjaRefNumber")} />
                 ) යටත්ව වරකට උපරිමය ව.අ
-                <span className={inlineInputClass}>{form.maxExtentVA}</span>
+                <input type="number" step="0.01" className={inlineInputClass} value={form.maxExtentVA} onChange={handleChange("maxExtentVA")} />
                 ක් දක්වා පතසක් කෑණීම සිදුකිරීම සඳහා උපරිමය PC
-                <span className={inlineInputClass}>{form.maxPcCount}</span>
+                <input type="text" inputMode="numeric" className={inlineInputClass} value={form.maxPcCount} onChange={handleChange("maxPcCount")} />
                 ක් දක්වා වන බැකෝ යන්ත්‍ර
-                <span className={inlineInputClass}>{form.backhoeCount}</span>
+                <input type="text" inputMode="numeric" className={inlineInputClass} value={form.backhoeCount} onChange={handleChange("backhoeCount")} />
                 ක් යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
-                <span className={inlineInputClass}>{form.gerumCount}</span>
+                <input type="text" inputMode="numeric" className={inlineInputClass} value={form.gerumCount} onChange={handleChange("gerumCount")} />
                 ක් යොදා ගැනීමටත් ඇදුම් යන්ත්‍ර
-                <span className={inlineInputClass}>{form.adumMachineCount}</span>
+                <input type="text" inputMode="numeric" className={inlineInputClass} value={form.adumMachineCount} onChange={handleChange("adumMachineCount")} />
                 යොදා ගැනීමටත්, රොන් මඩ වලවල් පවත්වා ගැනීමට ව.අ.
-                <span className={inlineInputClass}>{form.silageExtent}</span>
+                <input type="text" className={inlineInputClass} value={form.silageExtent} onChange={handleChange("silageExtent")} />
                 කට ඇප මුදල්
-                <span className={inlineInputClass}>{form.depositAmount}</span>
+                <input type="text" className={inlineInputClass} value={form.depositAmount} onChange={handleChange("depositAmount")} />
                 ක් තැන්පත් කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීම සඳහා
-                <span className={inlineInputClass}>{form.riverbankProtectionAmount}</span>
+                <input type="text" className={inlineInputClass} value={form.riverbankProtectionAmount} onChange={handleChange("riverbankProtectionAmount")} />
                 ක ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා
-                <span className={inlineInputClass}>{form.specialCaseAmount}</span>
+                <input type="text" className={inlineInputClass} value={form.specialCaseAmount} onChange={handleChange("specialCaseAmount")} />
                 ඇප මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා
                 ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට කාරුණික
                 අනුමැතියට ඉදිරිපත් කරමි.
@@ -755,12 +760,16 @@ export default function SearchResultPage() {
                 <p className="font-sinhala text-sm text-ink">
                   ඉහත නිර්දේශය
                 </p>
-                <div className={inputClass}>{form.directorApproval}</div>
+                <select className={`${inputClass} w-40`} value={form.directorApproval} onChange={handleChange("directorApproval")}>
+                  <option value="" hidden></option>
+                  <option value="අනුමත කරමි">අනුමත කරමි</option>
+                  <option value="අනුමත නොකරමි">අනුමත නොකරමි</option>
+                </select>
               </div>
 
               <div className="mt-4 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
                 <Field label="දිනය:-" className="sm:w-48">
-                  <div className={inputClass}>{form.recommendationDate}</div>
+                  <input type="date" className={inputClass} value={form.recommendationDate} onChange={handleChange("recommendationDate")} />
                 </Field>
                 <div className="flex flex-col items-center gap-1 sm:items-end">
                   <div className="h-12 w-56 border-b border-ink" />
@@ -777,12 +786,16 @@ export default function SearchResultPage() {
               <div className="border-t border-ink" />
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-sinhala text-sm text-ink">ඉහත නිර්දේශය අනුමත</p>
-                <div className={inputClass}>{form.chairmanApproval}</div>
+                <select className={`${inputClass} w-32`} value={form.chairmanApproval} onChange={handleChange("chairmanApproval")}>
+                  <option value="" hidden></option>
+                  <option value="කරමි">කරමි</option>
+                  <option value="නොකරමි">නොකරමි</option>
+                </select>
               </div>
 
               <div className="mt-4 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
                 <Field label="දිනය:-" className="sm:w-48">
-                  <div className={inputClass}>{form.chairmanApprovalDate}</div>
+                  <input type="date" className={inputClass} value={form.chairmanApprovalDate} onChange={handleChange("chairmanApprovalDate")} />
                 </Field>
                 <div className="flex flex-col items-center gap-1 sm:items-end">
                   <div className="h-12 w-56 border-b border-ink" />
@@ -809,13 +822,8 @@ export default function SearchResultPage() {
               >
                 {showPreview ? "පෙරදසුන සඟවන්න" : "පෙරදසුන"}
               </Button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  id="edit-btn"
-                  onClick={() => navigate("/edit-record", { state: { record } })}
-                >
-                Edit
+              <Button type="submit" variant="primary" disabled={saving}>
+                {saving ? "සුරකිමින්..." : "සුරකින්න"}
               </Button>
             </div>
           </form>

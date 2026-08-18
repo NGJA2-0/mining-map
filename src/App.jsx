@@ -8,6 +8,7 @@ import MiningMapPage from "./pages/MiningMapPage";
 import NewRecordPage from "./pages/NewRecordPage";
 import UpdateRecordPage from "./pages/UpdateRecordPage";
 import SearchResultPage from "./pages/SearchResultPage";
+import EditRecordPage from "./pages/EditRecordPage";
 import "./index.css";
 
 export default function App() {
@@ -50,6 +51,14 @@ export default function App() {
             }
           />
           <Route path="/dashboard/map" element={<MiningMapPage />} />
+          <Route
+            path="/edit-record"
+            element={
+              <ProtectedRoute>
+                <EditRecordPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

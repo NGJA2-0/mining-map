@@ -75,7 +75,7 @@ const initialState = {
   chairmanApprovalDate: "",
 };
 
-const SRI_LANKA_DISTRICTS = [
+export const SRI_LANKA_DISTRICTS = [
   "අම්පාර", "අනුරාධපුරය", "බදුල්ල", "මඩකලපුව", "කොළඹ", "ගාල්ල", "ගම්පහ",
   "හම්බන්තොට", "යාපනය", "කළුතර", "මහනුවර", "කෑගල්ල", "කිලිනොච්චිය",
   "කුරුණෑගල", "මන්නාරම", "මාතලේ", "මාතර", "මොණරාගල", "මුලතිව්",
@@ -85,7 +85,7 @@ const SRI_LANKA_DISTRICTS = [
 // DS divisions grouped by district (English names, as commonly used on official forms).
 // NOTE: verify this list against the latest official DS division gazette before
 // relying on it for production — a few divisions get renamed/split over time.
-const DS_DIVISIONS_BY_DISTRICT = {
+export const DS_DIVISIONS_BY_DISTRICT = {
   "කොළඹ": ["කොළඹ", "තිඹිරිගස්යාය", "කොලොන්නාව", "කඩුවෙල", "කැස්බෑව", "මහරගම", "හෝමාගම", "ශ්‍රී ජයවර්ධනපුර කෝට්ටේ", "දෙහිවල-ගල්කිස්ස", "මොරටුව", "පාදුක්ක", "සීතාවක", "රත්මලාන"],
   "ගම්පහ": ["ගම්පහ", "මීගමුව", "ජා-ඇල", "වත්තල", "කටාන", "දිවුලපිටිය", "මිරිගම", "මිනුවන්ගොඩ", "අත්තනගල්ල", "දොම්පේ", "බියගම", "කැලණිය", "මහර"],
   "කළුතර": ["කළුතර", "බේරුවල", "පානදුර", "බණ්ඩාරගම", "හෝරණ", "බුලත්සිංහල", "මිල්ලනිය", "පැලින්දනුවර", "අගලවත්ත", "මතුගම", "වලල්ලාවිට", "ඉංගිරිය", "දොඩංගොඩ", "මදුරාවෙල"],
