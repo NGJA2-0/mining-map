@@ -421,29 +421,29 @@ export default function SearchResultPage() {
               </h3>
               <div className="flex flex-col gap-5">
                 <Field label="ඉල්ලුම්කරුගේ නම">
-                  <div className={inputClass}>{form.applicantName}</div>
+                  <input type="text" className={inputClass} value={form.applicantName} onChange={handleChange("applicantName")} />
                 </Field>
                 <Field label="ඉල්ලුම්කරුගේ ලිපිනය">
-                  <div className={inputClass}>{form.applicantAddress}</div>
+                  <input type="text" className={inputClass} value={form.applicantAddress} onChange={handleChange("applicantAddress")} />
                 </Field>
                 <Field label="ඉල්ලුම්කරුගේ දුරකථන අංකය">
-                  <div className={inputClass}>{form.applicantPhone}</div>
+                  <input type="tel" className={inputClass} value={form.applicantPhone} onChange={handleChange("applicantPhone")} />
                 </Field>
               </div>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="ඉල්ලුම්කරුගේ හැඳුනුම්පත් අංකය">
-                  <div className={inputClass}>{form.nic}</div>
+                  <input type="text" className={inputClass} value={form.nic} onChange={handleChange("nic")} />
                 </Field>
                 <Field label="දේශීය ආදායම් දෙපාර්තමේන්තුවෙන් ලබාගත් බදු ගෙවන්නන් සඳහා හඳුනාගැනීමේ අංකය (TIN)">
-                  <div className={inputClass}>{form.tin}</div>
+                  <input type="text" className={inputClass} value={form.tin} onChange={handleChange("tin")} />
                 </Field>
                 <Field label="වියදම් පාර්ශවයක් සිටී නම්" full>
                   <label className="flex items-center gap-2 font-sinhala text-sm">
                     <input
                       type="checkbox"
                       checked={form.hasExpenseParty}
-                      readOnly disabled
+                      onChange={handleCheckboxChange("hasExpenseParty")}
                       className="accent-teal"
                     />
                     ඔව්
@@ -453,22 +453,22 @@ export default function SearchResultPage() {
                 {form.hasExpenseParty && (
                   <>
                     <Field label="වියදම් පාර්ශවයේ නම" full>
-                      <div className={inputClass}>{form.expenseName}</div>
+                      <input type="text" className={inputClass} value={form.expenseName} onChange={handleChange("expenseName")} />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ ලිපිනය" full>
-                      <div className={inputClass}>{form.expenseAddress}</div>
+                      <input type="text" className={inputClass} value={form.expenseAddress} onChange={handleChange("expenseAddress")} />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ දුරකථන අංකය" full>
-                      <div className={inputClass}>{form.expensePhone}</div>
+                      <input type="tel" className={inputClass} value={form.expensePhone} onChange={handleChange("expensePhone")} />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
-                      <div className={inputClass}>{form.expenseTin}</div>
+                      <input type="text" className={inputClass} value={form.expenseTin} onChange={handleChange("expenseTin")} />
                     </Field>
                   </>
                 )}
 
                 <Field label="මැණික් ගැරීමේ බලපත්‍ර අංකය (GML)">
-                  <div className={inputClass}>{form.gmlNumber}</div>
+                  <input type="text" className={inputClass} placeholder="GML" value={form.gmlNumber} onChange={handleChange("gmlNumber")} />
                 </Field>
 
                 <Field label="G. P. S." full>
@@ -486,11 +486,11 @@ export default function SearchResultPage() {
                         <div className="grid flex-1 grid-cols-2 gap-3">
                           <div className="flex flex-col gap-1">
                             <label className="font-sinhala text-xs text-ink-muted">අක්ෂාංශ</label>
-                            <div className={inputClass}>{point.latitude}</div>
+                            <input type="text" className={inputClass} required={index === 0} value={point.latitude} onChange={handleGpsChange(index, "latitude")} />
                           </div>
                           <div className="flex flex-col gap-1">
                             <label className="font-sinhala text-xs text-ink-muted">දේශාංෂ</label>
-                            <div className={inputClass}>{point.longitude}</div>
+                            <input type="text" className={inputClass} required={index === 0} value={point.longitude} onChange={handleGpsChange(index, "longitude")} />
                           </div>
                         </div>
                         {index > 0 && (
@@ -517,17 +517,17 @@ export default function SearchResultPage() {
                 </Field>
 
                 <Field label="ඉඩමේ නම" full>
-                  <div className={inputClass}>{form.landName}</div>
+                  <input type="text" className={inputClass} value={form.landName} onChange={handleChange("landName")} />
                 </Field>
 
                 <Field label="ඉඩමේ ස්වභාවය" full>
                   <div className="flex gap-4 pt-1">
                     <label className="flex items-center gap-2 font-sinhala text-sm">
-                      <input type="radio" name="landNature" value="goda" checked={form.landNature === "goda"} readOnly disabled className="accent-teal" />
+                      <input type="radio" name="landNature" value="goda" checked={form.landNature === "goda"} onChange={handleChange("landNature")} className="accent-teal" />
                       ගොඩ ඉඩමක්
                     </label>
                     <label className="flex items-center gap-2 font-sinhala text-sm">
-                      <input type="radio" name="landNature" value="kumbura" checked={form.landNature === "kumbura"} readOnly disabled className="accent-teal" />
+                      <input type="radio" name="landNature" value="kumbura" checked={form.landNature === "kumbura"} onChange={handleChange("landNature")} className="accent-teal" />
                       කුඹුරු ඉඩමක්
                     </label>
                   </div>
@@ -538,7 +538,7 @@ export default function SearchResultPage() {
                     <div className="flex gap-4 pt-1">
                       {yesNo.map((opt) => (
                         <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                          <input type="radio" name="isRatnapuraLand" value={opt.value} checked={form.isRatnapuraLand === opt.value} readOnly disabled className="accent-teal" />
+                          <input type="radio" name="isRatnapuraLand" value={opt.value} checked={form.isRatnapuraLand === opt.value} onChange={handleChange("isRatnapuraLand")} className="accent-teal" />
                           {opt.label}
                         </label>
                       ))}
@@ -552,11 +552,11 @@ export default function SearchResultPage() {
                         </p>
                         <div className="flex flex-col gap-1.5">
                           <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
-                          <input type="file" className={inputClass} disabled />
+                          <input type="file" className={inputClass} onChange={handleFileChange("writtenEvidenceAttachment")} />
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
-                          <input type="file" className={inputClass} disabled />
+                          <input type="file" className={inputClass} onChange={handleFileChange("affidavitAttachment")} />
                         </div>
                       </div>
                     )}
@@ -572,26 +572,42 @@ export default function SearchResultPage() {
               </h3>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="දිස්ත්‍රික්කය">
-                  <div className={inputClass}>{form.district}</div>
+                  <select className={inputClass} value={form.district} onChange={handleDistrictChange}>
+                    <option value="" hidden></option>
+                    {SRI_LANKA_DISTRICTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="ප්‍රාදේශීය කාර්යාලය">
-                  <div className={inputClass}>{form.regionalOffice}</div>
+                  <select className={inputClass} value={form.regionalOffice} onChange={handleChange("regionalOffice")} disabled={!form.district}>
+                    <option value="" hidden></option>
+                    {(DS_DIVISIONS_BY_DISTRICT[form.district] || []).map((ds) => (
+                      <option key={ds} value={ds}>{ds}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="ගම">
-                  <div className={inputClass}>{form.village}</div>
+                  <input type="text" className={inputClass} value={form.village} onChange={handleChange("village")} />
                 </Field>
                 <Field label="ඉඩමේ වපසරිය">
-                  <div className={inputClass}>{form.landExtent}</div>
+                  <input type="text" className={inputClass} value={form.landExtent} onChange={handleChange("landExtent")} />
                 </Field>
                 <Field label="බලපත්‍රලාභියා" full>
-                  <div className={inputClass}>{form.licenseeType}</div>
+                  <select className={inputClass} value={form.licenseeType} onChange={handleChange("licenseeType")}>
+                    <option value="" hidden></option>
+                    <option value="ඉඩම් හිමිකරු">ඉඩම් හිමිකරු</option>
+                    <option value="බදු ගැණුම්කරු">බදු ගැණුම්කරු</option>
+                    <option value="රජයේ ඉඩමක්">රජයේ ඉඩමක්</option>
+                    <option value="වෙන්දේසි ඉඩමක්">වෙන්දේසි ඉඩමක්</option>
+                  </select>
                 </Field>
 
                 <Field label="ඉඩම් හිමිකරු නොවේ නම්, කැමැත්ත ප්‍රකාශිත ලිපියක් අමුණා තිබේද?">
                   <div className="flex gap-4 pt-1">
                     {yesNo.map((opt) => (
                       <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                        <input type="radio" name="consentLetterAttached" value={opt.value} checked={form.consentLetterAttached === opt.value} readOnly disabled className="accent-teal" />
+                        <input type="radio" name="consentLetterAttached" value={opt.value} checked={form.consentLetterAttached === opt.value} onChange={handleChange("consentLetterAttached")} className="accent-teal" />
                         {opt.label}
                       </label>
                     ))}
@@ -602,7 +618,7 @@ export default function SearchResultPage() {
                   <div className="flex gap-4 pt-1">
                     {yesNo.map((opt) => (
                       <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                        <input type="radio" name="govLandAct" value={opt.value} checked={form.govLandAct === opt.value} readOnly disabled className="accent-teal" />
+                        <input type="radio" name="govLandAct" value={opt.value} checked={form.govLandAct === opt.value} onChange={handleChange("govLandAct")} className="accent-teal" />
                         {opt.label}
                       </label>
                     ))}
@@ -613,7 +629,7 @@ export default function SearchResultPage() {
                   <div className="flex gap-4 pt-1">
                     {yesNo.map((opt) => (
                       <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                        <input type="radio" name="existingPits" value={opt.value} checked={form.existingPits === opt.value} readOnly disabled className="accent-teal" />
+                        <input type="radio" name="existingPits" value={opt.value} checked={form.existingPits === opt.value} onChange={handleChange("existingPits")} className="accent-teal" />
                         {opt.label}
                       </label>
                     ))}
@@ -630,13 +646,13 @@ export default function SearchResultPage() {
                 </h3>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="කලින් නිකුත් කර ඇති සාම්ප්‍රදායික පතල් බලපත්‍රය, පළමුව නිකුත් කළ දිනය">
-                    <div className={inputClass}>{form.prevLicenseFirstDate}</div>
+                    <input type="date" className={inputClass} value={form.prevLicenseFirstDate} onChange={handleChange("prevLicenseFirstDate")} />
                   </Field>
                   <Field label="මෙම බලපත්‍රය කී වතාවක් දීර්ඝ කර තිබේද?">
-                    <div className={inputClass}>{form.extensionCount}</div>
+                    <input type="number" min="0" className={inputClass} value={form.extensionCount} onChange={handleChange("extensionCount")} />
                   </Field>
                   <Field label="එම කාල සීමාව තුළ කෑණීම් කරන ලද මැණික්වල වටිනාකම">
-                    <div className={inputClass}>{form.minedGemValue}</div>
+                    <input type="text" className={inputClass} value={form.minedGemValue} onChange={handleChange("minedGemValue")} />
                   </Field>
 
                   <div className="sm:col-span-2 grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -644,7 +660,7 @@ export default function SearchResultPage() {
                       <div className="flex gap-4 pt-1">
                         {yesNo.map((opt) => (
                           <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                            <input type="radio" name="conditionBreach" value={opt.value} checked={form.conditionBreach === opt.value} readOnly disabled className="accent-teal" />
+                            <input type="radio" name="conditionBreach" value={opt.value} checked={form.conditionBreach === opt.value} onChange={handleChange("conditionBreach")} className="accent-teal" />
                             {opt.label}
                           </label>
                         ))}
@@ -652,7 +668,7 @@ export default function SearchResultPage() {
                     </Field>
                     {form.conditionBreach === "yes" && (
                       <Field label="සිදු වී ඇත්නම් ඒ පිළිබඳ විස්තර">
-                        <div className={inputClass}>{form.conditionBreachDetails}</div>
+                        <input type="text" className={inputClass} value={form.conditionBreachDetails} onChange={handleChange("conditionBreachDetails")} />
                       </Field>
                     )}
                   </div>
@@ -661,7 +677,7 @@ export default function SearchResultPage() {
                     <div className="flex gap-4 pt-1">
                       {yesNo.map((opt) => (
                         <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                          <input type="radio" name="ownershipComplaint" value={opt.value} checked={form.ownershipComplaint === opt.value} readOnly disabled className="accent-teal" />
+                          <input type="radio" name="ownershipComplaint" value={opt.value} checked={form.ownershipComplaint === opt.value} onChange={handleChange("ownershipComplaint")} className="accent-teal" />
                           {opt.label}
                         </label>
                       ))}
@@ -669,7 +685,7 @@ export default function SearchResultPage() {
                   </Field>
                   {form.ownershipComplaint === "yes" && (
                     <Field label="ලැබී ඇත්නම් ඒ පිළිබඳ විස්තර">
-                      <div className={inputClass}>{form.complaintDetails}</div>
+                      <input type="text" className={inputClass} value={form.complaintDetails} onChange={handleChange("complaintDetails")} />
                     </Field>
                   )}
                 </div>
@@ -683,10 +699,10 @@ export default function SearchResultPage() {
               </h3>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="පතල් කැපීමට යෝජිත ගැඹුර ප්‍රමාණය (පොළොව මතුපිට සිට අඩි)">
-                  <div className={inputClass}>{form.proposedDepth}</div>
+                  <input type="number" className={inputClass} value={form.proposedDepth} onChange={handleChange("proposedDepth")} />
                 </Field>
                 <Field label="ඉඩමේ වගාව">
-                  <div className={inputClass}>{form.landCultivation}</div>
+                  <input type="text" className={inputClass} value={form.landCultivation} onChange={handleChange("landCultivation")} />
                 </Field>
               </div>
 
@@ -706,17 +722,17 @@ export default function SearchResultPage() {
                   { field: "boundaryOther", label: "වෙනත්" },
                 ].map(({ field, label }) => (
                   <Field key={field} label={label}>
-                    <div className={inputClass}>{form[field]}</div>
+                    <input type="text" className={inputClass} value={form[field]} onChange={handleChange(field)} />
                   </Field>
                 ))}
               </div>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="කැපීමට අදහස් කරන පතල් ප්‍රමාණය (ව.අ.)">
-                  <div className={inputClass}>{form.proposedExtent}</div>
+                  <input type="text" className={inputClass} value={form.proposedExtent} onChange={handleChange("proposedExtent")} />
                 </Field>
                 <Field label="ඇප මුදල් සේවා ගාස්තුව">
-                  <div className={inputClass}>{form.refundServiceFee}</div>
+                  <input type="text" className={inputClass} placeholder="NGJA/16.2/2018/Backhoe III චක්‍රලේඛය ප්‍රකාරව" value={form.refundServiceFee} onChange={handleChange("refundServiceFee")} />
                 </Field>
               </div>
             </section>
@@ -728,25 +744,25 @@ export default function SearchResultPage() {
               </h3>
               <p className="font-sinhala text-sm leading-8 text-ink">
                 කෑණීම් ඉංජිනේරු නිර්දේශයන්ට (NGJA/16.2/Backhoe/MER/
-                <span className={inlineInputClass}>{form.ngjaRefNumber}</span>
+                <input type="text" className={inlineInputClass} value={form.ngjaRefNumber} onChange={handleChange("ngjaRefNumber")} />
                 ) යටත්ව වරකට උපරිමය ව.අ
-                <span className={inlineInputClass}>{form.maxExtentVA}</span>
+                <input type="number" step="0.01" className={inlineInputClass} value={form.maxExtentVA} onChange={handleChange("maxExtentVA")} />
                 ක් දක්වා පතසක් කෑණීම සිදුකිරීම සඳහා උපරිමය PC
-                <span className={inlineInputClass}>{form.maxPcCount}</span>
+                <input type="text" inputMode="numeric" className={inlineInputClass} value={form.maxPcCount} onChange={handleChange("maxPcCount")} />
                 ක් දක්වා වන බැකෝ යන්ත්‍ර
-                <span className={inlineInputClass}>{form.backhoeCount}</span>
+                <input type="text" inputMode="numeric" className={inlineInputClass} value={form.backhoeCount} onChange={handleChange("backhoeCount")} />
                 ක් යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
-                <span className={inlineInputClass}>{form.gerumCount}</span>
+                <input type="text" inputMode="numeric" className={inlineInputClass} value={form.gerumCount} onChange={handleChange("gerumCount")} />
                 ක් යොදා ගැනීමටත් ඇදුම් යන්ත්‍ර
-                <span className={inlineInputClass}>{form.adumMachineCount}</span>
+                <input type="text" inputMode="numeric" className={inlineInputClass} value={form.adumMachineCount} onChange={handleChange("adumMachineCount")} />
                 යොදා ගැනීමටත්, රොන් මඩ වලවල් පවත්වා ගැනීමට ව.අ.
-                <span className={inlineInputClass}>{form.silageExtent}</span>
+                <input type="text" className={inlineInputClass} value={form.silageExtent} onChange={handleChange("silageExtent")} />
                 කට ඇප මුදල්
-                <span className={inlineInputClass}>{form.depositAmount}</span>
+                <input type="text" className={inlineInputClass} value={form.depositAmount} onChange={handleChange("depositAmount")} />
                 ක් තැන්පත් කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීම සඳහා
-                <span className={inlineInputClass}>{form.riverbankProtectionAmount}</span>
+                <input type="text" className={inlineInputClass} value={form.riverbankProtectionAmount} onChange={handleChange("riverbankProtectionAmount")} />
                 ක ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා
-                <span className={inlineInputClass}>{form.specialCaseAmount}</span>
+                <input type="text" className={inlineInputClass} value={form.specialCaseAmount} onChange={handleChange("specialCaseAmount")} />
                 ඇප මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා
                 ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට කාරුණික
                 අනුමැතියට ඉදිරිපත් කරමි.
@@ -755,12 +771,20 @@ export default function SearchResultPage() {
                 <p className="font-sinhala text-sm text-ink">
                   ඉහත නිර්දේශය
                 </p>
-                <div className={inputClass}>{form.directorApproval}</div>
+                <select
+                  className={`${inputClass} w-40`}
+                  value={form.directorApproval}
+                  onChange={handleChange("directorApproval")}
+                >
+                  <option value="" hidden></option>
+                  <option value="අනුමත කරමි">අනුමත කරමි</option>
+                  <option value="අනුමත නොකරමි">අනුමත නොකරමි</option>
+                </select>
               </div>
 
               <div className="mt-4 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
                 <Field label="දිනය:-" className="sm:w-48">
-                  <div className={inputClass}>{form.recommendationDate}</div>
+                  <input type="date" className={inputClass} value={form.recommendationDate} onChange={handleChange("recommendationDate")} />
                 </Field>
                 <div className="flex flex-col items-center gap-1 sm:items-end">
                   <div className="h-12 w-56 border-b border-ink" />
@@ -777,12 +801,16 @@ export default function SearchResultPage() {
               <div className="border-t border-ink" />
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-sinhala text-sm text-ink">ඉහත නිර්දේශය අනුමත</p>
-                <div className={inputClass}>{form.chairmanApproval}</div>
+                <select className={`${inputClass} w-32`} value={form.chairmanApproval} onChange={handleChange("chairmanApproval")}>
+                  <option value="" hidden></option>
+                  <option value="කරමි">කරමි</option>
+                  <option value="නොකරමි">නොකරමි</option>
+                </select>
               </div>
 
               <div className="mt-4 flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
                 <Field label="දිනය:-" className="sm:w-48">
-                  <div className={inputClass}>{form.chairmanApprovalDate}</div>
+                  <input type="date" className={inputClass} value={form.chairmanApprovalDate} onChange={handleChange("chairmanApprovalDate")} />
                 </Field>
                 <div className="flex flex-col items-center gap-1 sm:items-end">
                   <div className="h-12 w-56 border-b border-ink" />
@@ -809,8 +837,17 @@ export default function SearchResultPage() {
               >
                 {showPreview ? "පෙරදසුන සඟවන්න" : "පෙරදසුන"}
               </Button>
-              <Button type="button" variant="primary" id="edit-btn">
-                Edit
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={saving || submitSuccess}
+                id="resubmit-btn"
+              >
+                {saving
+                  ? "ඉදිරිපත් කරමින්..."
+                  : submitSuccess
+                    ? "✓ ඉදිරිපත් කෙරිණ"
+                    : "නැවත ඉදිරිපත් කරන්න"}
               </Button>
             </div>
           </form>
