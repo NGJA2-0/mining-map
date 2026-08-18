@@ -809,12 +809,7 @@ export default function SearchResultPage() {
               >
                 {showPreview ? "පෙරදසුන සඟවන්න" : "පෙරදසුන"}
               </Button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  id="edit-btn"
-                  onClick={() => navigate("/edit-record", { state: { record } })}
-                >
+              <Button type="button" variant="primary" id="edit-btn">
                 Edit
               </Button>
             </div>
