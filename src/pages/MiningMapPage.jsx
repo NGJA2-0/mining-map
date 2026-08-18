@@ -170,7 +170,7 @@ export default function MiningMapPage() {
     <div className="min-h-screen bg-base text-ink">
       {/* header */}
       <header className="border-b border-line">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-8">
+        <div className="flex items-center justify-between px-4 py-4 sm:px-6">
           <button
             onClick={() => navigate("/dashboard")}
             style={{
@@ -188,72 +188,70 @@ export default function MiningMapPage() {
         </div>
       </header>
 
-      {/* filter bar */}
-      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-8">
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
-          <select
-            value={district}
-            onChange={(e) => { setDistrict(e.target.value); setVillage(""); }}
-            style={inputStyle}
-          >
-            <option value="">All districts</option>
-            {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-
-          <select
-            value={regionalOffice}
-            onChange={(e) => setRegionalOffice(e.target.value)}
-            style={inputStyle}
-          >
-            <option value="">All regional offices</option>
-            {regionalOfficeOptions.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-
-          <input
-            type="text"
-            placeholder="Search TIN / NIC / GML / land name"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            style={{ ...inputStyle, flex: "1 1 220px", minWidth: "200px" }}
-          />
-
-          <Button variant="primary" size="md" onClick={handleSearch} disabled={loading}>
-            {loading ? "Searching…" : "Search"}
-          </Button>
-          <Button className="!text-ink" variant="secondary" size="md" onClick={handleClear} disabled={loading}>
-            Clear
-          </Button>
-          <Button
-            variant="secondary"
-            className="!text-ink"
-            size="md"
-            onClick={() => setMapView((v) => (v === "street" ? "satellite" : "street"))}
-          >
-            {mapView === "street" ? "Satellite view" : "Street view"}
-          </Button>
-        </div>
-
-        {error && (
-          <p style={{ marginTop: "10px", fontSize: "13px", color: "#dc2626" }}>{error}</p>
-        )}
-        {!loading && !error && (
-          <p style={{ marginTop: "10px", fontSize: "12px", color: "var(--color-ink-muted, #6b7280)" }}>
-            {mines.length} mine{mines.length !== 1 ? "s" : ""} shown
-          </p>
-        )}
-      </div>
-
-      {/* map + list */}
+            {/* map + list */}
       <div
-        className="mx-auto max-w-6xl px-4 pb-10 sm:px-8"
-        style={{ display: "flex", gap: "16px", flexWrap: "wrap-reverse" }}
+        className="px-4 pb-0 pt-4 sm:px-6"
+        style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}
       >
         {/* list panel */}
         <div style={{
-          flex: "1 1 280px", maxWidth: "340px", maxHeight: "70vh", overflowY: "auto",
+          flex: "1 1 280px", maxWidth: "420px", maxHeight: "calc(100vh - 96px)", overflowY: "auto",
           display: "flex", flexDirection: "column", gap: "8px",
         }}>
+          {/* filter bar */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
+            <select
+              value={district}
+              onChange={(e) => { setDistrict(e.target.value); setVillage(""); }}
+              style={inputStyle}
+            >
+              <option value="">All districts</option>
+              {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+
+            <select
+              value={regionalOffice}
+              onChange={(e) => setRegionalOffice(e.target.value)}
+              style={inputStyle}
+            >
+              <option value="">All regional offices</option>
+              {regionalOfficeOptions.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+
+            <input
+              type="text"
+              placeholder="Search TIN / NIC / GML / land name"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              style={{ ...inputStyle, width: "100%" }}
+            />
+
+            <Button variant="primary" size="md" onClick={handleSearch} disabled={loading}>
+              {loading ? "Searching…" : "Search"}
+            </Button>
+            <Button className="!text-ink" variant="secondary" size="md" onClick={handleClear} disabled={loading}>
+              Clear
+            </Button>
+            <Button
+              variant="secondary"
+              className="!text-ink"
+              size="md"
+              onClick={() => setMapView((v) => (v === "street" ? "satellite" : "street"))}
+            >
+              {mapView === "street" ? "Satellite view" : "Street view"}
+            </Button>
+          </div>
+
+          {error && (
+            <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>
+          )}
+          {!loading && !error && (
+            <p style={{ fontSize: "12px", color: "var(--color-ink-muted, #6b7280)" }}>
+              {mines.length} mine{mines.length !== 1 ? "s" : ""} shown
+            </p>
+          )}
+
           {mines.map((mine) => (
             <MineListItem
               key={mine.id || mine._id}
@@ -270,7 +268,7 @@ export default function MiningMapPage() {
         </div>
 
         {/* map */}
-        <div style={{ flex: "2 1 480px", minWidth: "300px", height: "70vh", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--color-line, #e5e7eb)" }}>
+        <div style={{ flex: "2 1 480px", minWidth: "300px", height: "calc(100vh - 96px)", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--color-line, #e5e7eb)" }}>
           <MapContainer center={SRI_LANKA_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
             {mapView === "street" ? (
               <TileLayer

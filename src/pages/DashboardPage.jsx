@@ -10,10 +10,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 /* ─────────────────────────── helpers ─────────────────────────── */
 
 const STATUS_CFG = {
-  draft:     { label: "Draft",     bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
-  submitted: { label: "Submitted", bg: "rgba(59,130,246,0.12)",  color: "#2563eb" },
-  approved:  { label: "Approved",  bg: "rgba(16,185,129,0.12)",  color: "#059669" },
-  rejected:  { label: "Rejected",  bg: "rgba(220,38,38,0.12)",   color: "#dc2626" },
+  draft: { label: "Draft", bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
+  submitted: { label: "Submitted", bg: "rgba(59,130,246,0.12)", color: "#2563eb" },
+  approved: { label: "Approved", bg: "rgba(16,185,129,0.12)", color: "#059669" },
+  rejected: { label: "Rejected", bg: "rgba(220,38,38,0.12)", color: "#dc2626" },
 };
 
 function StatusBadge({ status }) {
@@ -35,8 +35,8 @@ function StatusBadge({ status }) {
 function ResultCard({ record, onClick }) {
   const date = record.createdAt
     ? new Date(record.createdAt).toLocaleDateString("en-GB", {
-        day: "2-digit", month: "short", year: "numeric",
-      })
+      day: "2-digit", month: "short", year: "numeric",
+    })
     : "—";
 
   const statusColor =
@@ -80,12 +80,12 @@ function ResultCard({ record, onClick }) {
       {/* Meta pills */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
         {[
-          { key: "TIN",      val: record.tin },
-          { key: "GML",      val: record.gmlNumber },
-          { key: "NIC",      val: record.nic },
+          { key: "TIN", val: record.tin },
+          { key: "GML", val: record.gmlNumber },
+          { key: "NIC", val: record.nic },
           { key: "District", val: record.district },
-          { key: "Village",  val: record.village },
-          { key: "Land",     val: record.landName },
+          { key: "Village", val: record.village },
+          { key: "Land", val: record.landName },
         ].filter(f => f.val).map(({ key, val }) => (
           <span key={key} style={{
             display: "inline-flex", alignItems: "center", gap: "5px",
@@ -108,7 +108,7 @@ function ResultCard({ record, onClick }) {
           display: "flex", alignItems: "center", gap: "4px",
         }}>
           View &amp; edit
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
         </span>
       </div>
     </button>
@@ -162,7 +162,7 @@ function Pagination({ page, totalPages, onPage }) {
         onClick={() => onPage(page - 1)}
         aria-label="Previous page"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
       </button>
 
       {pages.map((p, i) => p === "…" ? (
@@ -189,7 +189,7 @@ function Pagination({ page, totalPages, onPage }) {
         onClick={() => onPage(page + 1)}
         aria-label="Next page"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
       </button>
     </div>
   );
@@ -306,7 +306,7 @@ export default function DashboardPage() {
 
       {/* ── header ── */}
       <header className="border-b border-line">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-8">
+        <div className="flex items-center justify-between px-4 py-5">
           <div className="flex items-center gap-3">
             <img
               src="/logo.jpg"
@@ -389,7 +389,7 @@ export default function DashboardPage() {
       </header>
 
       {/* ── main ── */}
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-8">
+      <main className="px-4 py-10">
         {/* Top action row */}
         <div className="mb-2 flex justify-center sm:justify-end">
           <Button
@@ -402,14 +402,18 @@ export default function DashboardPage() {
         </div>
 
         {/* Hero card */}
-        <div className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 sm:p-10">
+        <div
+          className="relative mx-auto w-full overflow-hidden rounded-2xl border border-line bg-surface p-8 sm:p-12 lg:w-1/2"
+          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
+        >
           <TopoBackground className="text-teal/15" />
+
           <div className="relative z-10 flex flex-col items-start gap-4">
-            <p className="font-mono text-xs uppercase tracking-widest text-ink-muted">
+            <p className="font-mono text-xs uppercase tracking-widest text-ink-muted" style={{ opacity: 0.75 }}>
               Signed in as {user?.name}
             </p>
-            <h2 className="font-display text-2xl font-semibold sm:text-3xl">
-              Site records
+            <h2 className="font-display text-3xl font-bold sm:text-4xl" style={{ letterSpacing: "-0.02em" }}>
+              Site Records
             </h2>
             <p className="max-w-md text-sm text-ink-muted">
               Search for an existing record by TIN number, or log a new survey entry.
@@ -449,15 +453,28 @@ export default function DashboardPage() {
                 {loading ? "Searching…" : "Search"}
               </Button>
 
-              <Button
-                variant="secondary"
-                size="md"
-                className="w-full sm:w-auto !text-ink"
-                onClick={() => navigate("/dashboard/map")}
-              >
-                View map
-              </Button>
             </div>
+            <button
+              onClick={() => navigate("/dashboard/map")}
+              style={{
+                position: "absolute", top: "20px", right: "20px", zIndex: 20,
+                display: "inline-flex", alignItems: "center", gap: "6px",
+                padding: "8px 16px", borderRadius: "999px",
+                background: "var(--color-ink, #1a1a1a)", color: "#fff",
+                fontSize: "12px", fontWeight: "700", letterSpacing: "0.03em",
+                border: "none", cursor: "pointer", fontFamily: "inherit",
+                transition: "transform 0.15s, opacity 0.15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.opacity = "0.9"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.opacity = "1"; }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+                <line x1="8" y1="2" x2="8" y2="18" />
+                <line x1="16" y1="6" x2="16" y2="22" />
+              </svg>
+              View map
+            </button>
           </div>
         </div>
 
@@ -524,7 +541,7 @@ export default function DashboardPage() {
                   background: "rgba(220,38,38,0.10)", display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
                 </div>
                 <p style={{ fontWeight: "600", color: "var(--color-ink, #1a1a1a)", margin: 0 }}>Failed to load results</p>
@@ -564,7 +581,7 @@ export default function DashboardPage() {
                   alignItems: "center", justifyContent: "center",
                 }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
                 </div>
                 <div>
