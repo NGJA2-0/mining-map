@@ -369,16 +369,37 @@ export default function SearchResultPage() {
               </div>
             ))}
           </div>
-          <span style={{
-            display: "inline-flex", alignItems: "center",
-            padding: "4px 12px", borderRadius: "999px",
-            fontSize: "11px", fontWeight: "700",
-            letterSpacing: "0.07em", textTransform: "uppercase",
-            background: statusCfg.bg, color: statusCfg.color,
-            border: `1px solid ${statusCfg.color}22`,
-          }}>
-            {statusCfg.label}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => {
+                // TODO: wire up extend-record action
+              }}
+              style={{
+                display: "inline-flex", alignItems: "center",
+                padding: "6px 14px", borderRadius: "999px",
+                fontSize: "12px", fontWeight: "600",
+                color: "var(--color-teal)", background: "transparent",
+                border: "1px solid var(--color-teal)",
+                cursor: "pointer", whiteSpace: "nowrap",
+                transition: "background 0.15s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(13,148,136,0.08)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              Extend Record
+            </button>
+            <span style={{
+              display: "inline-flex", alignItems: "center",
+              padding: "4px 12px", borderRadius: "999px",
+              fontSize: "11px", fontWeight: "700",
+              letterSpacing: "0.07em", textTransform: "uppercase",
+              background: statusCfg.bg, color: statusCfg.color,
+              border: `1px solid ${statusCfg.color}22`,
+            }}>
+              {statusCfg.label}
+            </span>
+          </div>
         </div>
 
         {/* ── success banner ── */}
