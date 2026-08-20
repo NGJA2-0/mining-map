@@ -289,7 +289,7 @@ export default function ExtendRecordPage() {
       delete payload.writtenEvidenceAttachment;
       delete payload.affidavitAttachment;
 
-      const res = await fetch(`${BASE_URL}/api/mining-licenses`, {
+      const res = await fetch(`${BASE_URL}/api/extend-mining-licenses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
