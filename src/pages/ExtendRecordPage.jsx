@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import A4PreviewSheet from "../components/common/A4PreviewSheet";
+import ExtendRecordPreviewSheet from "../components/common/ExtendRecordPreviewSheet";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import TopoBackground from "../components/common/TopoBackground";
@@ -1164,7 +1164,7 @@ export default function ExtendRecordPage() {
                   මුද්‍රණය කරන්න / PDF බාගන්න
                 </Button>
               </div>
-              <A4PreviewSheet form={form} />
+              <ExtendRecordPreviewSheet form={form} />
             </div>
           )}
         </div>
