@@ -123,14 +123,10 @@ export default function A4PreviewSheet({ form, isResubmit = false }) {
                 <p className="a4-paragraph">
                     කෑණීම් ඉංජිනේරු නිර්දේශයන්ට (NGJA/16.2/Backhoe/MER/{blank(form.ngjaRefNumber)}) යටත්ව
                     වරකට උපරිමය ව.අ {blank(form.maxExtentVA)} ක් දක්වා පතසක් කෑණීම සිදුකිරීම සඳහා
-                    උපරිමය PC {blank(form.maxPcCount)} ක් දක්වා වන බැකෝ යන්ත්‍ර {blank(form.backhoeCount)} ක්
+                    උපරිමය PC {blank(form.maxPcCount)} ක් දක්වා වන බැකෝ යන්ත්‍ර {blank(form.backhoeCount)} ක් දක්වා
                     යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර {blank(form.gerumCount)} ක් යොදා ගැනීමටත්
-                    ඇදුම් යන්ත්‍ර {blank(form.adumMachineCount)} යොදා ගැනීමටත්, රොන් මඩ වලවල් පවත්වා
-                    ගැනීමට ව.අ. {blank(form.silageExtent)} කට ඇප මුදල් {blank(form.depositAmount)} ක් තැන්පත්
-                    කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීම සඳහා {blank(form.riverbankProtectionAmount)} ක
-                    ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා {blank(form.specialCaseAmount)} ඇප
-                    මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා ගැනීමටත් අවසර ලබා දීම සුදුසු බවට
-                    නිර්දේශ කොට කාරුණික අනුමැතියට ඉදිරිපත් කරමි.
+                    අවශ්‍ය පරිදි ජල පොම්ප යොදා ගැනීමටත් අවසර ලබා දීම සුදුසු බවට
+                    නිර්දේශ කොට තාක්ෂණික අනුමැතියට ඉදිරිපත් කරමි.
                 </p>
             </div>
 
