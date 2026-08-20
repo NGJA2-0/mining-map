@@ -306,12 +306,12 @@ export default function DashboardPage() {
 
       {/* ── header ── */}
       <header className="border-b border-line">
-        <div className="flex items-center justify-between px-4 py-5">
+        <div className="flex items-center justify-between px-6 py-5 sm:px-10 lg:px-16">
           <div className="flex items-center gap-3">
             <img
               src="/logo.jpg"
               alt="Mining Map logo"
-              className="h-8 w-8 rounded-md object-cover sm:h-9 sm:w-9"
+              className="h-10 w-10 rounded-md object-cover sm:h-12 sm:w-12"
             />
             <h1 className="font-display text-xl font-semibold sm:text-2xl">
               Mining Map
@@ -319,162 +319,167 @@ export default function DashboardPage() {
           </div>
 
           {/* Profile avatar + dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              id="profile-menu-button"
-              aria-label="Open profile menu"
-              aria-expanded={profileOpen}
-              aria-haspopup="true"
-              onClick={() => setProfileOpen((prev) => !prev)}
-              style={{
-                width: "36px", height: "36px", borderRadius: "50%",
-                background: "var(--color-copper, #b85a29)", color: "#fff",
-                border: "none", cursor: "pointer", fontSize: "13px",
-                fontWeight: "700", display: "flex", alignItems: "center",
-                justifyContent: "center", letterSpacing: "0.05em",
-                fontFamily: "inherit", transition: "opacity 0.15s", flexShrink: 0,
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
-              {initials}
-            </button>
-
-            {profileOpen && (
-              <div
-                role="menu"
-                aria-labelledby="profile-menu-button"
+          <div className="flex items-center gap-3">
+            <div className="relative" ref={dropdownRef}>
+              <button
+                id="profile-menu-button"
+                aria-label="Open profile menu"
+                aria-expanded={profileOpen}
+                aria-haspopup="true"
+                onClick={() => setProfileOpen((prev) => !prev)}
                 style={{
-                  position: "absolute", top: "calc(100% + 10px)", right: 0,
-                  minWidth: "220px", background: "var(--color-surface, #fff)",
-                  border: "1px solid var(--color-line, #e5e7eb)", borderRadius: "10px",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 100,
-                  overflow: "hidden", animation: "dropdownIn 150ms ease-out",
+                  width: "46px", height: "46px", borderRadius: "50%",
+                  background: "var(--color-copper, #b85a29)", color: "#fff",
+                  border: "none", cursor: "pointer",
+                  display: "flex", alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "inherit", transition: "opacity 0.15s", flexShrink: 0,
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
               >
-                <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid var(--color-line, #e5e7eb)" }}>
-                  <p style={{ margin: 0, fontWeight: "700", fontSize: "14px", color: "var(--color-ink, #1a1a1a)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {user?.name}
-                  </p>
-                  <p style={{ margin: "3px 0 0", fontSize: "11px", fontFamily: "monospace", color: "var(--color-ink-muted, #6b7280)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    NIC: {user?.nic}
-                  </p>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </button>
+
+              {profileOpen && (
+                <div
+                  role="menu"
+                  aria-labelledby="profile-menu-button"
+                  style={{
+                    position: "absolute", top: "calc(100% + 10px)", right: 0,
+                    minWidth: "220px", background: "var(--color-surface, #fff)",
+                    border: "1px solid var(--color-line, #e5e7eb)", borderRadius: "10px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 100,
+                    overflow: "hidden", animation: "dropdownIn 150ms ease-out",
+                  }}
+                >
+                  <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid var(--color-line, #e5e7eb)" }}>
+                    <p style={{ margin: 0, fontWeight: "700", fontSize: "14px", color: "var(--color-ink, #1a1a1a)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {user?.name}
+                    </p>
+                    <p style={{ margin: "3px 0 0", fontSize: "11px", fontFamily: "monospace", color: "var(--color-ink-muted, #6b7280)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                      NIC: {user?.nic}
+                    </p>
+                  </div>
+                  <div style={{ padding: "8px" }}>
+                    <button
+                      role="menuitem"
+                      onClick={handleSignOutRequest}
+                      style={{
+                        width: "100%", padding: "9px 10px", background: "transparent",
+                        border: "none", borderRadius: "6px", cursor: "pointer",
+                        fontSize: "13px", fontWeight: "600", color: "#dc2626",
+                        textAlign: "left", display: "flex", alignItems: "center", gap: "8px",
+                        transition: "background 0.12s", fontFamily: "inherit",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(220,38,38,0.07)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                      </svg>
+                      Sign out
+                    </button>
+                  </div>
                 </div>
-                <div style={{ padding: "8px" }}>
-                  <button
-                    role="menuitem"
-                    onClick={handleSignOutRequest}
-                    style={{
-                      width: "100%", padding: "9px 10px", background: "transparent",
-                      border: "none", borderRadius: "6px", cursor: "pointer",
-                      fontSize: "13px", fontWeight: "600", color: "#dc2626",
-                      textAlign: "left", display: "flex", alignItems: "center", gap: "8px",
-                      transition: "background 0.12s", fontFamily: "inherit",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(220,38,38,0.07)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                      <polyline points="16 17 21 12 16 7" />
-                      <line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
-                    Sign out
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </header>
 
       {/* ── main ── */}
       <main className="px-4 py-10">
-        {/* Top action row */}
-        <div className="mb-2 flex justify-center sm:justify-end">
-          <Button
-            onClick={() => setOpen(true)}
-            size="md"
-            className="w-full sm:w-auto !text-ink"
-          >
-            Add / Update record
-          </Button>
-        </div>
 
-        {/* Hero card */}
-        <div
-          className="relative mx-auto w-full overflow-hidden rounded-2xl border border-line bg-surface p-8 sm:p-12 lg:w-1/2"
-          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
-        >
-          <TopoBackground className="text-teal/15" />
-
-          <div className="relative z-10 flex flex-col items-start gap-4">
-            <p className="font-mono text-xs uppercase tracking-widest text-ink-muted" style={{ opacity: 0.75 }}>
-              Signed in as {user?.name}
-            </p>
-            <h2 className="font-display text-3xl font-bold sm:text-4xl" style={{ letterSpacing: "-0.02em" }}>
-              Site Records
-            </h2>
-            <p className="max-w-md text-sm text-ink-muted">
-              Search for an existing record by TIN number, or log a new survey entry.
-            </p>
-
-            {/* Search row */}
-            <div className="mt-2 flex w-full flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1 sm:max-w-sm">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  id="tin-search-input"
-                  type="text"
-                  placeholder="Search by TIN number"
-                  value={tinInput}
-                  onChange={(e) => setTinInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full rounded-md border border-line bg-base py-2.5 pl-10 pr-4 font-mono text-sm text-ink placeholder:font-sans placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
-                />
-              </div>
-
-              <Button
-                id="tin-search-btn"
-                variant="primary"
-                size="md"
-                className="w-full sm:w-auto"
-                onClick={handleSearch}
-                disabled={loading}
-              >
-                {loading ? "Searching…" : "Search"}
-              </Button>
-
-            </div>
-            <button
-              onClick={() => navigate("/dashboard/map")}
-              style={{
-                position: "absolute", top: "20px", right: "20px", zIndex: 20,
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                padding: "8px 16px", borderRadius: "999px",
-                background: "var(--color-ink, #1a1a1a)", color: "#fff",
-                fontSize: "12px", fontWeight: "700", letterSpacing: "0.03em",
-                border: "none", cursor: "pointer", fontFamily: "inherit",
-                transition: "transform 0.15s, opacity 0.15s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.opacity = "0.9"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.opacity = "1"; }}
+        {/* Hero card wrapper */}
+        <div className="relative mx-auto w-full lg:w-1/2">
+          <div className="mb-3 flex justify-end">
+            <Button
+              onClick={() => setOpen(true)}
+              size="md"
+              className="!text-ink"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-                <line x1="8" y1="2" x2="8" y2="18" />
-                <line x1="16" y1="6" x2="16" y2="22" />
-              </svg>
-              View map
-            </button>
+              Add / Update record
+            </Button>
+          </div>
+
+          <div
+            className="relative w-full overflow-hidden rounded-2xl border border-line bg-surface p-8 sm:p-12"
+            style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
+          >
+            <TopoBackground className="text-teal/15" />
+
+            <div className="relative z-10 flex flex-col items-start gap-4">
+
+              <h2 className="font-display text-3xl font-bold sm:text-4xl" style={{ letterSpacing: "-0.02em" }}>
+                Site Records
+              </h2>
+              <p className="max-w-md text-sm text-ink-muted">
+                Search for an existing record by TIN number, or log a new survey entry.
+              </p>
+
+              {/* Search row */}
+              <div className="mt-2 flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="relative flex-1 sm:max-w-sm">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    id="tin-search-input"
+                    type="text"
+                    placeholder="Search by TIN number"
+                    value={tinInput}
+                    onChange={(e) => setTinInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    className="w-full rounded-md border border-line bg-base py-2.5 pl-10 pr-4 font-mono text-sm text-ink placeholder:font-sans placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
+                  />
+                </div>
+
+                <Button
+                  id="tin-search-btn"
+                  variant="primary"
+                  size="md"
+                  className="w-full sm:w-auto"
+                  onClick={handleSearch}
+                  disabled={loading}
+                >
+                  {loading ? "Searching…" : "Search"}
+                </Button>
+
+              </div>
+              <button
+                onClick={() => navigate("/dashboard/map")}
+                style={{
+                  position: "absolute", top: "20px", right: "20px", zIndex: 20,
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  padding: "8px 16px", borderRadius: "999px",
+                  background: "var(--color-ink, #1a1a1a)", color: "#fff",
+                  fontSize: "12px", fontWeight: "700", letterSpacing: "0.03em",
+                  border: "none", cursor: "pointer", fontFamily: "inherit",
+                  transition: "transform 0.15s, opacity 0.15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.opacity = "0.9"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.opacity = "1"; }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+                  <line x1="8" y1="2" x2="8" y2="18" />
+                  <line x1="16" y1="6" x2="16" y2="22" />
+                </svg>
+                View map
+              </button>
+            </div>
           </div>
         </div>
 
