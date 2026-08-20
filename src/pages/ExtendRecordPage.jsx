@@ -1012,7 +1012,7 @@ export default function ExtendRecordPage() {
                   value={form.backhoeCount}
                   onChange={handleChange("backhoeCount")}
                 />
-                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
+                                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
                 <input
                   type="text"
                   inputMode="numeric"
@@ -1020,7 +1020,43 @@ export default function ExtendRecordPage() {
                   value={form.gerumCount}
                   onChange={handleChange("gerumCount")}
                 />
-                ක් යොදා ගැනීමටත් අවශ්‍ය පරිදි ජල පොම්ප යොදා ගැනීමටත් අවසර ලබා දීම සුදුසු බවට
+                ක් යොදා ගැනීමටත් ඇදුම් යන්ත්‍ර
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={inlineInputClass}
+                  value={form.adumMachineCount}
+                  onChange={handleChange("adumMachineCount")}
+                />
+                යොදා ගැනීමටත්, රොන් මඩ වලවල් පවත්වා ගැනීමට ව.අ.
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.silageExtent}
+                  onChange={handleChange("silageExtent")}
+                />
+                කට ඇප මුදල්
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.depositAmount}
+                  onChange={handleChange("depositAmount")}
+                />
+                ක් තැන්පත් කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීම සඳහා
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.riverbankProtectionAmount}
+                  onChange={handleChange("riverbankProtectionAmount")}
+                />
+                ක ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.specialCaseAmount}
+                  onChange={handleChange("specialCaseAmount")}
+                />
+                ඇප මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා ගැනීමටත් අවසර ලබා දීම සුදුසු බවට
                 නිර්දේශ කොට තාක්ෂණික අනුමැතියට ඉදිරිපත් කරමි.
               </p>
 
