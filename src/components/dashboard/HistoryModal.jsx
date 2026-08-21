@@ -269,17 +269,35 @@ export default function HistoryModal({
           borderBottom: "1px solid var(--color-line, #e5e7eb)",
           flexShrink: 0,
         }}>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: "11px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
-              REF · {referenceNumber}
-            </p>
-            <h3 style={{ margin: "4px 0 0", fontWeight: "700", fontSize: "18px", color: "var(--color-ink, #1a1a1a)" }}>
-              {loading
-                ? "Loading history…"
-                : error
-                  ? "History error"
-                  : `${total} entr${total !== 1 ? "ies" : "y"}`}
-            </h3>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", minWidth: 0 }}>
+            <button
+              onClick={onClose}
+              aria-label="Back to search results"
+              style={{
+                width: "30px", height: "30px", borderRadius: "8px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "var(--color-base, #f9fafb)", border: "1px solid var(--color-line, #e5e7eb)",
+                cursor: "pointer", flexShrink: 0, color: "var(--color-ink, #1a1a1a)",
+                marginTop: "1px",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: "11px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
+                REF · {referenceNumber}
+              </p>
+              <h3 style={{ margin: "4px 0 0", fontWeight: "700", fontSize: "18px", color: "var(--color-ink, #1a1a1a)" }}>
+                {loading
+                  ? "Loading history…"
+                  : error
+                    ? "History error"
+                    : `${total} entr${total !== 1 ? "ies" : "y"}`}
+              </h3>
+            </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
