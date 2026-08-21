@@ -13,6 +13,26 @@ function formatDateTime(iso) {
 
 /* ─────────────────────────── sub components ─────────────────────────── */
 
+function SaleTypeBadge({ privateSaleValue }) {
+  const isNew = privateSaleValue === null || privateSaleValue === undefined;
+  const label = isNew ? "New" : "Extended";
+  const bg = isNew ? "rgba(37,99,235,0.12)" : "rgba(217,119,6,0.12)";
+  const color = isNew ? "#2563eb" : "#d97706";
+
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      padding: "2px 10px", borderRadius: "999px",
+      fontSize: "10px", fontWeight: "700",
+      letterSpacing: "0.07em", textTransform: "uppercase",
+      background: bg, color: color,
+      border: `1px solid ${color}22`,
+    }}>
+      {label}
+    </span>
+  );
+}
+
 function HistoryCard({ record }) {
   return (
     <div
@@ -31,16 +51,19 @@ function HistoryCard({ record }) {
         <span style={{ fontWeight: "700", fontSize: "15px", color: "var(--color-ink, #1a1a1a)" }}>
           {record.applicantName || "—"}
         </span>
-        <span style={{
-          display: "inline-flex", alignItems: "center", gap: "5px",
-          padding: "3px 10px", borderRadius: "6px",
-          background: "var(--color-base, #f9fafb)",
-          border: "1px solid var(--color-line, #e5e7eb)",
-          fontSize: "11px", fontFamily: "monospace", fontWeight: "700",
-          color: "var(--color-teal, #0d9488)",
-        }}>
-          {record.referenceNumber}
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <SaleTypeBadge privateSaleValue={record.privateSaleValue} />
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: "5px",
+            padding: "3px 10px", borderRadius: "6px",
+            background: "var(--color-base, #f9fafb)",
+            border: "1px solid var(--color-line, #e5e7eb)",
+            fontSize: "11px", fontFamily: "monospace", fontWeight: "700",
+            color: "var(--color-teal, #0d9488)",
+          }}>
+            {record.referenceNumber}
+          </span>
+        </div>
       </div>
 
       {/* Meta grid */}
