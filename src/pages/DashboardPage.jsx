@@ -6,6 +6,7 @@ import Button from "../components/common/Button";
 import Modal from "../components/common/Modal";
 import SearchResultsModal from "../components/dashboard/SearchResultsModal";
 import HistoryModal from "../components/dashboard/HistoryModal";
+import RecordPreviewModal from "../components/dashboard/RecordPreviewModal";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -41,6 +42,13 @@ export default function DashboardPage() {
   const [historyPageSize, setHistoryPageSize] = useState(10);
   const [historyTotalPages, setHistoryTotalPages] = useState(1);
   const [historyTotal, setHistoryTotal] = useState(0);
+
+  // ── record detail (view) state ──
+  const [recordDetailOpen, setRecordDetailOpen] = useState(false);
+  const [recordDetailLoading, setRecordDetailLoading] = useState(false);
+  const [recordDetailError, setRecordDetailError] = useState("");
+  const [recordDetailData, setRecordDetailData] = useState(null);
+  const [recordDetailId, setRecordDetailId] = useState(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -115,13 +123,43 @@ export default function DashboardPage() {
     }
   }, [token]);
 
-  // Re-fetch history when its page / pageSize changes
+    // Re-fetch history when its page / pageSize changes
   useEffect(() => {
     if (historyOpen && historyRef) {
       fetchHistory(historyRef, historyPage, historyPageSize);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyPage, historyPageSize]);
+
+  // ── record detail fetch helper ──
+  const fetchRecordDetail = useCallback(async (id) => {
+    if (!id) return;
+    setRecordDetailLoading(true);
+    setRecordDetailError("");
+    try {
+      const url = `${BASE_URL}/api/mining-licenses/${encodeURIComponent(id)}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.message || `Error ${res.status}`);
+      }
+      const json = await res.json();
+      setRecordDetailData(json.data || null);
+    } catch (err) {
+      setRecordDetailError(err.message || "Something went wrong. Please try again.");
+      setRecordDetailData(null);
+    } finally {
+      setRecordDetailLoading(false);
+    }
+  }, [token]);
+
+  const handleSelectHistoryRecord = (id) => {
+    setRecordDetailId(id);
+    setRecordDetailOpen(true);
+    fetchRecordDetail(id);
+  };
 
   const handleSearch = () => {
     const tin = tinInput.trim();
@@ -382,6 +420,18 @@ export default function DashboardPage() {
         onPageChange={(p) => setHistoryPage(p)}
         onPageSizeChange={(size) => { setHistoryPageSize(size); setHistoryPage(1); }}
         onRetry={() => fetchHistory(historyRef, historyPage, historyPageSize)}
+        onSelectRecord={handleSelectHistoryRecord}
+      />
+
+      {/* ── record detail popup ── */}
+      <RecordPreviewModal
+        open={recordDetailOpen}
+        onBack={() => setRecordDetailOpen(false)}
+        onClose={() => setRecordDetailOpen(false)}
+        loading={recordDetailLoading}
+        error={recordDetailError}
+        data={recordDetailData}
+        onRetry={() => fetchRecordDetail(recordDetailId)}
       />
 
       {/* ── Actions modal ── */}

@@ -33,9 +33,13 @@ function SaleTypeBadge({ privateSaleValue }) {
   );
 }
 
-function HistoryCard({ record }) {
+function HistoryCard({ record, onClick }) {
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick?.()}
       style={{
         width: "100%",
         background: "var(--color-surface, #fff)",
@@ -44,6 +48,16 @@ function HistoryCard({ record }) {
         borderRadius: "10px", padding: "16px 18px",
         display: "flex", flexDirection: "column", gap: "10px",
         fontFamily: "inherit",
+        cursor: "pointer",
+        transition: "box-shadow 0.18s, transform 0.12s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = "0 6px 18px -6px rgba(0,0,0,0.18)";
+        e.currentTarget.style.transform = "translateY(-1px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.transform = "translateY(0)";
       }}
     >
       {/* Top row */}
@@ -197,6 +211,7 @@ export default function HistoryModal({
   onPageChange,
   onPageSizeChange,
   onRetry,
+  onSelectRecord,
 }) {
   useEffect(() => {
     if (!open) return;
@@ -409,10 +424,14 @@ export default function HistoryModal({
           )}
 
           {/* Results list */}
-          {!loading && !error && results.length > 0 && (
+            {!loading && !error && results.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {results.map((record) => (
-                <HistoryCard key={record.id} record={record} />
+                <HistoryCard
+                  key={record.id}
+                  record={record}
+                  onClick={() => onSelectRecord(record.id)}
+                />
               ))}
             </div>
           )}
