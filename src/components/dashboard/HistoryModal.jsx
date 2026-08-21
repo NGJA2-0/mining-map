@@ -235,7 +235,7 @@ export default function HistoryModal({
         }
 
         @media (min-width: 1024px) {
-          .hm-panel-width { max-width: 700px !important; }
+          .hm-panel-width { max-width: 950px !important; }
         }
 
         @media (max-width: 640px) {
