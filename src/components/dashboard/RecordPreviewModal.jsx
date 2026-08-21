@@ -96,51 +96,23 @@ export default function RecordPreviewModal({
 
   return (
     <div
-      onClick={onClose}
-      className="rp-overlay"
+      className="rp-page"
       style={{
         position: "fixed", inset: 0, zIndex: 1200,
-        background: "rgba(17,17,20,0.5)",
-        backdropFilter: "blur(3px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "20px",
-        animation: "rpFadeIn 0.18s ease-out",
+        background: "var(--color-surface, #fff)",
+        display: "flex", flexDirection: "column",
+        animation: "rpFadeIn 0.16s ease-out",
       }}
     >
       <style>{`
         @keyframes rpFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes rpSlideUp { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        @keyframes rpSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes rpPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-        .rp-panel {
-          animation: rpSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @media (min-width: 1024px) {
-          .rp-panel-width { max-width: 900px !important; }
-        }
-
-        @media (max-width: 640px) {
-          .rp-overlay { padding: 0 !important; align-items: flex-end !important; }
-          .rp-panel {
-            width: 100% !important;
-            max-width: 100% !important;
-            max-height: 92vh !important;
-            border-radius: 16px 16px 0 0 !important;
-            animation: rpSheetUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
-          }
-        }
       `}</style>
 
       <div
-        className="rp-panel rp-panel-width"
-        onClick={(e) => e.stopPropagation()}
         style={{
-          width: "100%", maxWidth: "760px", maxHeight: "90vh",
+          width: "100%", height: "100%",
           background: "var(--color-surface, #fff)",
-          borderRadius: "16px",
-          boxShadow: "0 24px 64px -12px rgba(0,0,0,0.35)",
           display: "flex", flexDirection: "column",
           overflow: "hidden",
         }}
