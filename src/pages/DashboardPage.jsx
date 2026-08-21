@@ -4,196 +4,11 @@ import { useAuth } from "../context/AuthContext";
 import TopoBackground from "../components/common/TopoBackground";
 import Button from "../components/common/Button";
 import Modal from "../components/common/Modal";
+import SearchResultsModal from "../components/dashboard/SearchResultsModal";
+import HistoryModal from "../components/dashboard/HistoryModal";
+import RecordPreviewModal from "../components/dashboard/RecordPreviewModal";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-/* ─────────────────────────── helpers ─────────────────────────── */
-
-const STATUS_CFG = {
-  draft: { label: "Draft", bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
-  submitted: { label: "Submitted", bg: "rgba(59,130,246,0.12)", color: "#2563eb" },
-  approved: { label: "Approved", bg: "rgba(16,185,129,0.12)", color: "#059669" },
-  rejected: { label: "Rejected", bg: "rgba(220,38,38,0.12)", color: "#dc2626" },
-};
-
-function StatusBadge({ status }) {
-  const cfg = STATUS_CFG[status?.toLowerCase()] || STATUS_CFG.draft;
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center",
-      padding: "2px 10px", borderRadius: "999px",
-      fontSize: "10px", fontWeight: "700",
-      letterSpacing: "0.07em", textTransform: "uppercase",
-      background: cfg.bg, color: cfg.color,
-      border: `1px solid ${cfg.color}22`,
-    }}>
-      {cfg.label}
-    </span>
-  );
-}
-
-function ResultCard({ record, onClick }) {
-  const date = record.createdAt
-    ? new Date(record.createdAt).toLocaleDateString("en-GB", {
-      day: "2-digit", month: "short", year: "numeric",
-    })
-    : "—";
-
-  const statusColor =
-    (STATUS_CFG[record.status?.toLowerCase()] || STATUS_CFG.draft).color;
-
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: "100%", textAlign: "left", cursor: "pointer",
-        background: "var(--color-surface, #fff)",
-        border: "1px solid var(--color-line, #e5e7eb)",
-        borderLeft: `3px solid ${statusColor}`,
-        borderRadius: "10px", padding: "16px 20px",
-        display: "flex", flexDirection: "column", gap: "10px",
-        fontFamily: "inherit",
-        transition: "box-shadow 0.18s, transform 0.12s, border-color 0.18s",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.10)";
-        e.currentTarget.style.transform = "translateY(-2px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "none";
-        e.currentTarget.style.transform = "translateY(0)";
-      }}
-    >
-      {/* Top row */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-        <span style={{ fontWeight: "700", fontSize: "15px", color: "var(--color-ink, #1a1a1a)" }}>
-          {record.applicantName || "—"}
-        </span>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <StatusBadge status={record.status} />
-          <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)", fontFamily: "monospace" }}>
-            {date}
-          </span>
-        </div>
-      </div>
-
-      {/* Meta pills */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-        {[
-          { key: "TIN", val: record.tin },
-          { key: "GML", val: record.gmlNumber },
-          { key: "NIC", val: record.nic },
-          { key: "District", val: record.district },
-          { key: "Village", val: record.village },
-          { key: "Land", val: record.landName },
-        ].filter(f => f.val).map(({ key, val }) => (
-          <span key={key} style={{
-            display: "inline-flex", alignItems: "center", gap: "5px",
-            padding: "3px 10px", borderRadius: "6px",
-            background: "var(--color-base, #f9fafb)",
-            border: "1px solid var(--color-line, #e5e7eb)",
-            fontSize: "11px", color: "var(--color-ink-muted, #6b7280)",
-          }}>
-            <span style={{ fontWeight: "700", fontFamily: "monospace", color: "var(--color-ink, #1a1a1a)", fontSize: "10px" }}>{key}</span>
-            {val}
-          </span>
-        ))}
-      </div>
-
-      {/* Footer arrow */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-        <span style={{
-          fontSize: "11px", fontWeight: "600",
-          color: "var(--color-teal, #0d9488)",
-          display: "flex", alignItems: "center", gap: "4px",
-        }}>
-          View &amp; edit
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-        </span>
-      </div>
-    </button>
-  );
-}
-
-function SkeletonCard() {
-  return (
-    <div style={{
-      border: "1px solid var(--color-line, #e5e7eb)",
-      borderLeft: "3px solid var(--color-line, #e5e7eb)",
-      borderRadius: "10px", padding: "16px 20px",
-      display: "flex", flexDirection: "column", gap: "10px",
-      animation: "pulse 1.5s ease-in-out infinite",
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <div style={{ height: "16px", width: "180px", borderRadius: "4px", background: "var(--color-line, #e5e7eb)" }} />
-        <div style={{ height: "16px", width: "70px", borderRadius: "999px", background: "var(--color-line, #e5e7eb)" }} />
-      </div>
-      <div style={{ display: "flex", gap: "8px" }}>
-        {[80, 100, 120, 90].map((w, i) => (
-          <div key={i} style={{ height: "22px", width: `${w}px`, borderRadius: "6px", background: "var(--color-line, #e5e7eb)" }} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Pagination({ page, totalPages, onPage }) {
-  const pages = (() => {
-    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    if (page <= 4) return [1, 2, 3, 4, 5, "…", totalPages];
-    if (page >= totalPages - 3) return [1, "…", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-    return [1, "…", page - 1, page, page + 1, "…", totalPages];
-  })();
-
-  const btnBase = {
-    display: "inline-flex", alignItems: "center", justifyContent: "center",
-    minWidth: "32px", height: "32px", padding: "0 6px",
-    borderRadius: "6px", fontSize: "13px", fontWeight: "600",
-    border: "1px solid var(--color-line, #e5e7eb)",
-    cursor: "pointer", fontFamily: "inherit",
-    transition: "background 0.13s, border-color 0.13s, color 0.13s",
-  };
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", flexWrap: "wrap", marginTop: "20px" }}>
-      <button
-        style={{ ...btnBase, background: page === 1 ? "var(--color-line)" : "var(--color-surface)", color: page === 1 ? "var(--color-ink-muted)" : "var(--color-ink)", cursor: page === 1 ? "default" : "pointer" }}
-        disabled={page === 1}
-        onClick={() => onPage(page - 1)}
-        aria-label="Previous page"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-      </button>
-
-      {pages.map((p, i) => p === "…" ? (
-        <span key={`ellipsis-${i}`} style={{ minWidth: "32px", textAlign: "center", fontSize: "13px", color: "var(--color-ink-muted)" }}>…</span>
-      ) : (
-        <button
-          key={p}
-          style={{
-            ...btnBase,
-            background: p === page ? "var(--color-teal, #0d9488)" : "var(--color-surface)",
-            color: p === page ? "#fff" : "var(--color-ink)",
-            borderColor: p === page ? "var(--color-teal, #0d9488)" : "var(--color-line)",
-          }}
-          onClick={() => onPage(p)}
-          aria-current={p === page ? "page" : undefined}
-        >
-          {p}
-        </button>
-      ))}
-
-      <button
-        style={{ ...btnBase, background: page === totalPages ? "var(--color-line)" : "var(--color-surface)", color: page === totalPages ? "var(--color-ink-muted)" : "var(--color-ink)", cursor: page === totalPages ? "default" : "pointer" }}
-        disabled={page === totalPages}
-        onClick={() => onPage(page + 1)}
-        aria-label="Next page"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-      </button>
-    </div>
-  );
-}
 
 /* ─────────────────────────── page ─────────────────────────── */
 
@@ -216,6 +31,24 @@ export default function DashboardPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [hasSearched, setHasSearched] = useState(false);
+
+  // ── history state ──
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyRef, setHistoryRef] = useState("");
+  const [historyResults, setHistoryResults] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(10);
+  const [historyTotalPages, setHistoryTotalPages] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
+
+  // ── record detail (view) state ──
+  const [recordDetailOpen, setRecordDetailOpen] = useState(false);
+  const [recordDetailLoading, setRecordDetailLoading] = useState(false);
+  const [recordDetailError, setRecordDetailError] = useState("");
+  const [recordDetailData, setRecordDetailData] = useState(null);
+  const [recordDetailId, setRecordDetailId] = useState(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -255,13 +88,78 @@ export default function DashboardPage() {
     }
   }, [token]);
 
-  // Re-fetch when page / pageSize changes (only after an active search)
+    // Re-fetch when page / pageSize changes (only after an active search)
   useEffect(() => {
     if (hasSearched && activeSearch) {
       fetchResults(activeSearch, page, pageSize);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize]);
+
+  // ── history fetch helper ──
+  const fetchHistory = useCallback(async (refNumber, pg, limit) => {
+    if (!refNumber) return;
+    setHistoryLoading(true);
+    setHistoryError("");
+    try {
+      const url = `${BASE_URL}/api/mining-licenses/reference/${encodeURIComponent(refNumber)}?page=${pg}&limit=${limit}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.message || `Error ${res.status}`);
+      }
+      const json = await res.json();
+      const d = json.data;
+      setHistoryResults(d.data || []);
+      setHistoryTotal(d.total ?? 0);
+      setHistoryTotalPages(d.totalPages ?? 1);
+    } catch (err) {
+      setHistoryError(err.message || "Something went wrong. Please try again.");
+      setHistoryResults([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [token]);
+
+    // Re-fetch history when its page / pageSize changes
+  useEffect(() => {
+    if (historyOpen && historyRef) {
+      fetchHistory(historyRef, historyPage, historyPageSize);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyPage, historyPageSize]);
+
+  // ── record detail fetch helper ──
+  const fetchRecordDetail = useCallback(async (id) => {
+    if (!id) return;
+    setRecordDetailLoading(true);
+    setRecordDetailError("");
+    try {
+      const url = `${BASE_URL}/api/mining-licenses/${encodeURIComponent(id)}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.message || `Error ${res.status}`);
+      }
+      const json = await res.json();
+      setRecordDetailData(json.data || null);
+    } catch (err) {
+      setRecordDetailError(err.message || "Something went wrong. Please try again.");
+      setRecordDetailData(null);
+    } finally {
+      setRecordDetailLoading(false);
+    }
+  }, [token]);
+
+  const handleSelectHistoryRecord = (id) => {
+    setRecordDetailId(id);
+    setRecordDetailOpen(true);
+    fetchRecordDetail(id);
+  };
 
   const handleSearch = () => {
     const tin = tinInput.trim();
@@ -270,6 +168,14 @@ export default function DashboardPage() {
     setActiveSearch(tin);
     setHasSearched(true);
     fetchResults(tin, 1, pageSize);
+  };
+
+  const handleViewHistory = (record) => {
+    const refNumber = record.referenceNumber;
+    setHistoryRef(refNumber);
+    setHistoryPage(1);
+    setHistoryOpen(true);
+    fetchHistory(refNumber, 1, historyPageSize);
   };
 
   const handleSignOutRequest = () => {
@@ -296,10 +202,6 @@ export default function DashboardPage() {
         }
         @keyframes dropdownIn {
           from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeSlideUp {
-          from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
@@ -482,159 +384,55 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-
-        {/* ── search results section ── */}
-        {hasSearched && (
-          <div style={{ marginTop: "32px", animation: "fadeSlideUp 0.25s ease-out" }}>
-
-            {/* Results header */}
-            <div style={{
-              display: "flex", alignItems: "flex-end", justifyContent: "space-between",
-              marginBottom: "16px", flexWrap: "wrap", gap: "12px",
-              paddingBottom: "12px", borderBottom: "1px solid var(--color-line, #e5e7eb)",
-            }}>
-              <div>
-                <p style={{ margin: 0, fontSize: "11px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
-                  TIN · {activeSearch}
-                </p>
-                <h3 style={{ margin: "4px 0 0", fontWeight: "700", fontSize: "18px", color: "var(--color-ink, #1a1a1a)" }}>
-                  {loading
-                    ? "Searching…"
-                    : error
-                      ? "Search error"
-                      : `${total} record${total !== 1 ? "s" : ""} found`}
-                </h3>
-              </div>
-
-              {/* Per-page selector */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <label
-                  htmlFor="page-size-select"
-                  style={{ fontSize: "12px", color: "var(--color-ink-muted, #6b7280)", whiteSpace: "nowrap" }}
-                >
-                  Per page:
-                </label>
-                <select
-                  id="page-size-select"
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setPage(1);
-                  }}
-                  style={{
-                    padding: "5px 10px", borderRadius: "6px", fontSize: "13px", fontWeight: "600",
-                    border: "1px solid var(--color-line, #e5e7eb)",
-                    background: "var(--color-surface, #fff)", color: "var(--color-ink, #1a1a1a)",
-                    cursor: "pointer", fontFamily: "inherit", outline: "none",
-                  }}
-                >
-                  {[10, 15, 20].map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Error state */}
-            {error && !loading && (
-              <div style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: "10px",
-                padding: "40px 20px", textAlign: "center",
-              }}>
-                <div style={{
-                  width: "44px", height: "44px", borderRadius: "50%",
-                  background: "rgba(220,38,38,0.10)", display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                </div>
-                <p style={{ fontWeight: "600", color: "var(--color-ink, #1a1a1a)", margin: 0 }}>Failed to load results</p>
-                <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", margin: 0 }}>{error}</p>
-                <button
-                  onClick={() => fetchResults(activeSearch, page, pageSize)}
-                  style={{
-                    marginTop: "4px", padding: "8px 18px", borderRadius: "6px",
-                    border: "1px solid var(--color-line)", background: "var(--color-surface)",
-                    fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit",
-                    color: "var(--color-ink)",
-                  }}
-                >
-                  Retry
-                </button>
-              </div>
-            )}
-
-            {/* Loading skeletons */}
-            {loading && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {Array.from({ length: pageSize > 10 ? 5 : 4 }).map((_, i) => (
-                  <SkeletonCard key={i} />
-                ))}
-              </div>
-            )}
-
-            {/* Empty state */}
-            {!loading && !error && results.length === 0 && (
-              <div style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: "12px",
-                padding: "60px 20px", textAlign: "center",
-              }}>
-                <div style={{
-                  width: "52px", height: "52px", borderRadius: "50%",
-                  background: "var(--color-line, #e5e7eb)", display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontWeight: "700", fontSize: "16px", color: "var(--color-ink, #1a1a1a)" }}>
-                    No records found
-                  </p>
-                  <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--color-ink-muted, #6b7280)" }}>
-                    No mining license applications matched TIN <span style={{ fontFamily: "monospace", fontWeight: "700" }}>"{activeSearch}"</span>
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Results list */}
-            {!loading && !error && results.length > 0 && (
-              <>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {results.map((record) => (
-                    <ResultCard
-                      key={record.id}
-                      record={record}
-                      onClick={() => navigate("/dashboard/search-result", { state: { record } })}
-                    />
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div style={{ marginTop: "8px" }}>
-                    <Pagination
-                      page={page}
-                      totalPages={totalPages}
-                      onPage={(p) => setPage(p)}
-                    />
-                    <p style={{
-                      textAlign: "center", marginTop: "8px",
-                      fontSize: "11px", color: "var(--color-ink-muted, #6b7280)",
-                      fontFamily: "monospace",
-                    }}>
-                      Page {page} of {totalPages} · {total} total record{total !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
       </main>
+
+      {/* ── search results popup ── */}
+      <SearchResultsModal
+        open={hasSearched}
+        onClose={() => setHasSearched(false)}
+        activeSearch={activeSearch}
+        loading={loading}
+        error={error}
+        results={results}
+        total={total}
+        totalPages={totalPages}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={(p) => setPage(p)}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+        onRetry={() => fetchResults(activeSearch, page, pageSize)}
+        onSelectRecord={(record) => navigate("/dashboard/search-result", { state: { record } })}
+        onViewHistory={handleViewHistory}
+      />
+
+      {/* ── history popup ── */}
+      <HistoryModal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        referenceNumber={historyRef}
+        loading={historyLoading}
+        error={historyError}
+        results={historyResults}
+        total={historyTotal}
+        totalPages={historyTotalPages}
+        page={historyPage}
+        pageSize={historyPageSize}
+        onPageChange={(p) => setHistoryPage(p)}
+        onPageSizeChange={(size) => { setHistoryPageSize(size); setHistoryPage(1); }}
+        onRetry={() => fetchHistory(historyRef, historyPage, historyPageSize)}
+        onSelectRecord={handleSelectHistoryRecord}
+      />
+
+      {/* ── record detail popup ── */}
+      <RecordPreviewModal
+        open={recordDetailOpen}
+        onBack={() => setRecordDetailOpen(false)}
+        onClose={() => setRecordDetailOpen(false)}
+        loading={recordDetailLoading}
+        error={recordDetailError}
+        data={recordDetailData}
+        onRetry={() => fetchRecordDetail(recordDetailId)}
+      />
 
       {/* ── Actions modal ── */}
       <Modal
