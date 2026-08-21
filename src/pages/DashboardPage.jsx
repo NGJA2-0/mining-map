@@ -5,6 +5,7 @@ import TopoBackground from "../components/common/TopoBackground";
 import Button from "../components/common/Button";
 import Modal from "../components/common/Modal";
 import SearchResultsModal from "../components/dashboard/SearchResultsModal";
+import HistoryModal from "../components/dashboard/HistoryModal";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -29,6 +30,17 @@ export default function DashboardPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [hasSearched, setHasSearched] = useState(false);
+
+  // ── history state ──
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyRef, setHistoryRef] = useState("");
+  const [historyResults, setHistoryResults] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(10);
+  const [historyTotalPages, setHistoryTotalPages] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -68,13 +80,48 @@ export default function DashboardPage() {
     }
   }, [token]);
 
-  // Re-fetch when page / pageSize changes (only after an active search)
+    // Re-fetch when page / pageSize changes (only after an active search)
   useEffect(() => {
     if (hasSearched && activeSearch) {
       fetchResults(activeSearch, page, pageSize);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize]);
+
+  // ── history fetch helper ──
+  const fetchHistory = useCallback(async (refNumber, pg, limit) => {
+    if (!refNumber) return;
+    setHistoryLoading(true);
+    setHistoryError("");
+    try {
+      const url = `${BASE_URL}/api/mining-licenses/reference/${encodeURIComponent(refNumber)}?page=${pg}&limit=${limit}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.message || `Error ${res.status}`);
+      }
+      const json = await res.json();
+      const d = json.data;
+      setHistoryResults(d.data || []);
+      setHistoryTotal(d.total ?? 0);
+      setHistoryTotalPages(d.totalPages ?? 1);
+    } catch (err) {
+      setHistoryError(err.message || "Something went wrong. Please try again.");
+      setHistoryResults([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [token]);
+
+  // Re-fetch history when its page / pageSize changes
+  useEffect(() => {
+    if (historyOpen && historyRef) {
+      fetchHistory(historyRef, historyPage, historyPageSize);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyPage, historyPageSize]);
 
   const handleSearch = () => {
     const tin = tinInput.trim();
@@ -86,8 +133,11 @@ export default function DashboardPage() {
   };
 
   const handleViewHistory = (record) => {
-    // TODO: wire this up — e.g. navigate(`/dashboard/history/${record.id}`)
-    console.log("View history for record:", record.id);
+    const refNumber = record.referenceNumber;
+    setHistoryRef(refNumber);
+    setHistoryPage(1);
+    setHistoryOpen(true);
+    fetchHistory(refNumber, 1, historyPageSize);
   };
 
   const handleSignOutRequest = () => {
@@ -315,6 +365,23 @@ export default function DashboardPage() {
         onRetry={() => fetchResults(activeSearch, page, pageSize)}
         onSelectRecord={(record) => navigate("/dashboard/search-result", { state: { record } })}
         onViewHistory={handleViewHistory}
+      />
+
+      {/* ── history popup ── */}
+      <HistoryModal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        referenceNumber={historyRef}
+        loading={historyLoading}
+        error={historyError}
+        results={historyResults}
+        total={historyTotal}
+        totalPages={historyTotalPages}
+        page={historyPage}
+        pageSize={historyPageSize}
+        onPageChange={(p) => setHistoryPage(p)}
+        onPageSizeChange={(size) => { setHistoryPageSize(size); setHistoryPage(1); }}
+        onRetry={() => fetchHistory(historyRef, historyPage, historyPageSize)}
       />
 
       {/* ── Actions modal ── */}
