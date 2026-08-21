@@ -33,15 +33,15 @@ function ScaledSheet({ children }) {
     };
   }, [children]);
 
-  return (
+    return (
     <div ref={wrapperRef} style={{ width: "100%", overflow: "hidden" }}>
-      <div style={{ height: scaledHeight ?? "auto" }}>
+      <div style={{ height: scaledHeight ?? "auto", display: "flex", justifyContent: "center" }}>
         <div
           ref={sheetRef}
           style={{
             display: "inline-block",
             transform: `scale(${scale})`,
-            transformOrigin: "top left",
+            transformOrigin: "top center",
           }}
         >
           {children}
