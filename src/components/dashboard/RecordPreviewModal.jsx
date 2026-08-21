@@ -117,17 +117,43 @@ export default function RecordPreviewModal({
           overflow: "hidden",
         }}
       >
-        {/* Header */}
+                {/* Header */}
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: "12px", padding: "16px 20px",
+          display: "flex", flexDirection: "column", gap: "4px",
+          padding: "12px 20px",
           borderBottom: "1px solid var(--color-line, #e5e7eb)",
           flexShrink: 0,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+              <button
+                onClick={onBack}
+                aria-label="Back to history"
+                style={{
+                  width: "30px", height: "30px", borderRadius: "8px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "var(--color-base, #f9fafb)", border: "1px solid var(--color-line, #e5e7eb)",
+                  cursor: "pointer", flexShrink: 0, color: "var(--color-ink, #1a1a1a)",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+
+                            <div style={{ minWidth: 0 }}>
+                <h3 style={{
+                  margin: 0, fontWeight: "700", fontSize: "16px", color: "var(--color-ink, #1a1a1a)",
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>
+                  {data?.applicantName || (loading ? "Please wait…" : "—")}
+                </h3>
+              </div>
+            </div>
+
             <button
-              onClick={onBack}
-              aria-label="Back to history"
+              onClick={onClose}
+              aria-label="Close"
               style={{
                 width: "30px", height: "30px", borderRadius: "8px",
                 display: "flex", alignItems: "center", justifyContent: "center",
@@ -136,37 +162,30 @@ export default function RecordPreviewModal({
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 18-6-6 6-6" />
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
-
-            <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: "11px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
-                {loading ? "Loading record" : error ? "Record error" : isExtended ? "Extend record" : "New record"}
-              </p>
-              <h3 style={{
-                margin: "4px 0 0", fontWeight: "700", fontSize: "16px", color: "var(--color-ink, #1a1a1a)",
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              }}>
-                {data?.applicantName || (loading ? "Please wait…" : "—")}
-              </h3>
-            </div>
           </div>
 
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            style={{
-              width: "30px", height: "30px", borderRadius: "8px",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              background: "var(--color-base, #f9fafb)", border: "1px solid var(--color-line, #e5e7eb)",
-              cursor: "pointer", flexShrink: 0, color: "var(--color-ink, #1a1a1a)",
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <div style={{ width: "100%", textAlign: "center" }}>
+            <p style={{ margin: 0, fontSize: "13px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
+              {loading ? "Loading record" : error ? "Record error" : isExtended ? "Extend record" : "New record"}
+            </p>
+            {!loading && !error && data?.referenceNumber && (
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: "5px",
+                marginTop: "2px",
+                padding: "4px 14px", borderRadius: "8px",
+                background: "var(--color-base, #f9fafb)",
+                border: "1px solid var(--color-line, #e5e7eb)",
+                fontSize: "16px", fontFamily: "monospace", fontWeight: "700",
+                letterSpacing: "0.03em",
+                color: "var(--color-teal, #0d9488)",
+              }}>
+                {data.referenceNumber}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Body (scrollable) */}
