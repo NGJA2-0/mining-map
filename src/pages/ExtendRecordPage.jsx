@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import A4PreviewSheet from "../components/common/A4PreviewSheet";
+import ExtendRecordPreviewSheet from "../components/common/ExtendRecordPreviewSheet";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import TopoBackground from "../components/common/TopoBackground";
@@ -37,15 +37,13 @@ const initialState = {
   consentLetterAttached: "",
   govLandAct: "",
   landExtent: "",
-  existingPits: "",
-  prevLicenseFirstDate: "",
-  extensionCount: "",
-  minedGemValue: "",
-  conditionBreach: "",
-  conditionBreachDetails: "",
-  ownershipComplaint: "",
-  complaintDetails: "",
-  proposedDepth: "",
+  existingPitsArea: "",
+  mudPitsArea: "",
+  depthSize: "",
+  breachesInLast3Months: "",
+  reportsSubmitted: "",
+  privateSaleValue: "",
+  auctionSaleValue: "",
   landCultivation: "",
   boundaryNorth: "",
   boundarySouth: "",
@@ -133,10 +131,21 @@ const inputClass =
 const inlineInputClass =
   "mx-1 inline-block w-24 rounded border border-line bg-base px-2 py-0.5 align-baseline font-sinhala text-sm text-ink outline-none transition focus:border-teal focus:ring-1 focus:ring-teal";
 
-export default function NewRecordPage() {
+export default function ExtendRecordPage() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState(initialState);
+  const location = useLocation();
+  const [form, setForm] = useState(() => {
+    if (location.state?.record) {
+      const rec = location.state.record;
+      return {
+        ...initialState,
+        ...rec,
+        gpsPoints: rec.gpsPoints?.length ? rec.gpsPoints : initialState.gpsPoints
+      };
+    }
+    return initialState;
+  });
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -280,7 +289,7 @@ export default function NewRecordPage() {
       delete payload.writtenEvidenceAttachment;
       delete payload.affidavitAttachment;
 
-      const res = await fetch(`${BASE_URL}/api/mining-licenses`, {
+      const res = await fetch(`${BASE_URL}/api/extend-mining-licenses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -745,64 +754,50 @@ export default function NewRecordPage() {
                   </div>
                 </Field>
 
-                <Field label="ඉඩමේ කපන ලද පතල් තිබේද?">
-                  <div className="flex gap-4 pt-1">
-                    {yesNo.map((opt) => (
-                      <label
-                        key={opt.value}
-                        className="flex items-center gap-2 font-sinhala text-sm"
-                      >
-                        <input
-                          type="radio"
-                          name="existingPits"
-                          value={opt.value}
-                          checked={form.existingPits === opt.value}
-                          onChange={handleChange("existingPits")}
-                          className="accent-teal"
-                        />
-                        {opt.label}
-                      </label>
-                    ))}
-                  </div>
+                <Field label="දැනට කපා ඇති පතල් වලවල්වල වර්ග ප්‍රමාණය (මතුපිට)">
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={form.existingPitsArea || ""}
+                    onChange={handleChange("existingPitsArea")}
+                  />
                 </Field>
               </div>
             </section>
 
             {/* Previous license history */}
-            {form.existingPits === "yes" && (
-              <section className="flex flex-col gap-5">
+            <section className="flex flex-col gap-5">
                 <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
                   පෙර බලපත්‍රය පිළිබඳ තොරතුරු
                 </h3>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <Field label="කලින් නිකුත් කර ඇති සාම්ප්‍රදායික පතල් බලපත්‍රය, පළමුව නිකුත් කළ දිනය">
-                    <input
-                      type="date"
-                      className={inputClass}
-                      value={form.prevLicenseFirstDate}
-                      onChange={handleChange("prevLicenseFirstDate")}
-                    />
-                  </Field>
-                  <Field label="මෙම බලපත්‍රය කී වතාවක් දීර්ඝ කර තිබේද?">
-                    <input
-                      type="number"
-                      min="0"
-                      className={inputClass}
-                      value={form.extensionCount}
-                      onChange={handleChange("extensionCount")}
-                    />
-                  </Field>
-                  <Field label="එම කාල සීමාව තුළ කෑණීම් කරන ලද මැණික්වල වටිනාකම">
+                  <Field label="රොන්මඩ වලවල් ලෙස පවත්වාගෙන යන වලවල්වල වර්ග ප්‍රමාණය (ව.අඩි)">
                     <input
                       type="text"
                       className={inputClass}
-                      value={form.minedGemValue}
-                      onChange={handleChange("minedGemValue")}
+                      value={form.mudPitsArea || ""}
+                      onChange={handleChange("mudPitsArea")}
+                    />
+                  </Field>
+                  <Field label="ගැඹුර ප්‍රමාණය">
+                    <input
+                      type="text"
+                      className={inputClass}
+                      value={form.depthSize || ""}
+                      onChange={handleChange("depthSize")}
+                    />
+                  </Field>
+                  <Field label="පසුගිය මාස 03 ඇතුලතදී කොන්දේසි කඩකිරීම් ඇත්නම්">
+                    <input
+                      type="text"
+                      className={inputClass}
+                      value={form.breachesInLast3Months || ""}
+                      onChange={handleChange("breachesInLast3Months")}
                     />
                   </Field>
 
-                  <div className="sm:col-span-2 grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <Field label="එම කාලය තුළ කොන්දේසි කඩකිරීම් සිදුවී ඇත්ද?">
+                  <div className="sm:col-span-2">
+                    <Field label="අංක NGJA1/03/2025 දරන චක්‍රලේඛය මගින් නියම කර ඇති වාර්තා ඉදිරිපත් කර තිබේද?">
                       <div className="flex gap-4 pt-1">
                         {yesNo.map((opt) => (
                           <label
@@ -811,10 +806,10 @@ export default function NewRecordPage() {
                           >
                             <input
                               type="radio"
-                              name="conditionBreach"
+                              name="reportsSubmitted"
                               value={opt.value}
-                              checked={form.conditionBreach === opt.value}
-                              onChange={handleChange("conditionBreach")}
+                              checked={form.reportsSubmitted === opt.value}
+                              onChange={handleChange("reportsSubmitted")}
                               className="accent-teal"
                             />
                             {opt.label}
@@ -822,51 +817,47 @@ export default function NewRecordPage() {
                         ))}
                       </div>
                     </Field>
-                    {form.conditionBreach === "yes" && (
-                      <Field label="සිදු වී ඇත්නම් ඒ පිළිබඳ විස්තර">
-                        <input
-                          type="text"
-                          className={inputClass}
-                          value={form.conditionBreachDetails}
-                          onChange={handleChange("conditionBreachDetails")}
-                        />
-                      </Field>
-                    )}
                   </div>
 
-                  <Field label="මෙම කාලය තුළ ඉඩමේ අයිතිය පිළිබඳ පැමිණිලි ලැබී තිබේද?">
-                    <div className="flex gap-4 pt-1">
-                      {yesNo.map((opt) => (
-                        <label
-                          key={opt.value}
-                          className="flex items-center gap-2 font-sinhala text-sm"
-                        >
-                          <input
-                            type="radio"
-                            name="ownershipComplaint"
-                            value={opt.value}
-                            checked={form.ownershipComplaint === opt.value}
-                            onChange={handleChange("ownershipComplaint")}
-                            className="accent-teal"
-                          />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-                  </Field>
-                  {form.ownershipComplaint === "yes" && (
-                    <Field label="ලැබී ඇත්නම් ඒ පිළිබඳ විස්තර">
-                      <input
-                        type="text"
-                        className={inputClass}
-                        value={form.complaintDetails}
-                        onChange={handleChange("complaintDetails")}
-                      />
+                  <div className="sm:col-span-2">
+                    <Field label="පවත්වා ඇති මැණික් ගල් වෙන්දේසි සම්බන්ධ විස්තර :-">
+                      <div className="mt-2 border rounded-md overflow-hidden">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-gray-50 border-b">
+                            <tr>
+                              <th colSpan="2" className="px-4 py-2 font-sinhala font-medium text-center border-b">පසුගිය මාස 12 තුළ විකුණූ මැණික් සම්බන්ධ විස්තර</th>
+                            </tr>
+                            <tr>
+                              <th className="px-4 py-2 font-sinhala font-medium border-r w-1/2">විකිණීමේ ස්වභාවය (පුද්ගලික/වෙන්දේසි)</th>
+                              <th className="px-4 py-2 font-sinhala font-medium w-1/2">විකුණුම් වටිනාකම (රු.)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b">
+                              <td className="px-4 py-2 font-sinhala border-r">පුද්ගලික</td>
+                              <td className="px-4 py-2">
+                                <input type="number" className="w-full bg-transparent outline-none" value={form.privateSaleValue || ""} onChange={handleChange("privateSaleValue")} />
+                              </td>
+                            </tr>
+                            <tr className="border-b">
+                              <td className="px-4 py-2 font-sinhala border-r">වෙන්දේසි</td>
+                              <td className="px-4 py-2">
+                                <input type="number" className="w-full bg-transparent outline-none" value={form.auctionSaleValue || ""} onChange={handleChange("auctionSaleValue")} />
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="px-4 py-2 font-sinhala font-medium border-r">මුළු එකතුව</td>
+                              <td className="px-4 py-2">
+                                <input type="number" className="w-full bg-transparent outline-none font-semibold" value={(Number(form.privateSaleValue || 0) + Number(form.auctionSaleValue || 0)) || ""} readOnly />
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </Field>
-                  )}
+                  </div>
                 </div>
               </section>
-            )}
 
             {/* Mining proposal */}
             <section className="flex flex-col gap-5">
@@ -874,14 +865,7 @@ export default function NewRecordPage() {
                 කැණීම් යෝජනාව
               </h3>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Field label="පතල් කැපීමට යෝජිත ගැඹුර ප්‍රමාණය (පොළොව මතුපිට සිට අඩි)">
-                  <input
-                    type="number"
-                    className={inputClass}
-                    value={form.proposedDepth}
-                    onChange={handleChange("proposedDepth")}
-                  />
-                </Field>
+                
                 <Field label="ඉඩමේ වගාව">
                   <input
                     type="text"
@@ -1028,7 +1012,7 @@ export default function NewRecordPage() {
                   value={form.backhoeCount}
                   onChange={handleChange("backhoeCount")}
                 />
-                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
+                                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
                 <input
                   type="text"
                   inputMode="numeric"
@@ -1036,7 +1020,43 @@ export default function NewRecordPage() {
                   value={form.gerumCount}
                   onChange={handleChange("gerumCount")}
                 />
-                ක් යොදා ගැනීමටත් අවශ්‍ය පරිදි ජල පොම්ප යොදා ගැනීමටත් අවසර ලබා දීම සුදුසු බවට
+                ක් යොදා ගැනීමටත් ඇදුම් යන්ත්‍ර
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={inlineInputClass}
+                  value={form.adumMachineCount}
+                  onChange={handleChange("adumMachineCount")}
+                />
+                යොදා ගැනීමටත්, රොන් මඩ වලවල් පවත්වා ගැනීමට ව.අ.
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.silageExtent}
+                  onChange={handleChange("silageExtent")}
+                />
+                කට ඇප මුදල්
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.depositAmount}
+                  onChange={handleChange("depositAmount")}
+                />
+                ක් තැන්පත් කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීම සඳහා
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.riverbankProtectionAmount}
+                  onChange={handleChange("riverbankProtectionAmount")}
+                />
+                ක ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා
+                <input
+                  type="text"
+                  className={inlineInputClass}
+                  value={form.specialCaseAmount}
+                  onChange={handleChange("specialCaseAmount")}
+                />
+                ඇප මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා ගැනීමටත් අවසර ලබා දීම සුදුසු බවට
                 නිර්දේශ කොට තාක්ෂණික අනුමැතියට ඉදිරිපත් කරමි.
               </p>
 
@@ -1144,7 +1164,7 @@ export default function NewRecordPage() {
                   මුද්‍රණය කරන්න / PDF බාගන්න
                 </Button>
               </div>
-              <A4PreviewSheet form={form} />
+              <ExtendRecordPreviewSheet form={form} />
             </div>
           )}
         </div>

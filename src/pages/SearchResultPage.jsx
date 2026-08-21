@@ -369,16 +369,37 @@ export default function SearchResultPage() {
               </div>
             ))}
           </div>
-          <span style={{
-            display: "inline-flex", alignItems: "center",
-            padding: "4px 12px", borderRadius: "999px",
-            fontSize: "11px", fontWeight: "700",
-            letterSpacing: "0.07em", textTransform: "uppercase",
-            background: statusCfg.bg, color: statusCfg.color,
-            border: `1px solid ${statusCfg.color}22`,
-          }}>
-            {statusCfg.label}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => {
+                navigate("/dashboard/extend", { state: { record } });
+              }}
+              style={{
+                display: "inline-flex", alignItems: "center",
+                padding: "6px 14px", borderRadius: "999px",
+                fontSize: "12px", fontWeight: "600",
+                color: "var(--color-teal)", background: "transparent",
+                border: "1px solid var(--color-teal)",
+                cursor: "pointer", whiteSpace: "nowrap",
+                transition: "background 0.15s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(13,148,136,0.08)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              Extend Record
+            </button>
+            <span style={{
+              display: "inline-flex", alignItems: "center",
+              padding: "4px 12px", borderRadius: "999px",
+              fontSize: "11px", fontWeight: "700",
+              letterSpacing: "0.07em", textTransform: "uppercase",
+              background: statusCfg.bg, color: statusCfg.color,
+              border: `1px solid ${statusCfg.color}22`,
+            }}>
+              {statusCfg.label}
+            </span>
+          </div>
         </div>
 
         {/* ── success banner ── */}
@@ -751,21 +772,10 @@ export default function SearchResultPage() {
                 <input type="text" inputMode="numeric" className={inlineInputClass} value={form.maxPcCount} onChange={handleChange("maxPcCount")} />
                 ක් දක්වා වන බැකෝ යන්ත්‍ර
                 <input type="text" inputMode="numeric" className={inlineInputClass} value={form.backhoeCount} onChange={handleChange("backhoeCount")} />
-                ක් යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
+                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
                 <input type="text" inputMode="numeric" className={inlineInputClass} value={form.gerumCount} onChange={handleChange("gerumCount")} />
-                ක් යොදා ගැනීමටත් ඇදුම් යන්ත්‍ර
-                <input type="text" inputMode="numeric" className={inlineInputClass} value={form.adumMachineCount} onChange={handleChange("adumMachineCount")} />
-                යොදා ගැනීමටත්, රොන් මඩ වලවල් පවත්වා ගැනීමට ව.අ.
-                <input type="text" className={inlineInputClass} value={form.silageExtent} onChange={handleChange("silageExtent")} />
-                කට ඇප මුදල්
-                <input type="text" className={inlineInputClass} value={form.depositAmount} onChange={handleChange("depositAmount")} />
-                ක් තැන්පත් කර ඇත. තවද, ඉවුරු කඩා වැටීම වැළැක්වීම සඳහා
-                <input type="text" className={inlineInputClass} value={form.riverbankProtectionAmount} onChange={handleChange("riverbankProtectionAmount")} />
-                ක ඇප මුදලක් වෙන් කර ඇත. මීට අමතරව විශේශ අවස්ථා සඳහා
-                <input type="text" className={inlineInputClass} value={form.specialCaseAmount} onChange={handleChange("specialCaseAmount")} />
-                ඇප මුදලක් වෙන් කර ඇත. තවද, අවශ්‍ය පරිදි ජල පොම්ප යොදා
-                ගැනීමටත් අවසර ලබා දීම සුදුසු බවට නිර්දේශ කොට කාරුණික
-                අනුමැතියට ඉදිරිපත් කරමි.
+                ක් යොදා ගැනීමටත් අවශ්‍ය පරිදි ජල පොම්ප යොදා ගැනීමටත් අවසර ලබා දීම සුදුසු බවට
+                නිර්දේශ කොට තාක්ෂණික අනුමැතියට ඉදිරිපත් කරමි.
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-sinhala text-sm text-ink">

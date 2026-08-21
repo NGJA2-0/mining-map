@@ -8,6 +8,7 @@ import MiningMapPage from "./pages/MiningMapPage";
 import NewRecordPage from "./pages/NewRecordPage";
 import UpdateRecordPage from "./pages/UpdateRecordPage";
 import SearchResultPage from "./pages/SearchResultPage";
+import ExtendRecordPage from "./pages/ExtendRecordPage";
 import "./index.css";
 
 export default function App() {
@@ -38,6 +39,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <UpdateRecordPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/extend"
+            element={
+              <ProtectedRoute>
+                <ExtendRecordPage />
               </ProtectedRoute>
             }
           />
