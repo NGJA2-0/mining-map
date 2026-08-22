@@ -212,53 +212,92 @@ export default function RecordPreviewModal({
       >
                 {/* Header */}
         <div style={{
-          display: "flex", flexDirection: "column", gap: "4px",
-          padding: "12px 20px",
+          position: "relative",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px",
+          padding: "20px 20px",
           borderBottom: "1px solid var(--color-line, #e5e7eb)",
           flexShrink: 0,
         }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-              <button
-                onClick={onBack}
-                aria-label="Back to history"
-                style={{
-                  width: "30px", height: "30px", borderRadius: "8px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "var(--color-base, #f9fafb)", border: "1px solid var(--color-line, #e5e7eb)",
-                  cursor: "pointer", flexShrink: 0, color: "var(--color-ink, #1a1a1a)",
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
-              </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0, flex: "1 1 auto" }}>
+            <button
+              onClick={onBack}
+              aria-label="Back to history"
+              style={{
+                width: "30px", height: "30px", borderRadius: "8px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "var(--color-base, #f9fafb)", border: "1px solid var(--color-line, #e5e7eb)",
+                cursor: "pointer", flexShrink: 0, color: "var(--color-ink, #1a1a1a)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
 
-                            <div style={{ minWidth: 0 }}>
-                <h3 style={{
-                  margin: 0, fontWeight: "700", fontSize: "16px", color: "var(--color-ink, #1a1a1a)",
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>
-                  {data?.applicantName || (loading ? "Please wait…" : "—")}
-                </h3>
-              </div>
-            </div>
+            <h3 style={{
+              margin: 0, fontWeight: "700", fontSize: "16px", color: "var(--color-ink, #1a1a1a)",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            }}>
+              {data?.applicantName || (loading ? "Please wait…" : "—")}
+            </h3>
+          </div>
 
+         <div style={{
+            position: "absolute", left: "50%", top: "50%",
+            transform: "translate(-50%, -50%)",
+            display: "flex", alignItems: "center", gap: "10px",
+            pointerEvents: "none",
+          }}>
+            <p style={{ margin: 0, fontSize: "13px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)", whiteSpace: "nowrap" }}>
+              {loading ? "Loading record" : error ? "Record error" : isExtended ? "Extend record" : "New record"}
+            </p>
+            {!loading && !error && data?.referenceNumber && (
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: "5px",
+                padding: "4px 14px", borderRadius: "8px",
+                background: "var(--color-base, #f9fafb)",
+                border: "1px solid var(--color-line, #e5e7eb)",
+                fontSize: "16px", fontFamily: "monospace", fontWeight: "700",
+                letterSpacing: "0.03em",
+                color: "var(--color-teal, #0d9488)",
+                whiteSpace: "nowrap",
+                pointerEvents: "auto",
+              }}>
+                {data.referenceNumber}
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
             {!loading && !error && data && (
               <button
                 onClick={compareResult ? () => setCompareResult(null) : handleCompare}
                 disabled={compareLoading}
                 style={{
-                  padding: "0 14px", height: "30px", borderRadius: "8px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: compareResult ? "var(--color-teal, #0d9488)" : "var(--color-base, #f9fafb)",
-                  border: "1px solid var(--color-line, #e5e7eb)",
+                  padding: "0 16px", height: "32px", borderRadius: "8px",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
+                  background: compareResult
+                    ? "var(--color-teal, #0d9488)"
+                    : "linear-gradient(180deg, #ffffff, #f9fafb)",
+                  border: compareResult
+                    ? "1px solid var(--color-teal, #0d9488)"
+                    : "1px solid var(--color-line, #e5e7eb)",
+                  boxShadow: compareResult
+                    ? "0 1px 2px rgba(13,148,136,0.25)"
+                    : "0 1px 2px rgba(0,0,0,0.04)",
                   color: compareResult ? "#fff" : "var(--color-ink, #1a1a1a)",
                   cursor: compareLoading ? "not-allowed" : "pointer",
-                  fontSize: "13px", fontWeight: "600", flexShrink: 0,
+                  fontSize: "16px", fontWeight: "700",
+                  letterSpacing: "0.01em",
+                  whiteSpace: "nowrap",
+                  transition: "background 0.15s ease, box-shadow 0.15s ease",
                 }}
               >
-                {compareLoading ? "Comparing…" : compareResult ? "Close Compare" : "Compare"}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3 4 7l4 4" /><path d="M4 7h11a4 4 0 0 1 4 4v1" />
+                  <path d="m16 21 4-4-4-4" /><path d="M20 17H9a4 4 0 0 1-4-4v-1" />
+                </svg>
+                {compareLoading ? "සසඳමින්…" : compareResult ? "සැසඳුම වසන්න" : "පෙර පිටපත සමග සසදන්න"}
               </button>
             )}
 
@@ -266,7 +305,7 @@ export default function RecordPreviewModal({
               onClick={onClose}
               aria-label="Close"
               style={{
-                width: "30px", height: "30px", borderRadius: "8px",
+                width: "32px", height: "32px", borderRadius: "8px",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 background: "var(--color-base, #f9fafb)", border: "1px solid var(--color-line, #e5e7eb)",
                 cursor: "pointer", flexShrink: 0, color: "var(--color-ink, #1a1a1a)",
@@ -276,26 +315,6 @@ export default function RecordPreviewModal({
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
-          </div>
-
-          <div style={{ width: "100%", textAlign: "center" }}>
-            <p style={{ margin: 0, fontSize: "13px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
-              {loading ? "Loading record" : error ? "Record error" : isExtended ? "Extend record" : "New record"}
-            </p>
-            {!loading && !error && data?.referenceNumber && (
-              <span style={{
-                display: "inline-flex", alignItems: "center", gap: "5px",
-                marginTop: "2px",
-                padding: "4px 14px", borderRadius: "8px",
-                background: "var(--color-base, #f9fafb)",
-                border: "1px solid var(--color-line, #e5e7eb)",
-                fontSize: "16px", fontFamily: "monospace", fontWeight: "700",
-                letterSpacing: "0.03em",
-                color: "var(--color-teal, #0d9488)",
-              }}>
-                {data.referenceNumber}
-              </span>
-            )}
           </div>
         </div>
 
