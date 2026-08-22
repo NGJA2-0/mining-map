@@ -23,15 +23,16 @@ function StatusBadge({ status }) {
   );
 }
 
-function ResultCard({ record, onView, onViewHistory }) {
-  const date = record.createdAt
-    ? new Date(record.createdAt).toLocaleDateString("en-GB", {
-      day: "2-digit", month: "short", year: "numeric",
-    })
-    : "—";
+function ResultCard({ record, onView, onViewHistory, onDownload }) {
+  const formatDate = (value) =>
+    value
+      ? new Date(value).toLocaleDateString("en-GB", {
+        day: "2-digit", month: "short", year: "numeric",
+      })
+      : "—";
 
-  const statusColor =
-    (STATUS_CFG[record.status?.toLowerCase()] || STATUS_CFG.draft).color;
+  const date = formatDate(record.createdAt);
+  const updatedDate = formatDate(record.updatedAt);
 
   return (
     <div
@@ -39,7 +40,7 @@ function ResultCard({ record, onView, onViewHistory }) {
         width: "100%", textAlign: "left",
         background: "var(--color-surface, #fff)",
         border: "1px solid var(--color-line, #e5e7eb)",
-        borderLeft: `3px solid ${statusColor}`,
+        borderLeft: "3px solid var(--color-teal, #0d9488)",
         borderRadius: "10px", padding: "16px 18px",
         display: "flex", flexDirection: "column", gap: "10px",
         fontFamily: "inherit",
@@ -51,24 +52,21 @@ function ResultCard({ record, onView, onViewHistory }) {
         <span style={{ fontWeight: "700", fontSize: "15px", color: "var(--color-ink, #1a1a1a)" }}>
           {record.applicantName || "—"}
         </span>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <StatusBadge status={record.status} />
-          <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)", fontFamily: "monospace" }}>
-            {date}
-          </span>
-        </div>
+        <span style={{
+          fontSize: "11px", color: "var(--color-ink-muted, #6b7280)",
+          fontFamily: "monospace", whiteSpace: "nowrap",
+        }}>
+          {date}
+        </span>
       </div>
 
       {/* Meta pills */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
         {[
-          { key: "TIN", val: record.tin },
           { key: "GML", val: record.gmlNumber },
-          { key: "NIC", val: record.nic },
-          { key: "District", val: record.district },
-          { key: "Village", val: record.village },
-          { key: "Land", val: record.landName },
-        ].filter(f => f.val).map(({ key, val }) => (
+          { key: "Created by", val: record.createdBy },
+          { key: "Updated", val: updatedDate },
+        ].filter(f => f.val && f.val !== "—").map(({ key, val }) => (
           <span key={key} style={{
             display: "inline-flex", alignItems: "center", gap: "5px",
             padding: "3px 10px", borderRadius: "6px",
@@ -84,6 +82,27 @@ function ResultCard({ record, onView, onViewHistory }) {
 
       {/* Footer actions */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
+        <button
+          onClick={onDownload}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "6px",
+            padding: "6px 12px", borderRadius: "6px",
+            fontSize: "12px", fontWeight: "600", cursor: "pointer",
+            fontFamily: "inherit",
+            background: "var(--color-base, #f9fafb)",
+            border: "1px solid var(--color-line, #e5e7eb)",
+            color: "var(--color-ink, #1a1a1a)",
+            transition: "background 0.12s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--color-line, #e5e7eb)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--color-base, #f9fafb)")}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" />
+          </svg>
+          Download
+        </button>
+
         <button
           onClick={onViewHistory}
           style={{
@@ -426,6 +445,7 @@ export default function SearchResultsModal({
                   record={record}
                   onView={() => onSelectRecord(record)}
                   onViewHistory={() => onViewHistory(record)}
+                  onDownload={() => {}}
                 />
               ))}
             </div>
