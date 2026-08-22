@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const tinInputRef = useRef(null);
 
   // ── search state ──
   const [tinInput, setTinInput] = useState("");
@@ -176,6 +177,14 @@ export default function DashboardPage() {
     setHistoryPage(1);
     setHistoryOpen(true);
     fetchHistory(refNumber, 1, historyPageSize);
+  };
+
+    const handleUpdateClick = () => {
+    setOpen(false);
+    setTimeout(() => {
+      tinInputRef.current?.focus();
+      tinInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
   };
 
   const handleSignOutRequest = () => {
@@ -339,6 +348,7 @@ export default function DashboardPage() {
                   </svg>
                   <input
                     id="tin-search-input"
+                    ref={tinInputRef}
                     type="text"
                     placeholder="Search by TIN number"
                     value={tinInput}
@@ -445,7 +455,7 @@ export default function DashboardPage() {
           <Button variant="primary" className="flex-1" onClick={() => navigate("/dashboard/new")}>
             New
           </Button>
-          <Button variant="copper" className="flex-1" onClick={() => navigate("/dashboard/update")}>
+          <Button variant="copper" className="flex-1" onClick={handleUpdateClick}>
             Update
           </Button>
         </div>
