@@ -1,6 +1,9 @@
-function Row({ label, value }) {
+function Row({ label, value, highlight }) {
     return (
-        <div className="a4-row">
+        <div
+            className={`a4-row${highlight ? " a4-row-highlight" : ""}`}
+            style={highlight ? { background: "#fef9c3", borderRadius: "6px" } : undefined}
+        >
             <span className="a4-row-label">{label}</span>
             <strong className="a4-row-value">{value || "—"}</strong>
         </div>
@@ -23,7 +26,9 @@ const blank = (v) => (v !== undefined && v !== null && String(v).trim() !== "" ?
 const landNatureLabel = (v) =>
     v === "goda" ? "ගොඩ ඉඩමක්" : v === "kumbura" ? "කුඹුරු ඉඩමක්" : "—";
 
-export default function ExtendRecordPreviewSheet({ form, isResubmit = false }) {
+export default function ExtendRecordPreviewSheet({ form, isResubmit = false, highlightFields = [] }) {
+    const isChanged = (field) => highlightFields.includes(field);
+
     const totalSaleValue =
         (Number(form.privateSaleValue) || 0) + (Number(form.auctionSaleValue) || 0);
 
@@ -39,32 +44,32 @@ export default function ExtendRecordPreviewSheet({ form, isResubmit = false }) {
             </div>
 
             <Section title="අයදුම්කරු පිළිබඳ තොරතුරු">
-                <Row label="ඉල්ලුම්කරුගේ නම" value={form.applicantName} />
-                <Row label="ඉල්ලුම්කරුගේ ලිපිනය" value={form.applicantAddress} />
-                <Row label="ඉල්ලුම්කරුගේ දුරකථන අංකය" value={form.applicantPhone} />
-                <Row label="හැඳුනුම්පත් අංකය" value={form.nic} />
-                <Row label="TIN" value={form.tin} />
-                <Row label="වියදම් පාර්ශවයක් සිටී" value={form.hasExpenseParty ? "ඔව්" : "නැත"} />
+                <Row label="ඉල්ලුම්කරුගේ නම" value={form.applicantName} highlight={isChanged("applicantName")} />
+                <Row label="ඉල්ලුම්කරුගේ ලිපිනය" value={form.applicantAddress} highlight={isChanged("applicantAddress")} />
+                <Row label="ඉල්ලුම්කරුගේ දුරකථන අංකය" value={form.applicantPhone} highlight={isChanged("applicantPhone")} />
+                <Row label="හැඳුනුම්පත් අංකය" value={form.nic} highlight={isChanged("nic")} />
+                <Row label="TIN" value={form.tin} highlight={isChanged("tin")} />
+                <Row label="වියදම් පාර්ශවයක් සිටී" value={form.hasExpenseParty ? "ඔව්" : "නැත"} highlight={isChanged("hasExpenseParty")} />
                 {form.hasExpenseParty && (
                     <>
-                        <Row label="වියදම් පාර්ශවයේ නම" value={form.expenseName} />
-                        <Row label="වියදම් පාර්ශවයේ ලිපිනය" value={form.expenseAddress} />
-                        <Row label="වියදම් පාර්ශවයේ දුරකථන අංකය" value={form.expensePhone} />
-                        <Row label="වියදම් පාර්ශවයේ TIN" value={form.expenseTin} />
+                        <Row label="වියදම් පාර්ශවයේ නම" value={form.expenseName} highlight={isChanged("expenseName")} />
+                        <Row label="වියදම් පාර්ශවයේ ලිපිනය" value={form.expenseAddress} highlight={isChanged("expenseAddress")} />
+                        <Row label="වියදම් පාර්ශවයේ දුරකථන අංකය" value={form.expensePhone} highlight={isChanged("expensePhone")} />
+                        <Row label="වියදම් පාර්ශවයේ TIN" value={form.expenseTin} highlight={isChanged("expenseTin")} />
                     </>
                 )}
-                <Row label="GML අංකය" value={form.gmlNumber} />
-                <Row label="ඉඩමේ නම" value={form.landName} />
+                <Row label="GML අංකය" value={form.gmlNumber} highlight={isChanged("gmlNumber")} />
+                <Row label="ඉඩමේ නම" value={form.landName} highlight={isChanged("landName")} />
             </Section>
 
             {(form.landNature === "goda" || form.landNature === "kumbura") && (
                 <Section title="ඉඩමේ ස්වභාවය">
-                    <Row label="ඉඩමේ ස්වභාවය" value={landNatureLabel(form.landNature)} />
-                    <Row label="රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත" value={yesNoLabel(form.isRatnapuraLand)} />
+                    <Row label="ඉඩමේ ස්වභාවය" value={landNatureLabel(form.landNature)} highlight={isChanged("landNature")} />
+                    <Row label="රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත" value={yesNoLabel(form.isRatnapuraLand)} highlight={isChanged("isRatnapuraLand")} />
                     {form.isRatnapuraLand === "yes" && (
                         <>
-                            <Row label="ලිඛිත සාක්ෂි ගොනුව" value={fileLabel(form.writtenEvidenceAttachment)} />
-                            <Row label="දිවුරුම් ප්‍රකාශය ගොනුව" value={fileLabel(form.affidavitAttachment)} />
+                            <Row label="ලිඛිත සාක්ෂි ගොනුව" value={fileLabel(form.writtenEvidenceAttachment)} highlight={isChanged("writtenEvidenceAttachment")} />
+                            <Row label="දිවුරුම් ප්‍රකාශය ගොනුව" value={fileLabel(form.affidavitAttachment)} highlight={isChanged("affidavitAttachment")} />
                         </>
                     )}
                 </Section>
@@ -76,26 +81,27 @@ export default function ExtendRecordPreviewSheet({ form, isResubmit = false }) {
                         key={i}
                         label={`ලක්ෂ්‍ය ${i + 1}`}
                         value={p.latitude || p.longitude ? `${p.latitude || "—"} / ${p.longitude || "—"}` : "—"}
+                        highlight={isChanged("gpsPoints")}
                     />
                 ))}
             </Section>
 
             <Section title="මැණික් ගැරීමේ බලපත්‍රලත් ඉඩම පිහිටි">
-                <Row label="දිස්ත්‍රික්කය" value={form.district} />
-                <Row label="ප්‍රාදේශීය කාර්යාලය" value={form.regionalOffice} />
-                <Row label="ගම" value={form.village} />
-                <Row label="ඉඩමේ වපසරිය" value={form.landExtent} />
-                <Row label="බලපත්‍රලාභියා" value={form.licenseeType} />
-                <Row label="කැමැත්ත ප්‍රකාශිත ලිපිය අමුණා ඇත" value={yesNoLabel(form.consentLetterAttached)} />
-                <Row label="ගොවිජන සේවා/විහාර/ඉඩම් සංවර්ධන ආඥා පනත" value={yesNoLabel(form.govLandAct)} />
-                <Row label="දැනට කපා ඇති පතල් වලවල්වල වර්ග ප්‍රමාණය" value={form.existingPitsArea} />
+                <Row label="දිස්ත්‍රික්කය" value={form.district} highlight={isChanged("district")} />
+                <Row label="ප්‍රාදේශීය කාර්යාලය" value={form.regionalOffice} highlight={isChanged("regionalOffice")} />
+                <Row label="ගම" value={form.village} highlight={isChanged("village")} />
+                <Row label="ඉඩමේ වපසරිය" value={form.landExtent} highlight={isChanged("landExtent")} />
+                <Row label="බලපත්‍රලාභියා" value={form.licenseeType} highlight={isChanged("licenseeType")} />
+                <Row label="කැමැත්ත ප්‍රකාශිත ලිපිය අමුණා ඇත" value={yesNoLabel(form.consentLetterAttached)} highlight={isChanged("consentLetterAttached")} />
+                <Row label="ගොවිජන සේවා/විහාර/ඉඩම් සංවර්ධන ආඥා පනත" value={yesNoLabel(form.govLandAct)} highlight={isChanged("govLandAct")} />
+                <Row label="දැනට කපා ඇති පතල් වලවල්වල වර්ග ප්‍රමාණය" value={form.existingPitsArea} highlight={isChanged("existingPitsArea")} />
             </Section>
 
                         <Section title="පෙර බලපත්‍රය පිළිබඳ තොරතුරු">
-                <Row label="රොන්මඩ වලවල්වල වර්ග ප්‍රමාණය (ව.අඩි)" value={form.mudPitsArea} />
-                <Row label="ගැඹුර ප්‍රමාණය" value={form.depthSize} />
-                <Row label="පසුගිය මාස 03තුළ කොන්දේසි කඩකිරීම්" value={form.breachesInLast3Months} />
-                <Row label="NGJA1/03/2025 වාර්තා ඉදිරිපත් කර තිබේ" value={yesNoLabel(form.reportsSubmitted)} />
+                <Row label="රොන්මඩ වලවල්වල වර්ග ප්‍රමාණය (ව.අඩි)" value={form.mudPitsArea} highlight={isChanged("mudPitsArea")} />
+                <Row label="ගැඹුර ප්‍රමාණය" value={form.depthSize} highlight={isChanged("depthSize")} />
+                <Row label="පසුගිය මාස 03තුළ කොන්දේසි කඩකිරීම්" value={form.breachesInLast3Months} highlight={isChanged("breachesInLast3Months")} />
+                <Row label="NGJA1/03/2025 වාර්තා ඉදිරිපත් කර තිබේ" value={yesNoLabel(form.reportsSubmitted)} highlight={isChanged("reportsSubmitted")} />
             </Section>
 
             <div className="a4-section">
@@ -153,7 +159,10 @@ export default function ExtendRecordPreviewSheet({ form, isResubmit = false }) {
                             <td style={{ border: "1px solid #333", padding: "6px 10px" }}>
                                 පුද්ගලික
                             </td>
-                            <td style={{ border: "1px solid #333", padding: "6px 10px" }}>
+                            <td style={{
+                                border: "1px solid #333", padding: "6px 10px",
+                                background: isChanged("privateSaleValue") ? "#fef9c3" : undefined,
+                            }}>
                                 {form.privateSaleValue || "—"}
                             </td>
                         </tr>
@@ -161,7 +170,10 @@ export default function ExtendRecordPreviewSheet({ form, isResubmit = false }) {
                             <td style={{ border: "1px solid #333", padding: "6px 10px" }}>
                                 වෙන්දේසි
                             </td>
-                            <td style={{ border: "1px solid #333", padding: "6px 10px" }}>
+                            <td style={{
+                                border: "1px solid #333", padding: "6px 10px",
+                                background: isChanged("auctionSaleValue") ? "#fef9c3" : undefined,
+                            }}>
                                 {form.auctionSaleValue || "—"}
                             </td>
                         </tr>
@@ -178,21 +190,32 @@ export default function ExtendRecordPreviewSheet({ form, isResubmit = false }) {
             </div>
 
             <Section title="කැණීම් යෝජනාව">
-                <Row label="ඉඩමේ වගාව" value={form.landCultivation} />
-                <Row label="උතුරට (අඩි)" value={form.boundaryNorth} />
-                <Row label="දකුණට (අඩි)" value={form.boundarySouth} />
-                <Row label="නැගෙනහිරට (අඩි)" value={form.boundaryEast} />
-                <Row label="බස්නාහිරට (අඩි)" value={form.boundaryWest} />
-                <Row label="නිවාසවලට (අඩි)" value={form.boundaryHouses} />
-                <Row label="විදුලි කණුවලට (අඩි)" value={form.boundaryElectricPoles} />
-                <Row label="ගංගා/ජල දෙහයන්ට (අඩි)" value={form.boundaryWater} />
-                <Row label="මාර්ගවලට (අඩි)" value={form.boundaryRoads} />
-                <Row label="වෙනත්" value={form.boundaryOther} />
-                <Row label="යෝජිත පතල් ප්‍රමාණය (ව.අ.)" value={form.proposedExtent} />
-                <Row label="ඇප මුදල් සේවා ගාස්තුව" value={form.refundServiceFee} />
+                <Row label="ඉඩමේ වගාව" value={form.landCultivation} highlight={isChanged("landCultivation")} />
+                <Row label="උතුරට (අඩි)" value={form.boundaryNorth} highlight={isChanged("boundaryNorth")} />
+                <Row label="දකුණට (අඩි)" value={form.boundarySouth} highlight={isChanged("boundarySouth")} />
+                <Row label="නැගෙනහිරට (අඩි)" value={form.boundaryEast} highlight={isChanged("boundaryEast")} />
+                <Row label="බස්නාහිරට (අඩි)" value={form.boundaryWest} highlight={isChanged("boundaryWest")} />
+                <Row label="නිවාසවලට (අඩි)" value={form.boundaryHouses} highlight={isChanged("boundaryHouses")} />
+                <Row label="විදුලි කණුවලට (අඩි)" value={form.boundaryElectricPoles} highlight={isChanged("boundaryElectricPoles")} />
+                <Row label="ගංගා/ජල දෙහයන්ට (අඩි)" value={form.boundaryWater} highlight={isChanged("boundaryWater")} />
+                <Row label="මාර්ගවලට (අඩි)" value={form.boundaryRoads} highlight={isChanged("boundaryRoads")} />
+                <Row label="වෙනත්" value={form.boundaryOther} highlight={isChanged("boundaryOther")} />
+                <Row label="යෝජිත පතල් ප්‍රමාණය (ව.අ.)" value={form.proposedExtent} highlight={isChanged("proposedExtent")} />
+                <Row label="ඇප මුදල් සේවා ගාස්තුව" value={form.refundServiceFee} highlight={isChanged("refundServiceFee")} />
             </Section>
 
-            <div className="a4-section">
+            <div
+                className="a4-section"
+                style={
+                    [
+                        "ngjaRefNumber", "maxExtentVA", "maxPcCount", "backhoeCount",
+                        "gerumCount", "adumMachineCount", "silageExtent", "depositAmount",
+                        "riverbankProtectionAmount", "specialCaseAmount",
+                    ].some(isChanged)
+                        ? { background: "#fef9c3", borderRadius: "8px", padding: "8px" }
+                        : undefined
+                }
+            >
                 <h3 className="a4-section-title">නිර්දේශය</h3>
                 <p className="a4-paragraph">
                     කෑණීම් ඉංජිනේරු නිර්දේශයන්ට (NGJA/16.2/Backhoe/MER/{blank(form.ngjaRefNumber)}) යටත්ව
@@ -209,13 +232,13 @@ export default function ExtendRecordPreviewSheet({ form, isResubmit = false }) {
             </div>
 
             <Section title="අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) අනුමැතිය">
-                <Row label="අනුමැතිය" value={form.directorApproval} />
-                <Row label="දිනය" value={form.recommendationDate} />
+                <Row label="අනුමැතිය" value={form.directorApproval} highlight={isChanged("directorApproval")} />
+                <Row label="දිනය" value={form.recommendationDate} highlight={isChanged("recommendationDate")} />
             </Section>
 
             <Section title="සභාපති හා ප්‍රධාන විධායක නිලධාරි අනුමැතිය">
-                <Row label="අනුමැතිය" value={form.chairmanApproval} />
-                <Row label="දිනය" value={form.chairmanApprovalDate} />
+                <Row label="අනුමැතිය" value={form.chairmanApproval} highlight={isChanged("chairmanApproval")} />
+                <Row label="දිනය" value={form.chairmanApprovalDate} highlight={isChanged("chairmanApprovalDate")} />
             </Section>
         </div>
     );
