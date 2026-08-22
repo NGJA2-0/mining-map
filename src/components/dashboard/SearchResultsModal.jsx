@@ -7,8 +7,30 @@ const STATUS_CFG = {
   rejected: { label: "Rejected", bg: "rgba(220,38,38,0.12)", color: "#dc2626" },
 };
 
+const TYPE_CFG = {
+  new: { label: "New", bg: "rgba(37,99,235,0.12)", color: "#2563eb" },
+  extended: { label: "Extended", bg: "rgba(5,150,105,0.12)", color: "#059669" },
+};
+
 function StatusBadge({ status }) {
   const cfg = STATUS_CFG[status?.toLowerCase()] || STATUS_CFG.draft;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      padding: "2px 10px", borderRadius: "999px",
+      fontSize: "10px", fontWeight: "700",
+      letterSpacing: "0.07em", textTransform: "uppercase",
+      background: cfg.bg, color: cfg.color,
+      border: `1px solid ${cfg.color}22`,
+    }}>
+      {cfg.label}
+    </span>
+  );
+}
+
+function TypeBadge({ type }) {
+  const cfg = TYPE_CFG[type?.toLowerCase()];
+  if (!cfg) return null;
   return (
     <span style={{
       display: "inline-flex", alignItems: "center",
@@ -49,11 +71,14 @@ function ResultCard({ record, onView, onViewHistory, onDownload }) {
     >
       {/* Top row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-        <span style={{ fontWeight: "700", fontSize: "15px", color: "var(--color-ink, #1a1a1a)" }}>
-          {record.applicantName || "—"}
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <span style={{ fontWeight: "700", fontSize: "15px", color: "var(--color-ink, #1a1a1a)" }}>
+            {record.applicantName || "—"}
+          </span>
+          <TypeBadge type={record.type} />
+        </div>
         <span style={{
-          fontSize: "11px", color: "var(--color-ink-muted, #6b7280)",
+          fontSize: "13px", color: "var(--color-ink-muted, #6b7280)",
           fontFamily: "monospace", whiteSpace: "nowrap",
         }}>
           {date}
@@ -72,9 +97,9 @@ function ResultCard({ record, onView, onViewHistory, onDownload }) {
             padding: "3px 10px", borderRadius: "6px",
             background: "var(--color-base, #f9fafb)",
             border: "1px solid var(--color-line, #e5e7eb)",
-            fontSize: "11px", color: "var(--color-ink-muted, #6b7280)",
+            fontSize: "13px", color: "var(--color-ink-muted, #6b7280)",
           }}>
-            <span style={{ fontWeight: "700", fontFamily: "monospace", color: "var(--color-ink, #1a1a1a)", fontSize: "10px" }}>{key}</span>
+            <span style={{ fontWeight: "700", fontFamily: "monospace", color: "var(--color-ink, #1a1a1a)", fontSize: "12px" }}>{key}</span>
             {val}
           </span>
         ))}
@@ -316,7 +341,7 @@ export default function SearchResultsModal({
           flexShrink: 0,
         }}>
           <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: "11px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
+            <p style={{ margin: 0, fontSize: "13px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
               TIN · {activeSearch}
             </p>
             <h3 style={{ margin: "4px 0 0", fontWeight: "700", fontSize: "18px", color: "var(--color-ink, #1a1a1a)" }}>
