@@ -95,12 +95,14 @@ export default function RecordPreviewModal({
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareError, setCompareError] = useState(null);
   const [compareResult, setCompareResult] = useState(null); // { message, changes }
+  const [noCompareNotice, setNoCompareNotice] = useState(false);
 
-  // Reset comparison whenever a different record is loaded
+// Reset comparison whenever a different record is loaded
   useEffect(() => {
     setCompareResult(null);
     setCompareError(null);
     setCompareLoading(false);
+    setNoCompareNotice(false);
   }, [data]);
 
   if (!open) return null;
@@ -148,10 +150,35 @@ export default function RecordPreviewModal({
         );
       }
 
-      const json = await res.json();
+     const json = await res.json();
       if (!res.ok) {
-        throw new Error(json?.error || "Failed to compare");
+        const backendMessage = json?.error || "Failed to compare";
+        const translatedMessage =
+          backendMessage === "No previous version exists to compare"
+            ? "මෙය නව රෙකෝඩයක පලමු පිටපත බැවින් සංසන්දනය කිරීමට නොහැක."
+            : backendMessage;
+        throw new Error(translatedMessage);
       }
+
+      // If this is the first version of an extended record, every changed
+      // field (aside from referenceNumber, which is always tracked but
+      // never shown) will have a null "old" value — meaning there's no
+      // real previous version to compare against.
+      const changedKeys = Object.keys(json.changes || {}).filter(
+        (key) => key !== "referenceNumber"
+      );
+      const isFirstVersionOfExtendedRecord =
+        json.message === "The record was extended" &&
+        changedKeys.length > 0 &&
+        changedKeys.every(
+          (key) => json.changes[key]?.old === null || json.changes[key]?.old === undefined
+        );
+
+        if (isFirstVersionOfExtendedRecord) {
+        setNoCompareNotice(true);
+        return;
+      }
+
       setCompareResult(json);
     } catch (err) {
       setCompareError(err.message || "Failed to compare");
@@ -315,19 +342,7 @@ export default function RecordPreviewModal({
           )}
 
           {/* Compare error, e.g. "No previous version exists to compare" */}
-          {compareError && (
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              gap: "8px", padding: "12px 16px", marginBottom: "14px",
-              borderRadius: "8px", background: "rgba(220,38,38,0.08)",
-              border: "1px solid rgba(220,38,38,0.25)",
-              color: "#b91c1c", fontSize: "13px", fontWeight: "600",
-            }}>
-              {compareError}
-            </div>
-          )}
-
-          {/* Loaded preview sheet(s) */}
+                    {/* Loaded preview sheet(s) */}
           {!loading && !error && data && (
             compareResult ? (
               <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
@@ -389,9 +404,107 @@ export default function RecordPreviewModal({
                 </ScaledSheet>
               </div>
             )
-          )}
+                    )}
         </div>
       </div>
+
+            {/* Compare error popup, e.g. "No previous version exists to compare" */}
+      {compareError && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 1300,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.45)",
+            animation: "rpFadeIn 0.15s ease-out",
+          }}
+          onClick={() => setCompareError(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(420px, 90vw)",
+              background: "var(--color-surface, #fff)",
+              borderRadius: "12px",
+              border: "1px solid var(--color-line, #e5e7eb)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
+              padding: "24px",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: "14px",
+              textAlign: "center",
+            }}
+          >
+            <div style={{
+              width: "44px", height: "44px", borderRadius: "50%",
+              background: "rgba(220,38,38,0.10)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <p style={{ margin: 0, fontSize: "14px", lineHeight: "1.6", color: "var(--color-ink, #1a1a1a)", fontWeight: "600" }}>
+              {compareError}
+            </p>
+            <button
+              onClick={() => setCompareError(null)}
+              style={{
+                padding: "8px 24px", borderRadius: "8px", border: "none",
+                background: "#dc2626", color: "#fff",
+                fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* No-compare notice popup */}
+      {noCompareNotice && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 1300,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.45)",
+            animation: "rpFadeIn 0.15s ease-out",
+          }}
+          onClick={() => setNoCompareNotice(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(420px, 90vw)",
+              background: "var(--color-surface, #fff)",
+              borderRadius: "12px",
+              border: "1px solid var(--color-line, #e5e7eb)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
+              padding: "24px",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: "14px",
+              textAlign: "center",
+            }}
+          >
+            <div style={{
+              width: "44px", height: "44px", borderRadius: "50%",
+              background: "rgba(13,148,136,0.10)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-teal, #0d9488)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+            </div>
+            <p style={{ margin: 0, fontSize: "14px", lineHeight: "1.6", color: "var(--color-ink, #1a1a1a)" }}>
+              මෙය දීර්ඝ කරන ලද රෙකෝඩයක පලමු පිටපත බැවින් සංසන්දනය කිරීමට නොහැක.
+            </p>
+            <button
+              onClick={() => setNoCompareNotice(false)}
+              style={{
+                padding: "8px 24px", borderRadius: "8px", border: "none",
+                background: "var(--color-teal, #0d9488)", color: "#fff",
+                fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
