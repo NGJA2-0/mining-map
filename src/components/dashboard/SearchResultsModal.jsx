@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import DownloadRecordModal from "../common/DownloadRecordModal";
 
 const STATUS_CFG = {
   draft: { label: "Draft", bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
@@ -281,6 +282,8 @@ export default function SearchResultsModal({
     };
   }, [open, onClose]);
 
+  const [downloadRecord, setDownloadRecord] = useState(null);
+
   if (!open) return null;
 
   return (
@@ -470,7 +473,7 @@ export default function SearchResultsModal({
                   record={record}
                   onView={() => onSelectRecord(record)}
                   onViewHistory={() => onViewHistory(record)}
-                  onDownload={() => {}}
+                  onDownload={() => setDownloadRecord(record)}
                 />
               ))}
             </div>
@@ -494,6 +497,12 @@ export default function SearchResultsModal({
           </div>
         )}
       </div>
+
+      <DownloadRecordModal
+        open={!!downloadRecord}
+        onClose={() => setDownloadRecord(null)}
+        type={downloadRecord?.type}
+      />
     </div>
   );
 }
