@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import DownloadRecordModal from "../common/DownloadRecordModal";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const STATUS_CFG = {
   draft: { label: "Draft", bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
@@ -46,7 +50,7 @@ function TypeBadge({ type }) {
   );
 }
 
-function ResultCard({ record, onView, onViewHistory, onDownload }) {
+function ResultCard({ record, onView, onViewHistory, onDownload, viewLoading }) {
   const formatDate = (value) =>
     value
       ? new Date(value).toLocaleDateString("en-GB", {
@@ -154,17 +158,21 @@ function ResultCard({ record, onView, onViewHistory, onDownload }) {
 
         <button
           onClick={onView}
+          disabled={viewLoading}
           style={{
             display: "inline-flex", alignItems: "center", gap: "5px",
             padding: "6px 12px", borderRadius: "6px",
-            fontSize: "12px", fontWeight: "700", cursor: "pointer",
+            fontSize: "12px", fontWeight: "700", cursor: viewLoading ? "default" : "pointer",
             fontFamily: "inherit",
             background: "transparent", border: "none",
             color: "var(--color-teal, #0d9488)",
+            opacity: viewLoading ? 0.6 : 1,
           }}
         >
-          View &amp; edit
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+          {viewLoading ? "Loading…" : "View & edit"}
+          {!viewLoading && (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+          )}
         </button>
       </div>
     </div>
@@ -267,9 +275,35 @@ export default function SearchResultsModal({
   onPageChange,
   onPageSizeChange,
   onRetry,
-  onSelectRecord,
   onViewHistory,
 }) {
+  const navigate = useNavigate();
+  const { token } = useAuth();
+  const [viewLoadingId, setViewLoadingId] = useState(null);
+
+  const handleViewEdit = async (record) => {
+    setViewLoadingId(record.id);
+    try {
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/${record.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to load record");
+      const json = await res.json();
+      const data = json.data;
+
+      const targetPath =
+        record.type?.toLowerCase() === "extended"
+          ? "/dashboard/extend"
+          : "/dashboard/search-result";
+
+      navigate(targetPath, { state: { record: data } });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load the record. Please try again.");
+    } finally {
+      setViewLoadingId(null);
+    }
+  };
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -471,9 +505,10 @@ export default function SearchResultsModal({
                 <ResultCard
                   key={record.id}
                   record={record}
-                  onView={() => onSelectRecord(record)}
+                  onView={() => handleViewEdit(record)}
                   onViewHistory={() => onViewHistory(record)}
                   onDownload={() => setDownloadRecord(record)}
+                  viewLoading={viewLoadingId === record.id}
                 />
               ))}
             </div>

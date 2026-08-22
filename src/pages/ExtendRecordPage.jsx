@@ -341,7 +341,7 @@ export default function ExtendRecordPage() {
                 ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය
               </p>
               <h2 className="mt-1 font-sinhala text-lg font-semibold sm:text-xl">
-                යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම (නව)
+                යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම(දීර්ඝ)
               </h2>
               <p className="mt-1 font-sinhala text-xs text-ink-muted">
                 අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) නිර්දේශය
