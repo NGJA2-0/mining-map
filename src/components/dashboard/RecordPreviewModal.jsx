@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import A4PreviewSheet from "../common/A4PreviewSheet";
 import ExtendRecordPreviewSheet from "../common/ExtendRecordPreviewSheet";
+import { useAuth } from "../../context/AuthContext";
 
 /* ─────────────────────────── scaled sheet wrapper ─────────────────────────── */
 /* The A4 sheets are a fixed print width — this measures the sheet and the
@@ -78,6 +79,7 @@ export default function RecordPreviewModal({
   data,
   onRetry,
 }) {
+  const { token } = useAuth();
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -90,9 +92,73 @@ export default function RecordPreviewModal({
     };
   }, [open, onClose]);
 
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [compareError, setCompareError] = useState(null);
+  const [compareResult, setCompareResult] = useState(null); // { message, changes }
+
+  // Reset comparison whenever a different record is loaded
+  useEffect(() => {
+    setCompareResult(null);
+    setCompareError(null);
+    setCompareLoading(false);
+  }, [data]);
+
   if (!open) return null;
 
   const isExtended = data?.privateSaleValue !== null && data?.privateSaleValue !== undefined;
+
+  const isExtendedCompare = compareResult?.message === "The record was extended";
+
+  // Every changed field except referenceNumber — that one is tracked by the API
+  // but must never be shown or highlighted in the UI.
+  const highlightFields = compareResult
+    ? Object.keys(compareResult.changes || {}).filter((key) => key !== "referenceNumber")
+    : [];
+
+  // Reconstruct the "previous version" by taking the current record and
+  // swapping in the old values for whatever changed.
+  const oldFormData = compareResult
+    ? {
+        ...data,
+        ...Object.fromEntries(
+          highlightFields.map((key) => [key, compareResult.changes[key].old])
+        ),
+      }
+    : null;
+
+    async function handleCompare() {
+    if (!data?.id) return;
+    setCompareLoading(true);
+    setCompareError(null);
+    try {
+      const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/${data.id}/compare`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("Non-JSON response from compare API:", res.status, text.slice(0, 200));
+        throw new Error(
+          `Server returned ${res.status} ${res.statusText} (not JSON) — check the endpoint`
+        );
+      }
+
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.error || "Failed to compare");
+      }
+      setCompareResult(json);
+    } catch (err) {
+      setCompareError(err.message || "Failed to compare");
+    } finally {
+      setCompareLoading(false);
+    }
+  }
 
   return (
     <div
@@ -150,6 +216,24 @@ export default function RecordPreviewModal({
                 </h3>
               </div>
             </div>
+
+            {!loading && !error && data && (
+              <button
+                onClick={compareResult ? () => setCompareResult(null) : handleCompare}
+                disabled={compareLoading}
+                style={{
+                  padding: "0 14px", height: "30px", borderRadius: "8px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: compareResult ? "var(--color-teal, #0d9488)" : "var(--color-base, #f9fafb)",
+                  border: "1px solid var(--color-line, #e5e7eb)",
+                  color: compareResult ? "#fff" : "var(--color-ink, #1a1a1a)",
+                  cursor: compareLoading ? "not-allowed" : "pointer",
+                  fontSize: "13px", fontWeight: "600", flexShrink: 0,
+                }}
+              >
+                {compareLoading ? "Comparing…" : compareResult ? "Close Compare" : "Compare"}
+              </button>
+            )}
 
             <button
               onClick={onClose}
@@ -230,20 +314,81 @@ export default function RecordPreviewModal({
             </div>
           )}
 
-          {/* Loaded preview sheet */}
-          {!loading && !error && data && (
+          {/* Compare error, e.g. "No previous version exists to compare" */}
+          {compareError && (
             <div style={{
-              background: "var(--color-surface, #fff)", borderRadius: "10px",
-              border: "1px solid var(--color-line, #e5e7eb)", padding: "16px",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              gap: "8px", padding: "12px 16px", marginBottom: "14px",
+              borderRadius: "8px", background: "rgba(220,38,38,0.08)",
+              border: "1px solid rgba(220,38,38,0.25)",
+              color: "#b91c1c", fontSize: "13px", fontWeight: "600",
             }}>
-              <ScaledSheet>
-                {isExtended
-                  ? <ExtendRecordPreviewSheet form={data} isResubmit={Boolean(data.isResubmit)} />
-                  : <A4PreviewSheet form={data} isResubmit={Boolean(data.isResubmit)} />
-                }
-              </ScaledSheet>
+              {compareError}
             </div>
+          )}
+
+          {/* Loaded preview sheet(s) */}
+          {!loading && !error && data && (
+            compareResult ? (
+              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 360px", minWidth: 0 }}>
+                  <p style={{
+                    textAlign: "center", fontSize: "12px", fontWeight: "700",
+                    textTransform: "uppercase", letterSpacing: "0.06em",
+                    color: "var(--color-ink-muted, #6b7280)", margin: "0 0 8px",
+                  }}>
+                    Previous version
+                  </p>
+                  <div style={{
+                    background: "var(--color-surface, #fff)", borderRadius: "10px",
+                    border: "1px solid var(--color-line, #e5e7eb)", padding: "16px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                  }}>
+                    <ScaledSheet>
+                      {isExtendedCompare
+                        ? <ExtendRecordPreviewSheet form={oldFormData} isResubmit={Boolean(data.isResubmit)} highlightFields={highlightFields} />
+                        : <A4PreviewSheet form={oldFormData} isResubmit={Boolean(data.isResubmit)} highlightFields={highlightFields} />
+                      }
+                    </ScaledSheet>
+                  </div>
+                </div>
+
+                <div style={{ flex: "1 1 360px", minWidth: 0 }}>
+                  <p style={{
+                    textAlign: "center", fontSize: "12px", fontWeight: "700",
+                    textTransform: "uppercase", letterSpacing: "0.06em",
+                    color: "var(--color-teal, #0d9488)", margin: "0 0 8px",
+                  }}>
+                    Current version
+                  </p>
+                  <div style={{
+                    background: "var(--color-surface, #fff)", borderRadius: "10px",
+                    border: "1px solid var(--color-line, #e5e7eb)", padding: "16px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                  }}>
+                    <ScaledSheet>
+                      {isExtendedCompare
+                        ? <ExtendRecordPreviewSheet form={data} isResubmit={Boolean(data.isResubmit)} highlightFields={highlightFields} />
+                        : <A4PreviewSheet form={data} isResubmit={Boolean(data.isResubmit)} highlightFields={highlightFields} />
+                      }
+                    </ScaledSheet>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                background: "var(--color-surface, #fff)", borderRadius: "10px",
+                border: "1px solid var(--color-line, #e5e7eb)", padding: "16px",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+              }}>
+                <ScaledSheet>
+                  {isExtended
+                    ? <ExtendRecordPreviewSheet form={data} isResubmit={Boolean(data.isResubmit)} />
+                    : <A4PreviewSheet form={data} isResubmit={Boolean(data.isResubmit)} />
+                  }
+                </ScaledSheet>
+              </div>
+            )
           )}
         </div>
       </div>
