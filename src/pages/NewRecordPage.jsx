@@ -113,6 +113,8 @@ const DS_DIVISIONS_BY_DISTRICT = {
   "කෑගල්ල": ["කෑගල්ල", "මාවනැල්ල", "රඹුක්කන", "වරකාපොල", "රුවන්වැල්ල", "යටියන්තොට", "දෙරණියගල", "ගාලිගමුව", "බුලත්කොහුපිටිය", "දෙහිඕවිට", "අරණායක"],
 };
 
+const SRI_LANKA_PHONE_REGEX = /^(?:\+94|0)[1-9][0-9]{8}$/;
+
 const yesNo = [
   { value: "yes", label: "ඔව්" },
   { value: "no", label: "නැත" },
@@ -151,6 +153,11 @@ export default function NewRecordPage() {
   const handleFileChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.files?.[0] || null }));
   };
+
+  const handlePhoneChange = (field) => (e) => {
+  const value = e.target.value.replace(/[^0-9+]/g, "");
+  setForm((prev) => ({ ...prev, [field]: value }));
+};
 
   const handleGpsChange = (index, field) => (e) => {
     const { value } = e.target;
@@ -219,14 +226,18 @@ export default function NewRecordPage() {
       if (!form[f] || String(form[f]).trim() === "") errors.push(f);
     });
 
+    if (form.applicantPhone && !SRI_LANKA_PHONE_REGEX.test(form.applicantPhone)) errors.push("applicantPhone");
+
     if (!form.gpsPoints.some((p) => p.latitude && p.longitude)) {
       errors.push("gpsPoints");
     }
 
     if (form.hasExpenseParty) {
       ["expenseName", "expenseAddress", "expensePhone"].forEach((f) => {
-        if (!form[f]) errors.push(f);
+         if (!form[f]) errors.push(f);
       });
+      if (form.expensePhone && !SRI_LANKA_PHONE_REGEX.test(form.expensePhone)) errors.push("expensePhone");
+       
     }
 
     if (form.isRatnapuraLand === "yes") {
@@ -364,9 +375,10 @@ export default function NewRecordPage() {
                 <Field label="ඉල්ලුම්කරුගේ දුරකථන අංකය">
                   <input
                     type="tel"
+                    pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
                     className={inputClass}
                     value={form.applicantPhone}
-                    onChange={handleChange("applicantPhone")}
+                    onChange={handlePhoneChange("applicantPhone")}
                   />
                 </Field>
               </div>
@@ -421,9 +433,10 @@ export default function NewRecordPage() {
                     <Field label="වියදම් පාර්ශවයේ දුරකථන අංකය" full>
                       <input
                         type="tel"
+                        pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
                         className={inputClass}
                         value={form.expensePhone}
-                        onChange={handleChange("expensePhone")}
+                        onChange={handlePhoneChange("expensePhone")}
                       />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
@@ -898,7 +911,8 @@ export default function NewRecordPage() {
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <Field label="උතුරට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryNorth}
                     onChange={handleChange("boundaryNorth")}
@@ -906,7 +920,8 @@ export default function NewRecordPage() {
                 </Field>
                 <Field label="දකුණට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundarySouth}
                     onChange={handleChange("boundarySouth")}
@@ -914,7 +929,8 @@ export default function NewRecordPage() {
                 </Field>
                 <Field label="නැගෙනහිරට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryEast}
                     onChange={handleChange("boundaryEast")}
@@ -922,7 +938,8 @@ export default function NewRecordPage() {
                 </Field>
                 <Field label="බස්නාහිරට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryWest}
                     onChange={handleChange("boundaryWest")}
@@ -930,7 +947,8 @@ export default function NewRecordPage() {
                 </Field>
                 <Field label="නිවාසවලට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryHouses}
                     onChange={handleChange("boundaryHouses")}
@@ -938,7 +956,8 @@ export default function NewRecordPage() {
                 </Field>
                 <Field label="විදුලි කණුවලට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryElectricPoles}
                     onChange={handleChange("boundaryElectricPoles")}
@@ -946,7 +965,8 @@ export default function NewRecordPage() {
                 </Field>
                 <Field label="ගංගා සහ ජල දෙහයන්ට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryWater}
                     onChange={handleChange("boundaryWater")}
@@ -954,7 +974,8 @@ export default function NewRecordPage() {
                 </Field>
                 <Field label="මාර්ගවලට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryRoads}
                     onChange={handleChange("boundaryRoads")}
@@ -973,7 +994,8 @@ export default function NewRecordPage() {
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="කැපීමට අදහස් කරන පතල් ප්‍රමාණය (ව.අ.)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.proposedExtent}
                     onChange={handleChange("proposedExtent")}
@@ -981,7 +1003,8 @@ export default function NewRecordPage() {
                 </Field>
                 <Field label="ඇප මුදල් සේවා ගාස්තුව">
                   <input
-                    type="text"
+                    type="number"
+                    step="0.01"
                     className={inputClass}
                     placeholder="NGJA/16.2/2018/Backhoe III චක්‍රලේඛය ප්‍රකාරව"
                     value={form.refundServiceFee}

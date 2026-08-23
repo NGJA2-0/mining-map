@@ -111,6 +111,8 @@ const DS_DIVISIONS_BY_DISTRICT = {
   "කෑගල්ල": ["කෑගල්ල", "මාවනැල්ල", "රඹුක්කන", "වරකාපොල", "රුවන්වැල්ල", "යටියන්තොට", "දෙරණියගල", "ගාලිගමුව", "බුලත්කොහුපිටිය", "දෙහිඕවිට", "අරණායක"],
 };
 
+const SRI_LANKA_PHONE_REGEX = /^(?:\+94|0)[1-9][0-9]{8}$/;
+
 const yesNo = [
   { value: "yes", label: "ඔව්" },
   { value: "no", label: "නැත" },
@@ -160,6 +162,11 @@ export default function ExtendRecordPage() {
   const handleFileChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.files?.[0] || null }));
   };
+
+  const handlePhoneChange = (field) => (e) => {
+  const value = e.target.value.replace(/[^0-9+]/g, "");
+  setForm((prev) => ({ ...prev, [field]: value }));
+};
 
   const handleGpsChange = (index, field) => (e) => {
     const { value } = e.target;
@@ -228,6 +235,8 @@ export default function ExtendRecordPage() {
       if (!form[f] || String(form[f]).trim() === "") errors.push(f);
     });
 
+    if (form.applicantPhone && !SRI_LANKA_PHONE_REGEX.test(form.applicantPhone)) errors.push("applicantPhone");
+
     if (!form.gpsPoints.some((p) => p.latitude && p.longitude)) {
       errors.push("gpsPoints");
     }
@@ -236,6 +245,8 @@ export default function ExtendRecordPage() {
       ["expenseName", "expenseAddress", "expensePhone"].forEach((f) => {
         if (!form[f]) errors.push(f);
       });
+      if (form.expensePhone && !SRI_LANKA_PHONE_REGEX.test(form.expensePhone)) errors.push("expensePhone");
+
     }
 
     if (form.isRatnapuraLand === "yes") {
@@ -373,9 +384,10 @@ export default function ExtendRecordPage() {
                 <Field label="ඉල්ලුම්කරුගේ දුරකථන අංකය">
                   <input
                     type="tel"
+                    pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
                     className={inputClass}
                     value={form.applicantPhone}
-                    onChange={handleChange("applicantPhone")}
+                    onChange={handlePhoneChange("applicantPhone")}
                   />
                 </Field>
               </div>
@@ -430,9 +442,10 @@ export default function ExtendRecordPage() {
                     <Field label="වියදම් පාර්ශවයේ දුරකථන අංකය" full>
                       <input
                         type="tel"
+                        pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
                         className={inputClass}
                         value={form.expensePhone}
-                        onChange={handleChange("expensePhone")}
+                        onChange={handlePhoneChange("expensePhone")}
                       />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
@@ -767,97 +780,98 @@ export default function ExtendRecordPage() {
 
             {/* Previous license history */}
             <section className="flex flex-col gap-5">
-                <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
-                  පෙර බලපත්‍රය පිළිබඳ තොරතුරු
-                </h3>
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <Field label="රොන්මඩ වලවල් ලෙස පවත්වාගෙන යන වලවල්වල වර්ග ප්‍රමාණය (ව.අඩි)">
-                    <input
-                      type="text"
-                      className={inputClass}
-                      value={form.mudPitsArea || ""}
-                      onChange={handleChange("mudPitsArea")}
-                    />
-                  </Field>
-                  <Field label="ගැඹුර ප්‍රමාණය">
-                    <input
-                      type="text"
-                      className={inputClass}
-                      value={form.depthSize || ""}
-                      onChange={handleChange("depthSize")}
-                    />
-                  </Field>
-                  <Field label="පසුගිය මාස 03 ඇතුලතදී කොන්දේසි කඩකිරීම් ඇත්නම්">
-                    <input
-                      type="text"
-                      className={inputClass}
-                      value={form.breachesInLast3Months || ""}
-                      onChange={handleChange("breachesInLast3Months")}
-                    />
-                  </Field>
+              <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
+                පෙර බලපත්‍රය පිළිබඳ තොරතුරු
+              </h3>
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <Field label="රොන්මඩ වලවල් ලෙස පවත්වාගෙන යන වලවල්වල වර්ග ප්‍රමාණය (ව.අඩි)">
+                  <input
+                    type="number"
+                    step="any"
+                    className={inputClass}
+                    value={form.mudPitsArea || ""}
+                    onChange={handleChange("mudPitsArea")}
+                  />
+                </Field>
+                <Field label="ගැඹුර ප්‍රමාණය">
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={form.depthSize || ""}
+                    onChange={handleChange("depthSize")}
+                  />
+                </Field>
+                <Field label="පසුගිය මාස 03 ඇතුලතදී කොන්දේසි කඩකිරීම් ඇත්නම්">
+                  <input
+                    type="text"
+                    className={inputClass}
+                    value={form.breachesInLast3Months || ""}
+                    onChange={handleChange("breachesInLast3Months")}
+                  />
+                </Field>
 
-                  <div className="sm:col-span-2">
-                    <Field label="අංක NGJA1/03/2025 දරන චක්‍රලේඛය මගින් නියම කර ඇති වාර්තා ඉදිරිපත් කර තිබේද?">
-                      <div className="flex gap-4 pt-1">
-                        {yesNo.map((opt) => (
-                          <label
-                            key={opt.value}
-                            className="flex items-center gap-2 font-sinhala text-sm"
-                          >
-                            <input
-                              type="radio"
-                              name="reportsSubmitted"
-                              value={opt.value}
-                              checked={form.reportsSubmitted === opt.value}
-                              onChange={handleChange("reportsSubmitted")}
-                              className="accent-teal"
-                            />
-                            {opt.label}
-                          </label>
-                        ))}
-                      </div>
-                    </Field>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <Field label="පවත්වා ඇති මැණික් ගල් වෙන්දේසි සම්බන්ධ විස්තර :-">
-                      <div className="mt-2 border rounded-md overflow-hidden">
-                        <table className="w-full text-sm text-left">
-                          <thead className="bg-gray-50 border-b">
-                            <tr>
-                              <th colSpan="2" className="px-4 py-2 font-sinhala font-medium text-center border-b">පසුගිය මාස 12 තුළ විකුණූ මැණික් සම්බන්ධ විස්තර</th>
-                            </tr>
-                            <tr>
-                              <th className="px-4 py-2 font-sinhala font-medium border-r w-1/2">විකිණීමේ ස්වභාවය (පුද්ගලික/වෙන්දේසි)</th>
-                              <th className="px-4 py-2 font-sinhala font-medium w-1/2">විකුණුම් වටිනාකම (රු.)</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr className="border-b">
-                              <td className="px-4 py-2 font-sinhala border-r">පුද්ගලික</td>
-                              <td className="px-4 py-2">
-                                <input type="number" className="w-full bg-transparent outline-none" value={form.privateSaleValue || ""} onChange={handleChange("privateSaleValue")} />
-                              </td>
-                            </tr>
-                            <tr className="border-b">
-                              <td className="px-4 py-2 font-sinhala border-r">වෙන්දේසි</td>
-                              <td className="px-4 py-2">
-                                <input type="number" className="w-full bg-transparent outline-none" value={form.auctionSaleValue || ""} onChange={handleChange("auctionSaleValue")} />
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className="px-4 py-2 font-sinhala font-medium border-r">මුළු එකතුව</td>
-                              <td className="px-4 py-2">
-                                <input type="number" className="w-full bg-transparent outline-none font-semibold" value={(Number(form.privateSaleValue || 0) + Number(form.auctionSaleValue || 0)) || ""} readOnly />
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </Field>
-                  </div>
+                <div className="sm:col-span-2">
+                  <Field label="අංක NGJA1/03/2025 දරන චක්‍රලේඛය මගින් නියම කර ඇති වාර්තා ඉදිරිපත් කර තිබේද?">
+                    <div className="flex gap-4 pt-1">
+                      {yesNo.map((opt) => (
+                        <label
+                          key={opt.value}
+                          className="flex items-center gap-2 font-sinhala text-sm"
+                        >
+                          <input
+                            type="radio"
+                            name="reportsSubmitted"
+                            value={opt.value}
+                            checked={form.reportsSubmitted === opt.value}
+                            onChange={handleChange("reportsSubmitted")}
+                            className="accent-teal"
+                          />
+                          {opt.label}
+                        </label>
+                      ))}
+                    </div>
+                  </Field>
                 </div>
-              </section>
+
+                <div className="sm:col-span-2">
+                  <Field label="පවත්වා ඇති මැණික් ගල් වෙන්දේසි සම්බන්ධ විස්තර :-">
+                    <div className="mt-2 border rounded-md overflow-hidden">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-gray-50 border-b">
+                          <tr>
+                            <th colSpan="2" className="px-4 py-2 font-sinhala font-medium text-center border-b">පසුගිය මාස 12 තුළ විකුණූ මැණික් සම්බන්ධ විස්තර</th>
+                          </tr>
+                          <tr>
+                            <th className="px-4 py-2 font-sinhala font-medium border-r w-1/2">විකිණීමේ ස්වභාවය (පුද්ගලික/වෙන්දේසි)</th>
+                            <th className="px-4 py-2 font-sinhala font-medium w-1/2">විකුණුම් වටිනාකම (රු.)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="border-b">
+                            <td className="px-4 py-2 font-sinhala border-r">පුද්ගලික</td>
+                            <td className="px-4 py-2">
+                              <input type="number" className="w-full bg-transparent outline-none" value={form.privateSaleValue || ""} onChange={handleChange("privateSaleValue")} />
+                            </td>
+                          </tr>
+                          <tr className="border-b">
+                            <td className="px-4 py-2 font-sinhala border-r">වෙන්දේසි</td>
+                            <td className="px-4 py-2">
+                              <input type="number" className="w-full bg-transparent outline-none" value={form.auctionSaleValue || ""} onChange={handleChange("auctionSaleValue")} />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-2 font-sinhala font-medium border-r">මුළු එකතුව</td>
+                            <td className="px-4 py-2">
+                              <input type="number" className="w-full bg-transparent outline-none font-semibold" value={(Number(form.privateSaleValue || 0) + Number(form.auctionSaleValue || 0)) || ""} readOnly />
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </Field>
+                </div>
+              </div>
+            </section>
 
             {/* Mining proposal */}
             <section className="flex flex-col gap-5">
@@ -865,7 +879,7 @@ export default function ExtendRecordPage() {
                 කැණීම් යෝජනාව
               </h3>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                
+
                 <Field label="ඉඩමේ වගාව">
                   <input
                     type="text"
@@ -882,7 +896,8 @@ export default function ExtendRecordPage() {
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <Field label="උතුරට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryNorth}
                     onChange={handleChange("boundaryNorth")}
@@ -890,7 +905,8 @@ export default function ExtendRecordPage() {
                 </Field>
                 <Field label="දකුණට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundarySouth}
                     onChange={handleChange("boundarySouth")}
@@ -898,7 +914,8 @@ export default function ExtendRecordPage() {
                 </Field>
                 <Field label="නැගෙනහිරට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryEast}
                     onChange={handleChange("boundaryEast")}
@@ -906,7 +923,8 @@ export default function ExtendRecordPage() {
                 </Field>
                 <Field label="බස්නාහිරට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryWest}
                     onChange={handleChange("boundaryWest")}
@@ -914,7 +932,8 @@ export default function ExtendRecordPage() {
                 </Field>
                 <Field label="නිවාසවලට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryHouses}
                     onChange={handleChange("boundaryHouses")}
@@ -922,7 +941,8 @@ export default function ExtendRecordPage() {
                 </Field>
                 <Field label="විදුලි කණුවලට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryElectricPoles}
                     onChange={handleChange("boundaryElectricPoles")}
@@ -930,7 +950,8 @@ export default function ExtendRecordPage() {
                 </Field>
                 <Field label="ගංගා සහ ජල දෙහයන්ට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryWater}
                     onChange={handleChange("boundaryWater")}
@@ -938,7 +959,8 @@ export default function ExtendRecordPage() {
                 </Field>
                 <Field label="මාර්ගවලට (අඩි)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.boundaryRoads}
                     onChange={handleChange("boundaryRoads")}
@@ -957,7 +979,8 @@ export default function ExtendRecordPage() {
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="කැපීමට අදහස් කරන පතල් ප්‍රමාණය (ව.අ.)">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className={inputClass}
                     value={form.proposedExtent}
                     onChange={handleChange("proposedExtent")}
@@ -965,7 +988,8 @@ export default function ExtendRecordPage() {
                 </Field>
                 <Field label="ඇප මුදල් සේවා ගාස්තුව">
                   <input
-                    type="text"
+                    type="number"
+                    step="0.01"
                     className={inputClass}
                     placeholder="NGJA/16.2/2018/Backhoe III චක්‍රලේඛය ප්‍රකාරව"
                     value={form.refundServiceFee}
@@ -1012,7 +1036,7 @@ export default function ExtendRecordPage() {
                   value={form.backhoeCount}
                   onChange={handleChange("backhoeCount")}
                 />
-                                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
+                ක් දක්වා යොදා ගැනීමටත් ගැරීම සඳහා ගැරුම් යන්ත්‍ර
                 <input
                   type="text"
                   inputMode="numeric"
