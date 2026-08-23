@@ -407,7 +407,8 @@ export default function ExtendRecordPage() {
                 <Field label="දේශීය ආදායම් දෙපාර්තමේන්තුවෙන් ලබාගත් බදු ගෙවන්නන් සඳහා හඳුනාගැනීමේ අංකය (TIN)">
                   <input
                     type="text"
-                    className={inputClass}
+                    disabled
+                    className={`${inputClass} cursor-not-allowed opacity-60`}
                     value={form.tin}
                     onChange={handleChange("tin")}
                   />
@@ -499,7 +500,8 @@ export default function ExtendRecordPage() {
                             <label className="font-sinhala text-xs text-ink-muted">අක්ෂාංශ</label>
                             <input
                               type="text"
-                              className={inputClass}
+                              disabled
+                              className={`${inputClass} cursor-not-allowed opacity-60`}
                               required={index === 0}
                               value={point.latitude}
                               onChange={handleGpsChange(index, "latitude")}
@@ -509,7 +511,8 @@ export default function ExtendRecordPage() {
                             <label className="font-sinhala text-xs text-ink-muted">දේශාංෂ</label>
                             <input
                               type="text"
-                              className={inputClass}
+                              disabled
+                              className={`${inputClass} cursor-not-allowed opacity-60`}
                               required={index === 0}
                               value={point.longitude}
                               onChange={handleGpsChange(index, "longitude")}
