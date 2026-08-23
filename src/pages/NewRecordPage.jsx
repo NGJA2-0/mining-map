@@ -155,9 +155,9 @@ export default function NewRecordPage() {
   };
 
   const handlePhoneChange = (field) => (e) => {
-  const value = e.target.value.replace(/[^0-9+]/g, "");
-  setForm((prev) => ({ ...prev, [field]: value }));
-};
+    const value = e.target.value.replace(/[^0-9+]/g, "");
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleGpsChange = (index, field) => (e) => {
     const { value } = e.target;
@@ -234,10 +234,10 @@ export default function NewRecordPage() {
 
     if (form.hasExpenseParty) {
       ["expenseName", "expenseAddress", "expensePhone"].forEach((f) => {
-         if (!form[f]) errors.push(f);
+        if (!form[f]) errors.push(f);
       });
       if (form.expensePhone && !SRI_LANKA_PHONE_REGEX.test(form.expensePhone)) errors.push("expensePhone");
-       
+
     }
 
     if (form.isRatnapuraLand === "yes") {
@@ -378,8 +378,11 @@ export default function NewRecordPage() {
                     pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
                     className={inputClass}
                     value={form.applicantPhone}
-                    onChange={handlePhoneChange("applicantPhone")}
+                    onChange={handleChange("applicantPhone")}
                   />
+                  {form.applicantPhone && !SRI_LANKA_PHONE_REGEX.test(form.applicantPhone) && (
+                    <p className="font-sinhala text-xs text-red-500">වලංගු දුරකථන අංකයක් නොවේ</p>
+                  )}
                 </Field>
               </div>
 
@@ -436,8 +439,11 @@ export default function NewRecordPage() {
                         pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
                         className={inputClass}
                         value={form.expensePhone}
-                        onChange={handlePhoneChange("expensePhone")}
+                        onChange={handleChange("expensePhone")}
                       />
+                      {form.expensePhone && !SRI_LANKA_PHONE_REGEX.test(form.expensePhone) && (
+                        <p className="font-sinhala text-xs text-red-500">වලංගු දුරකථන අංකයක් නොවේ</p>
+                      )}
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
                       <input
