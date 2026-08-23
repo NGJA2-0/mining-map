@@ -471,7 +471,13 @@ export default function SearchResultPage() {
                   <input type="text" className={inputClass} value={form.nic} onChange={handleChange("nic")} />
                 </Field>
                 <Field label="දේශීය ආදායම් දෙපාර්තමේන්තුවෙන් ලබාගත් බදු ගෙවන්නන් සඳහා හඳුනාගැනීමේ අංකය (TIN)">
-                  <input type="text" className={inputClass} value={form.tin} onChange={handleChange("tin")} />
+                  <input
+                    type="text"
+                    disabled
+                    className={`${inputClass} cursor-not-allowed opacity-60`}
+                    value={form.tin}
+                    onChange={handleChange("tin")}
+                  />
                 </Field>
                 <Field label="වියදම් පාර්ශවයක් සිටී නම්" full>
                   <label className="flex items-center gap-2 font-sinhala text-sm">
@@ -530,12 +536,24 @@ export default function SearchResultPage() {
                         <div className="grid flex-1 grid-cols-2 gap-3">
                           <div className="flex flex-col gap-1">
                             <label className="font-sinhala text-xs text-ink-muted">අක්ෂාංශ</label>
-                            <input type="text" className={inputClass} required={index === 0} value={point.latitude} onChange={handleGpsChange(index, "latitude")} />
-                          </div>
+                            <input
+                              type="text"
+                              disabled
+                              className={`${inputClass} cursor-not-allowed opacity-60`}
+                              required={index === 0}
+                              value={point.latitude}
+                              onChange={handleGpsChange(index, "latitude")}
+                            /></div>
                           <div className="flex flex-col gap-1">
                             <label className="font-sinhala text-xs text-ink-muted">දේශාංෂ</label>
-                            <input type="text" className={inputClass} required={index === 0} value={point.longitude} onChange={handleGpsChange(index, "longitude")} />
-                          </div>
+                            <input
+                              type="text"
+                              disabled
+                              className={`${inputClass} cursor-not-allowed opacity-60`}
+                              required={index === 0}
+                              value={point.longitude}
+                              onChange={handleGpsChange(index, "longitude")}
+                            />   </div>
                         </div>
                         {index > 0 && (
                           <button
