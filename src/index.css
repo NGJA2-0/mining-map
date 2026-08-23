@@ -144,7 +144,7 @@ body {
     min-height: 0 !important;
     box-shadow: none !important;
     margin: 0 auto !important;
-    padding: 6mm 8mm !important;
+    padding: 0 8mm !important;
     font-size: 10.5px !important;
     line-height: 1.4 !important;
   }
@@ -160,7 +160,7 @@ body {
 
   .a4-header h2 {
     font-size: 14px !important;
-    margin: 2px 0 !important;
+    margin: 0 0 2px 0 !important;
   }
 
   .a4-header p {
