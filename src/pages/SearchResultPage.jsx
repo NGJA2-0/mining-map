@@ -44,6 +44,8 @@ const DS_DIVISIONS_BY_DISTRICT = {
   "කෑගල්ල": ["කෑගල්ල", "මාවනැල්ල", "රඹුක්කන", "වරකාපොල", "රුවන්වැල්ල", "යටියන්තොට", "දෙරණියගල", "ගාලිගමුව", "බුලත්කොහුපිටිය", "දෙහිඕවිට", "අරණායක"],
 };
 
+const SRI_LANKA_PHONE_REGEX = /^(?:\+94|0)[1-9][0-9]{8}$/;
+
 const yesNo = [
   { value: "yes", label: "ඔව්" },
   { value: "no", label: "නැත" },
@@ -246,7 +248,10 @@ export default function SearchResultPage() {
       if (!form[f] || String(form[f]).trim() === "") errors.push(f);
     });
     if (!form.gpsPoints.some((p) => p.latitude && p.longitude)) errors.push("gpsPoints");
+    if (form.applicantPhone && !SRI_LANKA_PHONE_REGEX.test(form.applicantPhone)) errors.push("applicantPhone");
+
     if (form.hasExpenseParty) {
+      if (form.expensePhone && !SRI_LANKA_PHONE_REGEX.test(form.expensePhone)) errors.push("expensePhone");
       ["expenseName", "expenseAddress", "expensePhone"].forEach((f) => {
         if (!form[f]) errors.push(f);
       });
@@ -448,7 +453,16 @@ export default function SearchResultPage() {
                   <input type="text" className={inputClass} value={form.applicantAddress} onChange={handleChange("applicantAddress")} />
                 </Field>
                 <Field label="ඉල්ලුම්කරුගේ දුරකථන අංකය">
-                  <input type="tel" className={inputClass} value={form.applicantPhone} onChange={handleChange("applicantPhone")} />
+                  <input
+                    type="tel"
+                    pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
+                    className={inputClass}
+                    value={form.applicantPhone}
+                    onChange={handleChange("applicantPhone")}
+                  />
+                  {form.applicantPhone && !SRI_LANKA_PHONE_REGEX.test(form.applicantPhone) && (
+                    <p className="font-sinhala text-xs text-red-500">වලංගු දුරකථන අංකයක් නොවේ</p>
+                  )}
                 </Field>
               </div>
 
@@ -480,7 +494,16 @@ export default function SearchResultPage() {
                       <input type="text" className={inputClass} value={form.expenseAddress} onChange={handleChange("expenseAddress")} />
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ දුරකථන අංකය" full>
-                      <input type="tel" className={inputClass} value={form.expensePhone} onChange={handleChange("expensePhone")} />
+                      <input
+                        type="tel"
+                        pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
+                        className={inputClass}
+                        value={form.expensePhone}
+                        onChange={handleChange("expensePhone")}
+                      />
+                      {form.expensePhone && !SRI_LANKA_PHONE_REGEX.test(form.expensePhone) && (
+                        <p className="font-sinhala text-xs text-red-500">වලංගු දුරකථන අංකයක් නොවේ</p>
+                      )}
                     </Field>
                     <Field label="වියදම් පාර්ශවයේ බදු ගෙවන්නන් හඳුනාගැනීමේ අංකය (TIN)">
                       <input type="text" className={inputClass} value={form.expenseTin} onChange={handleChange("expenseTin")} />
@@ -732,28 +755,34 @@ export default function SearchResultPage() {
               </h4>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {[
-                  { field: "boundaryNorth", label: "උතුරට (අඩි)" },
-                  { field: "boundarySouth", label: "දකුණට (අඩි)" },
-                  { field: "boundaryEast", label: "නැගෙනහිරට (අඩි)" },
-                  { field: "boundaryWest", label: "බස්නාහිරට (අඩි)" },
-                  { field: "boundaryHouses", label: "නිවාසවලට (අඩි)" },
-                  { field: "boundaryElectricPoles", label: "විදුලි කණුවලට (අඩි)" },
-                  { field: "boundaryWater", label: "ගංගා සහ ජල දෙහයන්ට (අඩි)" },
-                  { field: "boundaryRoads", label: "මාර්ගවලට (අඩි)" },
-                  { field: "boundaryOther", label: "වෙනත්" },
-                ].map(({ field, label }) => (
+                  { field: "boundaryNorth", label: "උතුරට (අඩි)", numeric: true },
+                  { field: "boundarySouth", label: "දකුණට (අඩි)", numeric: true },
+                  { field: "boundaryEast", label: "නැගෙනහිරට (අඩි)", numeric: true },
+                  { field: "boundaryWest", label: "බස්නාහිරට (අඩි)", numeric: true },
+                  { field: "boundaryHouses", label: "නිවාසවලට (අඩි)", numeric: true },
+                  { field: "boundaryElectricPoles", label: "විදුලි කණුවලට (අඩි)", numeric: true },
+                  { field: "boundaryWater", label: "ගංගා සහ ජල දෙහයන්ට (අඩි)", numeric: true },
+                  { field: "boundaryRoads", label: "මාර්ගවලට (අඩි)", numeric: true },
+                  { field: "boundaryOther", label: "වෙනත්", numeric: false },
+                ].map(({ field, label, numeric }) => (
                   <Field key={field} label={label}>
-                    <input type="text" className={inputClass} value={form[field]} onChange={handleChange(field)} />
+                    <input
+                      type={numeric ? "number" : "text"}
+                      step={numeric ? "any" : undefined}
+                      className={inputClass}
+                      value={form[field]}
+                      onChange={handleChange(field)}
+                    />
                   </Field>
                 ))}
               </div>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field label="කැපීමට අදහස් කරන පතල් ප්‍රමාණය (ව.අ.)">
-                  <input type="text" className={inputClass} value={form.proposedExtent} onChange={handleChange("proposedExtent")} />
+                  <input type="number" step="any" className={inputClass} value={form.proposedExtent} onChange={handleChange("proposedExtent")} />
                 </Field>
                 <Field label="ඇප මුදල් සේවා ගාස්තුව">
-                  <input type="text" className={inputClass} placeholder="NGJA/16.2/2018/Backhoe III චක්‍රලේඛය ප්‍රකාරව" value={form.refundServiceFee} onChange={handleChange("refundServiceFee")} />
+                  <input type="number" step="0.01" className={inputClass} placeholder="NGJA/16.2/2018/Backhoe III චක්‍රලේඛය ප්‍රකාරව" value={form.refundServiceFee} onChange={handleChange("refundServiceFee")} />
                 </Field>
               </div>
             </section>
