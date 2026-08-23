@@ -10,11 +10,11 @@ function Row({ label, value, highlight }) {
     );
 }
 
-function Section({ title, children }) {
+function Section({ title, children, columns = 2 }) {
     return (
         <div className="a4-section">
             <h3 className="a4-section-title">{title}</h3>
-            <div className="a4-grid">{children}</div>
+           <div className={`a4-grid a4-grid-${columns}`}>{children}</div>
         </div>
     );
 }
@@ -109,7 +109,7 @@ export default function A4PreviewSheet({ form, isResubmit = false, highlightFiel
                 </Section>
             )}
 
-            <Section title="කැණීම් යෝජනාව">
+            <Section title="කැණීම් යෝජනාව" columns={3}>
                 <Row label="යෝජිත ගැඹුර (අඩි)" value={form.proposedDepth} highlight={isChanged("proposedDepth")} />
                 <Row label="ඉඩමේ වගාව" value={form.landCultivation} highlight={isChanged("landCultivation")} />
                 <Row label="උතුරට (අඩි)" value={form.boundaryNorth} highlight={isChanged("boundaryNorth")} />
