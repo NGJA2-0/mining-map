@@ -14,7 +14,7 @@ function Section({ title, children, columns = 2 }) {
     return (
         <div className="a4-section">
             <h3 className="a4-section-title">{title}</h3>
-           <div className={`a4-grid a4-grid-${columns}`}>{children}</div>
+            <div className={`a4-grid a4-grid-${columns}`}>{children}</div>
         </div>
     );
 }
@@ -29,12 +29,15 @@ export default function A4PreviewSheet({ form, isResubmit = false, highlightFiel
     return (
         <div id="a4-preview-sheet" className="a4-sheet">
             <div className="a4-header">
-                <p>ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</p>
-                <h2>
-                  යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම
-                  {isResubmit ? " (නැවත ඉදිරිපත් කිරීම)" : " (නව)"}
-                </h2>
-                <p>අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) නිර්දේශය</p>
+                <img src="/logo.jpg" alt="ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය" className="a4-logo" />
+                <div className="a4-header-text">
+                    <p>ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</p>
+                    <h2>
+                        යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම
+                        {isResubmit ? " (නැවත ඉදිරිපත් කිරීම)" : " (නව)"}
+                    </h2>
+                    <p>අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) නිර්දේශය</p>
+                </div>
             </div>
 
             <Section title="අයදුම්කරු පිළිබඳ තොරතුරු">
@@ -82,7 +85,7 @@ export default function A4PreviewSheet({ form, isResubmit = false, highlightFiel
                 ))}
             </Section>
 
-             <Section title="මැණික් ගැරීමේ බලපත්‍රලත් ඉඩම පිහිටි">
+            <Section title="මැණික් ගැරීමේ බලපත්‍රලත් ඉඩම පිහිටි">
                 <Row label="දිස්ත්‍රික්කය" value={form.district} highlight={isChanged("district")} />
                 <Row label="ප්‍රාදේශීය කාර්යාලය" value={form.regionalOffice} highlight={isChanged("regionalOffice")} />
                 <Row label="ගම" value={form.village} highlight={isChanged("village")} />

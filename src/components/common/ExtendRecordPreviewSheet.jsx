@@ -35,12 +35,15 @@ export default function ExtendRecordPreviewSheet({ form, isResubmit = false, hig
     return (
         <div id="a4-preview-sheet" className="a4-sheet">
             <div className="a4-header">
-                <p>ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</p>
-                <h2>
-                    යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම
-                    {isResubmit ? " (නැවත ඉදිරිපත් කිරීම)" : " (නව)"}
-                </h2>
-                <p>අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) නිර්දේශය</p>
+                <img src="/logo.jpg" alt="ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය" className="a4-logo" />
+                <div className="a4-header-text">
+                    <p>ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</p>
+                    <h2>
+                        යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම
+                        {isResubmit ? " (නැවත ඉදිරිපත් කිරීම)" : " (නව)"}
+                    </h2>
+                    <p>අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) නිර්දේශය</p>
+                </div>
             </div>
 
             <Section title="අයදුම්කරු පිළිබඳ තොරතුරු">
@@ -97,7 +100,7 @@ export default function ExtendRecordPreviewSheet({ form, isResubmit = false, hig
                 <Row label="දැනට කපා ඇති පතල් වලවල්වල වර්ග ප්‍රමාණය" value={form.existingPitsArea} highlight={isChanged("existingPitsArea")} />
             </Section>
 
-                        <Section title="පෙර බලපත්‍රය පිළිබඳ තොරතුරු">
+            <Section title="පෙර බලපත්‍රය පිළිබඳ තොරතුරු">
                 <Row label="රොන්මඩ වලවල්වල වර්ග ප්‍රමාණය (ව.අඩි)" value={form.mudPitsArea} highlight={isChanged("mudPitsArea")} />
                 <Row label="ගැඹුර ප්‍රමාණය" value={form.depthSize} highlight={isChanged("depthSize")} />
                 <Row label="පසුගිය මාස 03තුළ කොන්දේසි කඩකිරීම්" value={form.breachesInLast3Months} highlight={isChanged("breachesInLast3Months")} />
