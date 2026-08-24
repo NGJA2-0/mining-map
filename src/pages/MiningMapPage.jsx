@@ -16,6 +16,8 @@ L.Icon.Default.mergeOptions({
 
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/common/Button";
+import A4PreviewSheet from "../components/common/A4PreviewSheet";
+import ExtendRecordPreviewSheet from "../components/common/ExtendRecordPreviewSheet";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const SRI_LANKA_CENTER = [7.8731, 80.7718];
@@ -128,7 +130,7 @@ function ResetViewControl() {
   return null;
 }
 
-function MineDetailPanel({ mine, loading, error }) {
+function MineDetailPanel({ mine, loading, error, onPreview }) {
   if (loading) {
     return (
       <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", padding: "12px 4px" }}>
@@ -241,7 +243,7 @@ function MineDetailPanel({ mine, loading, error }) {
         </div>
       </div>
 
-      {/* details */}
+            {/* details */}
       <div style={{ padding: "6px 16px 12px" }}>
         {rows.map((r, i) => (
           <div
@@ -277,6 +279,84 @@ function MineDetailPanel({ mine, loading, error }) {
             </span>
           </div>
         ))}
+
+        {onPreview && (
+          <Button
+            variant="primary"
+            size="md"
+            onClick={onPreview}
+            style={{
+              width: "100%",
+              marginTop: "10px",
+              background: "linear-gradient(135deg, #bfdbfe, #ffffff)",
+              color: "var(--color-ink, #1a1a1a)",
+              border: "1px solid #93c5fd",
+            }}
+          >
+            View full application
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PreviewOverlay({ open, loading, error, form, isExtend, onClose }) {
+  if (!open) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "var(--color-base, #f7f7f5)",
+        zIndex: 1000,
+        overflowY: "auto",
+      }}
+    >
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          padding: "14px 20px",
+          background: "var(--color-surface, #fff)",
+          borderBottom: "1px solid var(--color-line, #e5e7eb)",
+          zIndex: 1,
+        }}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: "600",
+            color: "var(--color-ink-muted, #6b7280)",
+            fontFamily: "inherit",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          Back to map
+        </button>
+      </div>
+
+      <div style={{ padding: "20px" }}>
+        {loading && (
+          <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)" }}>Loading application…</p>
+        )}
+        {error && <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>}
+        {!loading && !error && form && (
+          isExtend ? <ExtendRecordPreviewSheet form={form} /> : <A4PreviewSheet form={form} />
+        )}
       </div>
     </div>
   );
@@ -297,6 +377,12 @@ export default function MiningMapPage() {
   const [selectedDetails, setSelectedDetails] = useState(null); // full record from /:id
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const [previewForm, setPreviewForm] = useState(null);
+  const [previewIsExtend, setPreviewIsExtend] = useState(false);
 
   // UI-only filter state — kept for layout purposes; not wired to any fetch/filter logic.
   const [district, setDistrict] = useState("");
@@ -373,6 +459,39 @@ export default function MiningMapPage() {
     },
     [token]
   );
+
+    const handleOpenPreview = useCallback(
+    async (id) => {
+      setPreviewOpen(true);
+      setPreviewLoading(true);
+      setPreviewError("");
+      setPreviewForm(null);
+      try {
+        const res = await fetch(`${BASE_URL}/api/mining-licenses/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        const record = json.data || null;
+        setPreviewIsExtend(Boolean(record?.privateSaleValue || record?.auctionSaleValue));
+        setPreviewForm(record);
+      } catch (err) {
+        setPreviewError(err.message || "Failed to load application.");
+      } finally {
+        setPreviewLoading(false);
+      }
+    },
+    [token]
+  );
+
+  const handleClosePreview = () => {
+    setPreviewOpen(false);
+    setPreviewForm(null);
+    setPreviewError("");
+  };
 
   return (
     <div className="min-h-screen bg-base text-ink">
@@ -475,7 +594,12 @@ export default function MiningMapPage() {
             </p>
           )}
 
-          <MineDetailPanel mine={selectedDetails} loading={detailLoading} error={detailError} />
+          <MineDetailPanel
+            mine={selectedDetails}
+            loading={detailLoading}
+            error={detailError}
+            onPreview={() => selectedDetails?.id && handleOpenPreview(selectedDetails.id)}
+          />
         </div>
 
         {/* map */}
@@ -538,8 +662,17 @@ export default function MiningMapPage() {
               );
             })}
           </MapContainer>
-        </div>
+                </div>
       </div>
+
+      <PreviewOverlay
+        open={previewOpen}
+        loading={previewLoading}
+        error={previewError}
+        form={previewForm}
+        isExtend={previewIsExtend}
+        onClose={handleClosePreview}
+      />
     </div>
   );
 }
