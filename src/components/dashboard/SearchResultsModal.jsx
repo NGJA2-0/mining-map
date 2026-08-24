@@ -1,10 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import DownloadRecordModal from "../common/DownloadRecordModal";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const STATUS_CFG = {
   draft: { label: "Draft", bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
   submitted: { label: "Submitted", bg: "rgba(59,130,246,0.12)", color: "#2563eb" },
   approved: { label: "Approved", bg: "rgba(16,185,129,0.12)", color: "#059669" },
   rejected: { label: "Rejected", bg: "rgba(220,38,38,0.12)", color: "#dc2626" },
+};
+
+const TYPE_CFG = {
+  new: { label: "New", bg: "rgba(37,99,235,0.12)", color: "#2563eb" },
+  extended: { label: "Extended", bg: "rgba(5,150,105,0.12)", color: "#059669" },
 };
 
 function StatusBadge({ status }) {
@@ -23,15 +33,33 @@ function StatusBadge({ status }) {
   );
 }
 
-function ResultCard({ record, onView, onViewHistory }) {
-  const date = record.createdAt
-    ? new Date(record.createdAt).toLocaleDateString("en-GB", {
-      day: "2-digit", month: "short", year: "numeric",
-    })
-    : "—";
+function TypeBadge({ type }) {
+  const cfg = TYPE_CFG[type?.toLowerCase()];
+  if (!cfg) return null;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      padding: "2px 10px", borderRadius: "999px",
+      fontSize: "10px", fontWeight: "700",
+      letterSpacing: "0.07em", textTransform: "uppercase",
+      background: cfg.bg, color: cfg.color,
+      border: `1px solid ${cfg.color}22`,
+    }}>
+      {cfg.label}
+    </span>
+  );
+}
 
-  const statusColor =
-    (STATUS_CFG[record.status?.toLowerCase()] || STATUS_CFG.draft).color;
+function ResultCard({ record, onView, onViewHistory, onDownload, viewLoading }) {
+  const formatDate = (value) =>
+    value
+      ? new Date(value).toLocaleDateString("en-GB", {
+        day: "2-digit", month: "short", year: "numeric",
+      })
+      : "—";
+
+  const date = formatDate(record.createdAt);
+  const updatedDate = formatDate(record.updatedAt);
 
   return (
     <div
@@ -39,7 +67,7 @@ function ResultCard({ record, onView, onViewHistory }) {
         width: "100%", textAlign: "left",
         background: "var(--color-surface, #fff)",
         border: "1px solid var(--color-line, #e5e7eb)",
-        borderLeft: `3px solid ${statusColor}`,
+        borderLeft: "3px solid var(--color-teal, #0d9488)",
         borderRadius: "10px", padding: "16px 18px",
         display: "flex", flexDirection: "column", gap: "10px",
         fontFamily: "inherit",
@@ -48,35 +76,35 @@ function ResultCard({ record, onView, onViewHistory }) {
     >
       {/* Top row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-        <span style={{ fontWeight: "700", fontSize: "15px", color: "var(--color-ink, #1a1a1a)" }}>
-          {record.applicantName || "—"}
-        </span>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <StatusBadge status={record.status} />
-          <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)", fontFamily: "monospace" }}>
-            {date}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <span style={{ fontWeight: "700", fontSize: "15px", color: "var(--color-ink, #1a1a1a)" }}>
+            {record.applicantName || "—"}
           </span>
+          <TypeBadge type={record.type} />
         </div>
+        <span style={{
+          fontSize: "13px", color: "var(--color-ink-muted, #6b7280)",
+          fontFamily: "monospace", whiteSpace: "nowrap",
+        }}>
+          {date}
+        </span>
       </div>
 
       {/* Meta pills */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
         {[
-          { key: "TIN", val: record.tin },
           { key: "GML", val: record.gmlNumber },
-          { key: "NIC", val: record.nic },
-          { key: "District", val: record.district },
-          { key: "Village", val: record.village },
-          { key: "Land", val: record.landName },
-        ].filter(f => f.val).map(({ key, val }) => (
+          { key: "Created by", val: record.createdBy },
+          { key: "Updated", val: updatedDate },
+        ].filter(f => f.val && f.val !== "—").map(({ key, val }) => (
           <span key={key} style={{
             display: "inline-flex", alignItems: "center", gap: "5px",
             padding: "3px 10px", borderRadius: "6px",
             background: "var(--color-base, #f9fafb)",
             border: "1px solid var(--color-line, #e5e7eb)",
-            fontSize: "11px", color: "var(--color-ink-muted, #6b7280)",
+            fontSize: "13px", color: "var(--color-ink-muted, #6b7280)",
           }}>
-            <span style={{ fontWeight: "700", fontFamily: "monospace", color: "var(--color-ink, #1a1a1a)", fontSize: "10px" }}>{key}</span>
+            <span style={{ fontWeight: "700", fontFamily: "monospace", color: "var(--color-ink, #1a1a1a)", fontSize: "12px" }}>{key}</span>
             {val}
           </span>
         ))}
@@ -84,6 +112,27 @@ function ResultCard({ record, onView, onViewHistory }) {
 
       {/* Footer actions */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
+        <button
+          onClick={onDownload}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "6px",
+            padding: "6px 12px", borderRadius: "6px",
+            fontSize: "12px", fontWeight: "600", cursor: "pointer",
+            fontFamily: "inherit",
+            background: "var(--color-base, #f9fafb)",
+            border: "1px solid var(--color-line, #e5e7eb)",
+            color: "var(--color-ink, #1a1a1a)",
+            transition: "background 0.12s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--color-line, #e5e7eb)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--color-base, #f9fafb)")}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" />
+          </svg>
+          Download
+        </button>
+
         <button
           onClick={onViewHistory}
           style={{
@@ -109,17 +158,21 @@ function ResultCard({ record, onView, onViewHistory }) {
 
         <button
           onClick={onView}
+          disabled={viewLoading}
           style={{
             display: "inline-flex", alignItems: "center", gap: "5px",
             padding: "6px 12px", borderRadius: "6px",
-            fontSize: "12px", fontWeight: "700", cursor: "pointer",
+            fontSize: "12px", fontWeight: "700", cursor: viewLoading ? "default" : "pointer",
             fontFamily: "inherit",
             background: "transparent", border: "none",
             color: "var(--color-teal, #0d9488)",
+            opacity: viewLoading ? 0.6 : 1,
           }}
         >
-          View &amp; edit
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+          {viewLoading ? "Loading…" : "View & edit"}
+          {!viewLoading && (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+          )}
         </button>
       </div>
     </div>
@@ -222,9 +275,35 @@ export default function SearchResultsModal({
   onPageChange,
   onPageSizeChange,
   onRetry,
-  onSelectRecord,
   onViewHistory,
 }) {
+  const navigate = useNavigate();
+  const { token } = useAuth();
+  const [viewLoadingId, setViewLoadingId] = useState(null);
+
+  const handleViewEdit = async (record) => {
+    setViewLoadingId(record.id);
+    try {
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/${record.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to load record");
+      const json = await res.json();
+      const data = json.data;
+
+      const targetPath =
+        record.type?.toLowerCase() === "extended"
+          ? "/dashboard/extend"
+          : "/dashboard/search-result";
+
+      navigate(targetPath, { state: { record: data } });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load the record. Please try again.");
+    } finally {
+      setViewLoadingId(null);
+    }
+  };
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -236,6 +315,8 @@ export default function SearchResultsModal({
       document.body.style.overflow = prevOverflow;
     };
   }, [open, onClose]);
+
+  const [downloadRecord, setDownloadRecord] = useState(null);
 
   if (!open) return null;
 
@@ -297,7 +378,7 @@ export default function SearchResultsModal({
           flexShrink: 0,
         }}>
           <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: "11px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
+            <p style={{ margin: 0, fontSize: "13px", fontFamily: "monospace", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)" }}>
               TIN · {activeSearch}
             </p>
             <h3 style={{ margin: "4px 0 0", fontWeight: "700", fontSize: "18px", color: "var(--color-ink, #1a1a1a)" }}>
@@ -424,8 +505,10 @@ export default function SearchResultsModal({
                 <ResultCard
                   key={record.id}
                   record={record}
-                  onView={() => onSelectRecord(record)}
+                  onView={() => handleViewEdit(record)}
                   onViewHistory={() => onViewHistory(record)}
+                  onDownload={() => setDownloadRecord(record)}
+                  viewLoading={viewLoadingId === record.id}
                 />
               ))}
             </div>
@@ -449,6 +532,12 @@ export default function SearchResultsModal({
           </div>
         )}
       </div>
+
+      <DownloadRecordModal
+        open={!!downloadRecord}
+        onClose={() => setDownloadRecord(null)}
+        type={downloadRecord?.type}
+      />
     </div>
   );
 }
