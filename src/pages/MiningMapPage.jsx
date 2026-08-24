@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -63,6 +63,7 @@ function MineDetailPanel({ mine, loading, error }) {
   const point = mine.gpsPoints?.[0];
   const rows = [
     { label: "Applicant", value: mine.applicantName },
+    { label: "Status", value: mine.status },
     { label: "Phone", value: mine.applicantPhone },
     { label: "TIN", value: mine.tin },
     { label: "GML", value: mine.gmlNumber },
@@ -124,6 +125,7 @@ function MineDetailPanel({ mine, loading, error }) {
 export default function MiningMapPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const mapRef = useRef(null);
   const [mapView, setMapView] = useState("street"); // "street" | "satellite"
   const [mines, setMines] = useState([]); // pins from /latest
   const [loading, setLoading] = useState(true);
@@ -303,6 +305,14 @@ export default function MiningMapPage() {
             >
               {mapView === "street" ? "Satellite view" : "Street view"}
             </Button>
+            <Button
+              variant="secondary"
+              className="!text-ink"
+              size="md"
+              onClick={() => mapRef.current?.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 })}
+            >
+              Reset view
+            </Button>
           </div>
 
           {error && <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>}
@@ -326,7 +336,7 @@ export default function MiningMapPage() {
             border: "1px solid var(--color-line, #e5e7eb)",
           }}
         >
-          <MapContainer center={SRI_LANKA_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
+          <MapContainer ref={mapRef} center={SRI_LANKA_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
             {mapView === "street" ? (
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -357,6 +367,9 @@ export default function MiningMapPage() {
                     >
                       <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--color-ink, #1a1a1a)" }}>
                         {mine.applicantName || "—"}
+                      </span>
+                      <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                        Status: {mine.status || "—"}
                       </span>
                       <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
                         Lat: {mine.latitude}
