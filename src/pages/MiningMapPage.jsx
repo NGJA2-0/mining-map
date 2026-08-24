@@ -150,7 +150,6 @@ function MineDetailPanel({ mine, loading, error }) {
   const point = mine.gpsPoints?.[0];
   const rows = [
     { label: "Applicant", value: mine.applicantName },
-    { label: "Status", value: mine.status },
     { label: "Phone", value: mine.applicantPhone },
     { label: "TIN", value: mine.tin },
     { label: "GML", value: mine.gmlNumber },
@@ -158,27 +157,103 @@ function MineDetailPanel({ mine, loading, error }) {
     { label: "Created by", value: mine.createdBy },
     { label: "Created at", value: mine.createdAt && new Date(mine.createdAt).toLocaleString() },
     { label: "Updated at", value: mine.updatedAt && new Date(mine.updatedAt).toLocaleString() },
-  ];
+  ].filter((r) => r.value);
+
+  const statusColors = {
+    draft: { bg: "#fef3c7", fg: "#92400e" },
+    approved: { bg: "#d1fae5", fg: "#065f46" },
+    rejected: { bg: "#fee2e2", fg: "#991b1b" },
+  };
+  const statusStyle = statusColors[mine.status?.toLowerCase()] || { bg: "#e5e7eb", fg: "#374151" };
 
   return (
     <div
       style={{
         border: "1px solid var(--color-line, #e5e7eb)",
-        borderRadius: "10px",
+        borderRadius: "12px",
         background: "var(--color-surface, #fff)",
-        padding: "16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
+        overflow: "hidden",
       }}
     >
-      <h2 style={{ fontSize: "15px", fontWeight: "700", color: "var(--color-ink, #1a1a1a)" }}>
-        {mine.applicantName || "—"}
-      </h2>
-      {rows
-        .filter((r) => r.value)
-        .map((r) => (
-          <div key={r.label} style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
+      {/* header */}
+            <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          padding: "16px",
+          background: "linear-gradient(135deg, #ccfbf1, #fde8d7)",
+        }}
+      >
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.7)",
+            color: "var(--color-teal, #0d9488)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "700",
+            fontSize: "14px",
+            flexShrink: 0,
+          }}
+        >
+          {(mine.applicantName || "?")
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2)}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+          <span
+            style={{
+              fontSize: "15px",
+              fontWeight: "700",
+              color: "var(--color-ink, #1a1a1a)",
+              lineHeight: "1.2",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {mine.applicantName || "—"}
+          </span>
+          {mine.status && (
+            <span
+              style={{
+                alignSelf: "flex-start",
+                fontSize: "10px",
+                fontWeight: "700",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                padding: "2px 8px",
+                borderRadius: "999px",
+                background: statusStyle.bg,
+                color: statusStyle.fg,
+              }}
+            >
+              {mine.status}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* details */}
+      <div style={{ padding: "6px 16px 12px" }}>
+        {rows.map((r, i) => (
+          <div
+            key={r.label}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "88px 1fr",
+              gap: "12px",
+              padding: "10px 0",
+              borderTop: i === 0 ? "none" : "1px solid var(--color-line, #f1f2f4)",
+            }}
+          >
             <span
               style={{
                 fontSize: "11px",
@@ -186,7 +261,6 @@ function MineDetailPanel({ mine, loading, error }) {
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 color: "var(--color-ink-muted, #6b7280)",
-                whiteSpace: "nowrap",
               }}
             >
               {r.label}
@@ -196,13 +270,14 @@ function MineDetailPanel({ mine, loading, error }) {
                 fontSize: "13px",
                 fontWeight: "600",
                 color: "var(--color-ink, #1a1a1a)",
-                textAlign: "right",
+                wordBreak: "break-word",
               }}
             >
               {r.value}
             </span>
           </div>
         ))}
+      </div>
     </div>
   );
 }
