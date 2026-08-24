@@ -41,6 +41,93 @@ function FlyToMine({ mine }) {
   return null;
 }
 
+// Adds a native Leaflet control button that toggles street/satellite tiles,
+// stacking directly below the default zoom control. Must live inside <MapContainer>.
+function ToggleViewControl({ mapView, setMapView }) {
+  const map = useMap();
+  const viewRef = useRef(mapView);
+  const buttonRef = useRef(null);
+
+  useEffect(() => {
+    viewRef.current = mapView;
+  }, [mapView]);
+
+  useEffect(() => {
+        const control = L.control({ position: "topleft" });
+
+    control.onAdd = () => {
+      const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+      const button = L.DomUtil.create("a", "", container);
+      buttonRef.current = button;
+      button.href = "#";
+      button.style.display = "flex";
+      button.style.alignItems = "center";
+      button.style.justifyContent = "center";
+      button.style.width = "30px";
+      button.style.height = "30px";
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.on(button, "click", (e) => {
+        L.DomEvent.preventDefault(e);
+        setMapView(viewRef.current === "street" ? "satellite" : "street");
+      });
+
+      return container;
+    };
+
+    control.addTo(map);
+    return () => control.remove();
+  }, [map, setMapView]);
+
+  // Keep the icon/title in sync with the current view without rebuilding the control.
+  useEffect(() => {
+    if (!buttonRef.current) return;
+    const satelliteIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 7 5 5-8.5 8.5a3.54 3.54 0 1 1-5-5L13 7Z"/><path d="m18 2 4 4"/><path d="m17 7-3-3"/><path d="M6.5 12.5 4 15a3.54 3.54 0 1 0 5 5l2.5-2.5"/></svg>`;
+    const mapIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`;
+    buttonRef.current.innerHTML = mapView === "street" ? satelliteIcon : mapIcon;
+    buttonRef.current.title = mapView === "street" ? "Satellite view" : "Street view";
+    buttonRef.current.setAttribute("aria-label", buttonRef.current.title);
+  }, [mapView]);
+
+  return null;
+}
+
+// Adds a native Leaflet control button, positioned in the same corner as
+// (and stacking directly below) the default zoom control. Must live inside <MapContainer>.
+function ResetViewControl() {
+  const map = useMap();
+  useEffect(() => {
+    const control = L.control({ position: "topleft" });
+
+    control.onAdd = () => {
+      const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+      const button = L.DomUtil.create("a", "", container);
+      button.href = "#";
+      button.title = "Reset view";
+      button.setAttribute("aria-label", "Reset view");
+      button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`;
+      button.style.display = "flex";
+      button.style.alignItems = "center";
+      button.style.justifyContent = "center";
+      button.style.width = "30px";
+      button.style.height = "30px";
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.on(button, "click", (e) => {
+        L.DomEvent.preventDefault(e);
+        map.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
+      });
+
+      return container;
+    };
+
+    control.addTo(map);
+    return () => control.remove();
+  }, [map]);
+
+  return null;
+}
+
 function MineDetailPanel({ mine, loading, error }) {
   if (loading) {
     return (
@@ -304,23 +391,7 @@ export default function MiningMapPage() {
             >
               Clear
             </Button>
-            <Button
-              variant="secondary"
-              className="!text-ink"
-              size="md"
-              onClick={() => setMapView((v) => (v === "street" ? "satellite" : "street"))}
-            >
-              {mapView === "street" ? "Satellite view" : "Street view"}
-            </Button>
-            <Button
-              variant="secondary"
-              className="!text-ink"
-              size="md"
-              onClick={() => mapRef.current?.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 })}
-            >
-              Reset view
-            </Button>
-          </div>
+            </div>
 
           {error && <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>}
           {!loading && !error && (
@@ -356,6 +427,8 @@ export default function MiningMapPage() {
               />
             )}
             <FlyToMine mine={selectedMine} />
+            <ToggleViewControl mapView={mapView} setMapView={setMapView} />
+            <ResetViewControl />
             {mines.map((mine) => {
               const latLng = getLatLng(mine);
               if (!latLng) return null;
