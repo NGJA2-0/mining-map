@@ -186,6 +186,13 @@ export default function MiningMapPage() {
       setSelectedDetails(null);
       setDetailError("");
       setDetailLoading(true);
+
+      // Fly directly, since setSelectedMine may pass the same object
+      // reference as before (e.g. after a reset), which would otherwise
+      // skip FlyToMine's effect and leave the map un-zoomed.
+      const latLng = getLatLng(mine);
+      if (latLng) mapRef.current?.flyTo(latLng, 13, { duration: 0.8 });
+
       try {
         const res = await fetch(`${BASE_URL}/api/mining-licenses/${mine.id}`, {
           headers: { Authorization: `Bearer ${token}` },
