@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -24,10 +24,8 @@ const DEFAULT_ZOOM = 8;
 /* ─────────────────────────── helpers ─────────────────────────── */
 
 function getLatLng(mine) {
-  const point = mine.gpsPoints?.[0];
-  if (!point) return null;
-  const lat = Number(point.latitude);
-  const lng = Number(point.longitude);
+  const lat = Number(String(mine.latitude).trim());
+  const lng = Number(String(mine.longitude).trim());
   if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
   return [lat, lng];
 }
@@ -43,30 +41,81 @@ function FlyToMine({ mine }) {
   return null;
 }
 
-function MineListItem({ mine, active, onClick }) {
+function MineDetailPanel({ mine, loading, error }) {
+  if (loading) {
+    return (
+      <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", padding: "12px 4px" }}>
+        Loading details…
+      </p>
+    );
+  }
+  if (error) {
+    return <p style={{ fontSize: "13px", color: "#dc2626", padding: "12px 4px" }}>{error}</p>;
+  }
+  if (!mine) {
+    return (
+      <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", padding: "12px 4px" }}>
+        Click a marker on the map to view mine details.
+      </p>
+    );
+  }
+
+  const point = mine.gpsPoints?.[0];
+  const rows = [
+    { label: "Applicant", value: mine.applicantName },
+    { label: "Phone", value: mine.applicantPhone },
+    { label: "TIN", value: mine.tin },
+    { label: "GML", value: mine.gmlNumber },
+    { label: "GPS", value: point ? `${point.latitude}, ${point.longitude}` : null },
+    { label: "Created by", value: mine.createdBy },
+    { label: "Created at", value: mine.createdAt && new Date(mine.createdAt).toLocaleString() },
+    { label: "Updated at", value: mine.updatedAt && new Date(mine.updatedAt).toLocaleString() },
+  ];
+
   return (
-    <button
-      onClick={onClick}
+    <div
       style={{
-        width: "100%", textAlign: "left", cursor: "pointer",
-        background: active ? "var(--color-teal, #0d9488)11" : "var(--color-surface, #fff)",
         border: "1px solid var(--color-line, #e5e7eb)",
-        borderLeft: `3px solid ${active ? "var(--color-teal, #0d9488)" : "var(--color-line, #e5e7eb)"}`,
-        borderRadius: "8px", padding: "12px 14px",
-        display: "flex", flexDirection: "column", gap: "4px",
-        fontFamily: "inherit", transition: "background 0.15s, border-color 0.15s",
+        borderRadius: "10px",
+        background: "var(--color-surface, #fff)",
+        padding: "16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
       }}
     >
-      <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--color-ink, #1a1a1a)" }}>
+      <h2 style={{ fontSize: "15px", fontWeight: "700", color: "var(--color-ink, #1a1a1a)" }}>
         {mine.applicantName || "—"}
-      </span>
-      <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
-        {mine.landName || "—"} · {mine.village || "—"}, {mine.district || "—"}
-      </span>
-      <span style={{ fontSize: "10px", fontFamily: "monospace", color: "var(--color-ink-muted, #6b7280)" }}>
-        GML {mine.gmlNumber || "—"} · TIN {mine.tin || "—"}
-      </span>
-    </button>
+      </h2>
+      {rows
+        .filter((r) => r.value)
+        .map((r) => (
+          <div key={r.label} style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: "700",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: "var(--color-ink-muted, #6b7280)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {r.label}
+            </span>
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "var(--color-ink, #1a1a1a)",
+                textAlign: "right",
+              }}
+            >
+              {r.value}
+            </span>
+          </div>
+        ))}
+    </div>
   );
 }
 
@@ -76,32 +125,44 @@ export default function MiningMapPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const [mapView, setMapView] = useState("street"); // "street" | "satellite"
-  const [allMines, setAllMines] = useState([]);   // unfiltered, fetched once — powers dropdowns
-  const [mines, setMines] = useState([]);          // currently displayed set
+  const [mines, setMines] = useState([]); // pins from /latest
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedMine, setSelectedMine] = useState(null);
 
+  const [selectedMine, setSelectedMine] = useState(null); // clicked pin summary (drives flyTo)
+  const [selectedDetails, setSelectedDetails] = useState(null); // full record from /:id
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+
+  // UI-only filter state — kept for layout purposes; not wired to any fetch/filter logic.
   const [district, setDistrict] = useState("");
   const [regionalOffice, setRegionalOffice] = useState("");
-  const [search, setSearch] = useState(""); // matched against tin / nic / gmlNumber / landName
+  const [search, setSearch] = useState("");
 
-  const fetchMines = useCallback(async (params = {}) => {
+  const inputStyle = {
+    padding: "8px 12px",
+    borderRadius: "6px",
+    fontSize: "13px",
+    border: "1px solid var(--color-line, #e5e7eb)",
+    background: "var(--color-surface, #fff)",
+    color: "var(--color-ink, #1a1a1a)",
+    fontFamily: "inherit",
+    outline: "none",
+  };
+
+  const fetchMines = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const qs = new URLSearchParams();
-      if (params.district) qs.set("district", params.district);
-      if (params.regionalOffice) qs.set("regionalOffice", params.regionalOffice);
-      if (params.search) qs.set("q", params.search);
-      const url = `${BASE_URL}/api/mining-licenses/map${qs.toString() ? `?${qs}` : ""}`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/latest`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
         throw new Error(errData?.error || `Error ${res.status}`);
       }
       const json = await res.json();
-      return json.data || [];
+      return Array.isArray(json) ? json : json.data || [];
     } catch (err) {
       setError(err.message || "Failed to load mines.");
       return [];
@@ -110,77 +171,76 @@ export default function MiningMapPage() {
     }
   }, [token]);
 
-  // Initial load — unfiltered, used both as the default map view and as the
-  // source for dropdown options.
   useEffect(() => {
     (async () => {
       const data = await fetchMines();
-      setAllMines(data);
       setMines(data);
     })();
   }, [fetchMines]);
 
-  const districtOptions = useMemo(
-    () => [...new Set(allMines.map((m) => m.district).filter(Boolean))].sort(),
-    [allMines]
+  const handleMarkerClick = useCallback(
+    async (mine) => {
+      setSelectedMine(mine);
+      setSelectedDetails(null);
+      setDetailError("");
+      setDetailLoading(true);
+      try {
+        const res = await fetch(`${BASE_URL}/api/mining-licenses/${mine.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        setSelectedDetails(json.data || null);
+      } catch (err) {
+        setDetailError(err.message || "Failed to load mine details.");
+      } finally {
+        setDetailLoading(false);
+      }
+    },
+    [token]
   );
-  const regionalOfficeOptions = useMemo(
-    () => [...new Set(allMines.map((m) => m.regionalOffice).filter(Boolean))].sort(),
-    [allMines]
-  );
-
-  const handleSearch = async () => {
-    setSelectedMine(null);
-    const data = await fetchMines({ district, regionalOffice, search: search.trim() });
-    setMines(data);
-  };
-
-  const handleClear = async () => {
-    setDistrict("");
-    setRegionalOffice("");
-    setSearch("");
-    setSelectedMine(null);
-    const data = await fetchMines();
-    setMines(data);
-  };
-
-  const inputStyle = {
-    padding: "8px 12px", borderRadius: "6px", fontSize: "13px",
-    border: "1px solid var(--color-line, #e5e7eb)",
-    background: "var(--color-surface, #fff)", color: "var(--color-ink, #1a1a1a)",
-    fontFamily: "inherit", outline: "none",
-  };
-
-  <style>{`
-  .leaflet-tooltip.mine-tooltip {
-    background: #ffffff;
-    border: 1px solid var(--color-line, #e5e7eb);
-    border-radius: 10px;
-    padding: 0;
-    overflow: hidden;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.18);
-    font-family: inherit;
-  }
-  .leaflet-tooltip.mine-tooltip::before {
-    border-top-color: var(--color-line, #e5e7eb);
-  }
-`}</style>
 
   return (
     <div className="min-h-screen bg-base text-ink">
+      <style>{`
+        .leaflet-tooltip.mine-tooltip {
+          background: #ffffff;
+          border: 1px solid var(--color-line, #e5e7eb);
+          border-radius: 10px;
+          padding: 0;
+          overflow: hidden;
+          box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+          font-family: inherit;
+        }
+        .leaflet-tooltip.mine-tooltip::before {
+          border-top-color: var(--color-line, #e5e7eb);
+        }
+      `}</style>
+
       {/* header */}
       <header className="border-b border-line">
         <div className="flex items-center justify-between px-4 py-4 sm:px-6">
           <button
             onClick={() => navigate("/dashboard")}
             style={{
-              display: "flex", alignItems: "center", gap: "6px",
-              background: "transparent", border: "none", cursor: "pointer",
-              fontSize: "13px", fontWeight: "600", color: "var(--color-ink-muted, #6b7280)",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: "600",
+              color: "var(--color-ink-muted, #6b7280)",
               fontFamily: "inherit",
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
             Back to dashboard
           </button>
           <h1 className="font-display text-lg font-semibold sm:text-xl">Mine locations</h1>
@@ -188,34 +248,28 @@ export default function MiningMapPage() {
         </div>
       </header>
 
-            {/* map + list */}
-      <div
-        className="px-4 pb-0 pt-4 sm:px-6"
-        style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}
-      >
-        {/* list panel */}
-        <div style={{
-          flex: "1 1 280px", maxWidth: "420px", maxHeight: "calc(100vh - 96px)", overflowY: "auto",
-          display: "flex", flexDirection: "column", gap: "8px",
-        }}>
-          {/* filter bar */}
+      {/* map + detail panel */}
+      <div className="px-4 pb-0 pt-4 sm:px-6" style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+        {/* detail panel */}
+        <div
+          style={{
+            flex: "1 1 280px",
+            maxWidth: "420px",
+            maxHeight: "calc(100vh - 96px)",
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          {/* filter bar (UI only — not wired to any filtering logic) */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
-            <select
-              value={district}
-              onChange={(e) => { setDistrict(e.target.value); setVillage(""); }}
-              style={inputStyle}
-            >
+            <select value={district} onChange={(e) => setDistrict(e.target.value)} style={inputStyle}>
               <option value="">All districts</option>
-              {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
 
-            <select
-              value={regionalOffice}
-              onChange={(e) => setRegionalOffice(e.target.value)}
-              style={inputStyle}
-            >
+            <select value={regionalOffice} onChange={(e) => setRegionalOffice(e.target.value)} style={inputStyle}>
               <option value="">All regional offices</option>
-              {regionalOfficeOptions.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
 
             <input
@@ -223,14 +277,22 @@ export default function MiningMapPage() {
               placeholder="Search TIN / NIC / GML / land name"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               style={{ ...inputStyle, width: "100%" }}
             />
 
-            <Button variant="primary" size="md" onClick={handleSearch} disabled={loading}>
-              {loading ? "Searching…" : "Search"}
+            <Button variant="primary" size="md">
+              Search
             </Button>
-            <Button className="!text-ink" variant="secondary" size="md" onClick={handleClear} disabled={loading}>
+            <Button
+              className="!text-ink"
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                setDistrict("");
+                setRegionalOffice("");
+                setSearch("");
+              }}
+            >
               Clear
             </Button>
             <Button
@@ -243,32 +305,27 @@ export default function MiningMapPage() {
             </Button>
           </div>
 
-          {error && (
-            <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>
-          )}
+          {error && <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>}
           {!loading && !error && (
             <p style={{ fontSize: "12px", color: "var(--color-ink-muted, #6b7280)" }}>
-              {mines.length} mine{mines.length !== 1 ? "s" : ""} shown
+              {mines.length} mine{mines.length !== 1 ? "s" : ""} on map
             </p>
           )}
 
-          {mines.map((mine) => (
-            <MineListItem
-              key={mine.id || mine._id}
-              mine={mine}
-              active={selectedMine && (selectedMine.id || selectedMine._id) === (mine.id || mine._id)}
-              onClick={() => setSelectedMine(mine)}
-            />
-          ))}
-          {!loading && mines.length === 0 && (
-            <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", padding: "12px 4px" }}>
-              No mines match these filters.
-            </p>
-          )}
+          <MineDetailPanel mine={selectedDetails} loading={detailLoading} error={detailError} />
         </div>
 
         {/* map */}
-        <div style={{ flex: "2 1 480px", minWidth: "300px", height: "calc(100vh - 96px)", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--color-line, #e5e7eb)" }}>
+        <div
+          style={{
+            flex: "2 1 480px",
+            minWidth: "300px",
+            height: "calc(100vh - 96px)",
+            borderRadius: "10px",
+            overflow: "hidden",
+            border: "1px solid var(--color-line, #e5e7eb)",
+          }}
+        >
           <MapContainer center={SRI_LANKA_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
             {mapView === "street" ? (
               <TileLayer
@@ -286,59 +343,27 @@ export default function MiningMapPage() {
               const latLng = getLatLng(mine);
               if (!latLng) return null;
               return (
-                <Marker
-                  key={mine.id || mine._id}
-                  position={latLng}
-                  eventHandlers={{ click: () => setSelectedMine(mine) }}
-                >
+                <Marker key={mine.id} position={latLng} eventHandlers={{ click: () => handleMarkerClick(mine) }}>
                   <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
-                    <div style={{ width: "220px", fontFamily: "inherit" }}>
-                      {/* header strip */}
-                      <div style={{
-                        display: "flex", alignItems: "center", gap: "10px",
+                    <div
+                      style={{
+                        width: "200px",
+                        fontFamily: "inherit",
                         padding: "10px 12px",
-                        background: "linear-gradient(135deg, var(--color-teal, #0d9488), var(--color-copper, #b85a29))",
-                        borderRadius: "8px 8px 0 0",
-                      }}>
-                        <div style={{
-                          width: "30px", height: "30px", borderRadius: "50%",
-                          background: "rgba(255,255,255,0.22)", color: "#fff",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontWeight: "700", fontSize: "12px", flexShrink: 0,
-                        }}>
-                          {(mine.applicantName || "?").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
-                        </div>
-                        <span style={{ fontWeight: "700", fontSize: "13px", color: "#fff", lineHeight: "1.2" }}>
-                          {mine.applicantName || "—"}
-                        </span>
-                      </div>
-
-                      {/* details */}
-                      <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                        {[
-                          { label: "NIC", value: mine.nic },
-                          { label: "TIN", value: mine.tin },
-                          { label: "GML", value: mine.gmlNumber },
-                          { label: "License type", value: mine.licenseeType },
-                          { label: "Cultivation", value: mine.landCultivation },
-                        ].filter((r) => r.value).map((r) => (
-                          <div key={r.label} style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
-                            <span style={{
-                              fontSize: "10px", fontWeight: "700", letterSpacing: "0.05em",
-                              textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)",
-                              whiteSpace: "nowrap",
-                            }}>
-                              {r.label}
-                            </span>
-                            <span style={{
-                              fontSize: "12px", fontWeight: "600", color: "var(--color-ink, #1a1a1a)",
-                              textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                            }}>
-                              {r.value}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
+                      <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--color-ink, #1a1a1a)" }}>
+                        {mine.applicantName || "—"}
+                      </span>
+                      <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                        Lat: {mine.latitude}
+                      </span>
+                      <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                        Lng: {mine.longitude}
+                      </span>
                     </div>
                   </Tooltip>
                 </Marker>
