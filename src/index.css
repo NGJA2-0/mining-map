@@ -29,6 +29,7 @@ body {
     opacity: 0;
     transform: translateY(8px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -53,9 +54,32 @@ body {
   font-size: 12px;
   line-height: 1.6;
 }
-.a4-header { text-align: center; margin-bottom: 16px; }
+
+.a4-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;   /* centers the logo+text group as one unit */
+  gap: 10px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.a4-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.a4-header-text {
+  text-align: center;
+}
 .a4-header h2 { font-size: 16px; font-weight: 600; margin: 4px 0; }
-.a4-section { margin-bottom: 14px; }
+.a4-header p { margin: 0; }
+
+.a4-section {
+  margin-bottom: 14px;
+}
+
 .a4-section-title {
   font-size: 13px;
   font-weight: 600;
@@ -64,7 +88,16 @@ body {
   padding-bottom: 4px;
   margin-bottom: 8px;
 }
-.a4-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+
+.a4-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 24px;
+}
+.a4-grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 3px 14px;
+}
 .a4-row {
   display: flex;
   justify-content: space-between;
@@ -72,8 +105,14 @@ body {
   border-bottom: 1px dotted #e5e7eb;
   padding: 3px 0;
 }
-.a4-row-label { color: #6b7280; }
-.a4-row-value { text-align: right; }
+
+.a4-row-label {
+  color: #6b7280;
+}
+
+.a4-row-value {
+  text-align: right;
+}
 
 .a4-note {
   grid-column: 1 / -1;
@@ -82,6 +121,7 @@ body {
   border-bottom: 1px dotted #e5e7eb;
   color: #111827;
 }
+
 .a4-paragraph {
   margin: 0;
   text-align: justify;
@@ -91,27 +131,52 @@ body {
 @media print {
   @page {
     size: A4;
-    margin: 10mm;
+    margin: 0;
   }
-  html, body {
+
+  html,
+  body {
     margin: 0 !important;
     padding: 0 !important;
   }
+
   .print-hide {
     display: none !important;
   }
+
   .a4-preview-wrapper {
     margin: 0 !important;
     padding: 0 !important;
   }
+
   #a4-preview-sheet {
     width: 100% !important;
     min-height: 0 !important;
     box-shadow: none !important;
-    margin: 0 !important;
-    padding: 6mm 8mm !important;
+    margin: 0 auto !important;
+    padding: 0 8mm !important;
     font-size: 10.5px !important;
     line-height: 1.4 !important;
+  }
+
+  #a4-preview-sheet table {
+    font-size: 9px !important;
+  }
+
+  #a4-preview-sheet table th,
+  #a4-preview-sheet table td {
+    padding: 3px 6px !important;
+  }
+
+  .a4-header {
+    margin: 0 0 4px 0 !important;
+    gap: 6px !important;
+  }
+  .a4-logo {
+    width: 30px !important;
+    height: 30px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   .a4-header h2 {
     font-size: 14px !important;
@@ -121,25 +186,35 @@ body {
     font-size: 10px !important;
     margin: 1px 0 !important;
   }
+
   .a4-section {
     margin-bottom: 7px !important;
-    page-break-inside: avoid;
   }
+
   .a4-section-title {
     font-size: 11px !important;
     padding-bottom: 2px !important;
     margin-bottom: 4px !important;
   }
+
   .a4-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 2px 20px !important;
   }
+
+  .a4-grid-3 {
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 1px 10px !important;
+  }
+
   .a4-row {
     padding: 1.5px 0 !important;
   }
+
   .a4-note {
     padding: 4px 0 !important;
   }
+
   .a4-paragraph {
     font-size: 10.5px !important;
     line-height: 1.5 !important;
