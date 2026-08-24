@@ -177,6 +177,8 @@ export default function SearchResultPage() {
 
   if (!record) return null; // while redirecting
 
+  const lockedGpsCount = record.gpsPoints?.length || 0;
+
   const statusCfg = STATUS_CFG[record.status?.toLowerCase()] || STATUS_CFG.draft;
   const createdDate = record.createdAt
     ? new Date(record.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
@@ -538,8 +540,8 @@ export default function SearchResultPage() {
                             <label className="font-sinhala text-xs text-ink-muted">අක්ෂාංශ</label>
                             <input
                               type="text"
-                              disabled
-                              className={`${inputClass} cursor-not-allowed opacity-60`}
+                              disabled={index < lockedGpsCount}
+                              className={`${inputClass} ${index < lockedGpsCount ? "cursor-not-allowed opacity-60" : ""}`}
                               required={index === 0}
                               value={point.latitude}
                               onChange={handleGpsChange(index, "latitude")}
@@ -548,8 +550,8 @@ export default function SearchResultPage() {
                             <label className="font-sinhala text-xs text-ink-muted">දේශාංෂ</label>
                             <input
                               type="text"
-                              disabled
-                              className={`${inputClass} cursor-not-allowed opacity-60`}
+                              disabled={index < lockedGpsCount}
+                              className={`${inputClass} ${index < lockedGpsCount ? "cursor-not-allowed opacity-60" : ""}`}
                               required={index === 0}
                               value={point.longitude}
                               onChange={handleGpsChange(index, "longitude")}

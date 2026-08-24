@@ -137,7 +137,7 @@ export default function ExtendRecordPage() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState(() => {
+    const [form, setForm] = useState(() => {
     if (location.state?.record) {
       const rec = location.state.record;
       return {
@@ -148,6 +148,9 @@ export default function ExtendRecordPage() {
     }
     return initialState;
   });
+  const [lockedGpsCount] = useState(
+    () => location.state?.record?.gpsPoints?.length || 0
+  );
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -500,8 +503,8 @@ export default function ExtendRecordPage() {
                             <label className="font-sinhala text-xs text-ink-muted">අක්ෂාංශ</label>
                             <input
                               type="text"
-                              disabled
-                              className={`${inputClass} cursor-not-allowed opacity-60`}
+                              disabled={index < lockedGpsCount}
+                              className={`${inputClass} ${index < lockedGpsCount ? "cursor-not-allowed opacity-60" : ""}`}
                               required={index === 0}
                               value={point.latitude}
                               onChange={handleGpsChange(index, "latitude")}
@@ -511,8 +514,8 @@ export default function ExtendRecordPage() {
                             <label className="font-sinhala text-xs text-ink-muted">දේශාංෂ</label>
                             <input
                               type="text"
-                              disabled
-                              className={`${inputClass} cursor-not-allowed opacity-60`}
+                              disabled={index < lockedGpsCount}
+                              className={`${inputClass} ${index < lockedGpsCount ? "cursor-not-allowed opacity-60" : ""}`}
                               required={index === 0}
                               value={point.longitude}
                               onChange={handleGpsChange(index, "longitude")}
