@@ -97,8 +97,13 @@ function ToggleViewControl({ mapView, setMapView }) {
 
 // Adds a native Leaflet control button, positioned in the same corner as
 // (and stacking directly below) the default zoom control. Must live inside <MapContainer>.
-function ResetViewControl() {
+function ResetViewControl({ onReset }) {
   const map = useMap();
+  const onResetRef = useRef(onReset);
+  useEffect(() => {
+    onResetRef.current = onReset;
+  }, [onReset]);
+
   useEffect(() => {
     const control = L.control({ position: "topleft" });
 
@@ -119,6 +124,7 @@ function ResetViewControl() {
       L.DomEvent.on(button, "click", (e) => {
         L.DomEvent.preventDefault(e);
         map.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
+        onResetRef.current?.();
       });
 
       return container;
@@ -869,7 +875,13 @@ export default function MiningMapPage() {
             )}
             <FlyToMine mine={selectedMine} />
             <ToggleViewControl mapView={mapView} setMapView={setMapView} />
-            <ResetViewControl />
+            <ResetViewControl
+              onReset={() => {
+                setSelectedMine(null);
+                setSelectedDetails(null);
+                setDetailError("");
+              }}
+            />
             {mines.map((mine) => {
               const latLng = getLatLng(mine);
               if (!latLng) return null;
