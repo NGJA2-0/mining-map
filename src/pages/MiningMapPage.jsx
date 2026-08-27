@@ -633,10 +633,45 @@ export default function MiningMapPage() {
       } catch (err) {
         setDetailError(err.message || "Failed to load mine details.");
       } finally {
-        setDetailLoading(false);
+                setDetailLoading(false);
       }
     },
     [token]
+  );
+
+  const handleFilteredCardClick = useCallback(
+    (mine) => {
+      const point = mine?.gpsPoints?.[0];
+      const lat = point ? Number(String(point.latitude).trim()) : NaN;
+      const lng = point ? Number(String(point.longitude).trim()) : NaN;
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+            // Built directly from the filtered item itself — no need to depend
+      // on it also existing in the (potentially huge, unpaginated) /latest
+      // list. Note: if this mine isn't currently rendered as a marker on
+      // the map (e.g. outside the loaded set), flyTo still zooms to the
+      // right spot, it just won't show the special highlighted icon.
+      setSelectedMine({ id: mine.id, latitude: point.latitude, longitude: point.longitude });
+      mapRef.current?.flyTo([lat, lng], 13, { duration: 0.8 });
+
+      setSelectedDetails(null);
+      setDetailError("");
+      setDetailLoading(true);
+      fetch(`${BASE_URL}/api/mining-licenses/${mine.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const errData = await res.json().catch(() => null);
+            throw new Error(errData?.error || `Error ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((json) => setSelectedDetails(json.data || null))
+        .catch((err) => setDetailError(err.message || "Failed to load mine details."))
+        .finally(() => setDetailLoading(false));
+    },
+    [mines, token]
   );
 
     const handleOpenPreview = useCallback(
@@ -847,13 +882,14 @@ export default function MiningMapPage() {
             </p>
           )}
 
-                    <MineDetailPanel
-            mine={selectedDetails}
-            loading={detailLoading}
-            error={detailError}
-            onPreview={() => selectedDetails?.id && handleOpenPreview(selectedDetails.id)}
-            hideEmptyMessage={filterApplied}
-          />
+                    {!filterApplied && (
+            <MineDetailPanel
+              mine={selectedDetails}
+              loading={detailLoading}
+              error={detailError}
+              onPreview={() => selectedDetails?.id && handleOpenPreview(selectedDetails.id)}
+            />
+          )}
 
           {filterApplied && (
             <FilteredMinesTable
@@ -866,6 +902,7 @@ export default function MiningMapPage() {
               totalPages={filteredTotalPages}
               onPageChange={handleFilterPageChange}
               onLimitChange={handleFilterLimitChange}
+              onCardClick={handleFilteredCardClick}
             />
           )}
         </div>

@@ -52,9 +52,18 @@ const pagerButtonStyle = (disabled) => ({
   fontFamily: "inherit",
 });
 
-function MineCard({ mine }) {
+function MineCard({ mine, onClick }) {
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick?.(mine)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.(mine);
+        }
+      }}
       style={{
         border: "1px solid var(--color-line, #e5e7eb)",
         borderRadius: "14px",
@@ -63,6 +72,7 @@ function MineCard({ mine }) {
         overflow: "hidden",
         transition: "box-shadow 0.2s ease, transform 0.2s ease",
         flexShrink: 0,
+        cursor: "pointer",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06), 0 14px 28px -12px rgba(0,0,0,0.2)";
@@ -174,6 +184,7 @@ export default function FilteredMinesTable({
   totalPages = 1,
   onPageChange,
   onLimitChange,
+  onCardClick,
 }) {
   return (
     <div
@@ -264,7 +275,7 @@ export default function FilteredMinesTable({
             }}
           >
             {results.map((mine) => (
-              <MineCard key={mine.id} mine={mine} />
+              <MineCard key={mine.id} mine={mine} onClick={onCardClick} />
             ))}
           </div>
 
