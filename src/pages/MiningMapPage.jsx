@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -29,6 +32,23 @@ const highlightedMarkerIcon = L.divIcon({
 });
 
 const defaultMarkerIcon = new L.Icon.Default();
+
+// Cluster icon: a location-pin shape (matching the style of the individual
+// markers) instead of the default numbered circle badge.
+function createClusterIcon() {
+  return L.divIcon({
+    className: "mine-cluster-icon",
+    html: `<div style="position:relative;width:36px;height:44px;">
+      <svg width="36" height="36" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
+        <path d="M12 0C7.6 0 4 3.6 4 8c0 5.4 7 15.4 7.3 15.8.2.3.7.5 1.1.5s.9-.2 1.1-.5C13.7 23.4 20 13.4 20 8c0-4.4-3.6-8-8-8z" fill="#000000"/>
+        <path d="M12 1.6C8.4 1.6 5.6 4.6 5.6 8c0 4.6 5.7 12.9 6.1 13.5.1.1.2.1.3 0 .4-.6 6.1-8.9 6.1-13.5 0-3.4-2.8-6.4-6.1-6.4z" fill="#2563eb" stroke="#2563eb" stroke-width="0.3"/>
+        <circle cx="12" cy="8" r="3" fill="#ffffff"/>
+      </svg>
+    </div>`,
+    iconSize: [36, 44],
+    iconAnchor: [18, 40],
+  });
+}
 
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/common/Button";
@@ -939,44 +959,56 @@ export default function MiningMapPage() {
                 setDetailError("");
               }}
             />
-            {mines.map((mine) => {
-              const latLng = getLatLng(mine);
-              if (!latLng) return null;
+                        <MarkerClusterGroup
+              chunkedLoading
+              maxClusterRadius={70}
+              spiderfyOnMaxZoom
+              zoomToBoundsOnClick
+              disableClusteringAtZoom={16}
+              iconCreateFunction={createClusterIcon}
+              // Keeps a selected/highlighted marker's cluster from collapsing
+              // it back in with the rest once it's been picked out.
+              key={selectedMine?.id || "no-selection"}
+            >
+              {mines.map((mine) => {
+                const latLng = getLatLng(mine);
+                if (!latLng) return null;
                 return (
-                <Marker
-                  key={mine.id}
-                  position={latLng}
-                  icon={selectedMine?.id === mine.id ? highlightedMarkerIcon : defaultMarkerIcon}
-                  eventHandlers={{ click: () => handleMarkerClick(mine) }}
-                >
-                  <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
-                    <div
-                      style={{
-                        width: "200px",
-                        fontFamily: "inherit",
-                        padding: "10px 12px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "6px",
-                      }}
-                    >
-                      <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--color-ink, #1a1a1a)" }}>
-                        {mine.applicantName || "—"}
-                      </span>
-                      <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
-                        Status: {mine.status || "—"}
-                      </span>
-                      <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
-                        Lat: {mine.latitude}
-                      </span>
-                      <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
-                        Lng: {mine.longitude}
-                      </span>
-                    </div>
-                  </Tooltip>
-                </Marker>
-              );
-            })}
+                  <Marker
+                    key={mine.id}
+                    position={latLng}
+                    icon={selectedMine?.id === mine.id ? highlightedMarkerIcon : defaultMarkerIcon}
+                    eventHandlers={{ click: () => handleMarkerClick(mine) }}
+                  >
+                    <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
+                      <div
+                        style={{
+                          width: "200px",
+                          fontFamily: "inherit",
+                          padding: "10px 12px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                        }}
+                      >
+                        <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--color-ink, #1a1a1a)" }}>
+                          {mine.applicantName || "—"}
+                        </span>
+                        <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                          Status: {mine.status || "—"}
+                        </span>
+                        <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                          Lat: {mine.latitude}
+                        </span>
+                        <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                          Lng: {mine.longitude}
+                        </span>
+                      </div>
+                    </Tooltip>
+                  </Marker>
+                );
+              })}
+            </MarkerClusterGroup>
           </MapContainer>
                 </div>
       </div>
