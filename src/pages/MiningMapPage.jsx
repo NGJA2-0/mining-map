@@ -408,7 +408,15 @@ export default function MiningMapPage() {
     outline: "none",
   };
 
-  const selectStyle = { ...inputStyle, fontSize: "15px" };
+  const selectStyle = (disabled) => ({
+    ...inputStyle,
+    fontSize: "15px",
+    ...(disabled && {
+      opacity: 0.5,
+      cursor: "not-allowed",
+      background: "var(--color-base, #f3f4f6)",
+    }),
+  });
 
   const fetchMines = useCallback(async () => {
     setLoading(true);
@@ -636,7 +644,7 @@ export default function MiningMapPage() {
             <select
               value={district}
               onChange={(e) => setDistrict(e.target.value)}
-              style={selectStyle}
+              style={selectStyle(districtsLoading)}
               disabled={districtsLoading}
             >
               <option value="">
@@ -653,7 +661,7 @@ export default function MiningMapPage() {
             <select
               value={regionalOffice}
               onChange={(e) => setRegionalOffice(e.target.value)}
-              style={selectStyle}
+              style={selectStyle(!district || regionalOfficesLoading)}
               disabled={!district || regionalOfficesLoading}
             >
               <option value="">
