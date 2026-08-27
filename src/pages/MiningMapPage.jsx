@@ -18,6 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import Button from "../components/common/Button";
 import A4PreviewSheet from "../components/common/A4PreviewSheet";
 import ExtendRecordPreviewSheet from "../components/common/ExtendRecordPreviewSheet";
+import FilteredMinesTable from "../components/map/FilteredMinesTable";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const SRI_LANKA_CENTER = [7.8731, 80.7718];
@@ -397,6 +398,15 @@ export default function MiningMapPage() {
   const [regionalOfficesLoading, setRegionalOfficesLoading] = useState(false);
   const [regionalOfficesError, setRegionalOfficesError] = useState("");
 
+  const [filterApplied, setFilterApplied] = useState(false);
+  const [filteredResults, setFilteredResults] = useState([]);
+  const [filteredTotal, setFilteredTotal] = useState(0);
+  const [filteredPage, setFilteredPage] = useState(1);
+  const [filteredLimit, setFilteredLimit] = useState(10);
+  const [filteredTotalPages, setFilteredTotalPages] = useState(1);
+  const [filteredLoading, setFilteredLoading] = useState(false);
+  const [filteredError, setFilteredError] = useState("");
+
   const inputStyle = {
     padding: "8px 12px",
     borderRadius: "6px",
@@ -503,7 +513,7 @@ export default function MiningMapPage() {
     [token]
   );
 
-  useEffect(() => {
+    useEffect(() => {
     if (!district) {
       setRegionalOffices([]);
       setRegionalOfficesError("");
@@ -514,6 +524,60 @@ export default function MiningMapPage() {
       setRegionalOffices(data);
     })();
   }, [district, fetchRegionalOffices]);
+
+  const fetchFilteredMines = useCallback(
+    async (selectedDistrict, selectedRegionalOffice, targetPage, targetLimit) => {
+      setFilteredLoading(true);
+      setFilteredError("");
+      try {
+        const params = new URLSearchParams({
+          district: selectedDistrict || "",
+          regionalOffice: selectedRegionalOffice || "",
+          page: String(targetPage),
+          limit: String(targetLimit),
+        });
+        const res = await fetch(`${BASE_URL}/api/mining-licenses/filter?${params.toString()}`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        return json?.data || { data: [], total: 0, page: targetPage, limit: targetLimit, totalPages: 1 };
+      } catch (err) {
+        setFilteredError(err.message || "Failed to load filtered results.");
+        return null;
+      } finally {
+        setFilteredLoading(false);
+      }
+    },
+    [token]
+  );
+
+  const applyFilter = useCallback(
+    async (targetPage = 1, targetLimit = filteredLimit) => {
+      setFilterApplied(true);
+      const result = await fetchFilteredMines(district, regionalOffice, targetPage, targetLimit);
+      if (result) {
+        setFilteredResults(result.data || []);
+        setFilteredTotal(result.total || 0);
+        setFilteredPage(result.page || targetPage);
+        setFilteredLimit(result.limit || targetLimit);
+        setFilteredTotalPages(result.totalPages || 1);
+      }
+    },
+    [district, regionalOffice, filteredLimit, fetchFilteredMines]
+  );
+
+  const handleFilterPageChange = (newPage) => {
+    applyFilter(newPage, filteredLimit);
+  };
+
+  const handleFilterLimitChange = (newLimit) => {
+    applyFilter(1, newLimit);
+  };
 
   const handleMarkerClick = useCallback(
     async (mine) => {
@@ -658,22 +722,60 @@ export default function MiningMapPage() {
               ))}
             </select>
 
-            <select
-              value={regionalOffice}
-              onChange={(e) => setRegionalOffice(e.target.value)}
-              style={selectStyle(!district || regionalOfficesLoading)}
-              disabled={!district || regionalOfficesLoading}
-            >
-              <option value="">
-                {regionalOfficesLoading ? "Loading regional offices…" : "All regional offices"}
-              </option>
-              {regionalOfficesError && <option value="" disabled>{regionalOfficesError}</option>}
-              {regionalOffices.map((r) => (
-                <option key={r} value={r}>
-                  {r}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <select
+                value={regionalOffice}
+                onChange={(e) => setRegionalOffice(e.target.value)}
+                style={selectStyle(!district || regionalOfficesLoading)}
+                disabled={!district || regionalOfficesLoading}
+              >
+                <option value="">
+                  {regionalOfficesLoading ? "Loading regional offices…" : "All regional offices"}
                 </option>
-              ))}
-            </select>
+                {regionalOfficesError && <option value="" disabled>{regionalOfficesError}</option>}
+                {regionalOffices.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={() => applyFilter(1, filteredLimit)}
+                disabled={!district || filteredLoading}
+                title="Apply filter"
+                aria-label="Apply filter"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "34px",
+                  height: "34px",
+                  flexShrink: 0,
+                  borderRadius: "6px",
+                  border: "1px solid var(--color-line, #e5e7eb)",
+                  background:
+                    !district || filteredLoading ? "var(--color-base, #f3f4f6)" : "var(--color-surface, #fff)",
+                  color: !district || filteredLoading ? "var(--color-ink-muted, #9ca3af)" : "#059669",
+                  cursor: !district || filteredLoading ? "not-allowed" : "pointer",
+                  opacity: !district || filteredLoading ? 0.5 : 1,
+                }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </button>
+            </div>
 
             <input
               type="text"
@@ -707,12 +809,26 @@ export default function MiningMapPage() {
             </p>
           )}
 
-          <MineDetailPanel
+                    <MineDetailPanel
             mine={selectedDetails}
             loading={detailLoading}
             error={detailError}
             onPreview={() => selectedDetails?.id && handleOpenPreview(selectedDetails.id)}
           />
+
+          {filterApplied && (
+            <FilteredMinesTable
+              results={filteredResults}
+              loading={filteredLoading}
+              error={filteredError}
+              total={filteredTotal}
+              page={filteredPage}
+              limit={filteredLimit}
+              totalPages={filteredTotalPages}
+              onPageChange={handleFilterPageChange}
+              onLimitChange={handleFilterLimitChange}
+            />
+          )}
         </div>
 
         {/* map */}
