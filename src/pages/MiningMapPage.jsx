@@ -14,6 +14,22 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+const highlightedMarkerIcon = L.divIcon({
+  className: "mine-marker-highlighted",
+  html: `<div style="position:relative;width:44px;height:52px;">
+    <div style="position:absolute;left:50%;top:38px;width:26px;height:26px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(220,20,60,0.35);animation:mine-pulse 1.6s ease-out infinite;"></div>
+    <svg width="44" height="44" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.45));">
+      <path d="M12 0C7.6 0 4 3.6 4 8c0 5.4 7 15.4 7.3 15.8.2.3.7.5 1.1.5s.9-.2 1.1-.5C13.7 23.4 20 13.4 20 8c0-4.4-3.6-8-8-8z" fill="#000000"/>
+      <path d="M12 1.6C8.4 1.6 5.6 4.6 5.6 8c0 4.6 5.7 12.9 6.1 13.5.1.1.2.1.3 0 .4-.6 6.1-8.9 6.1-13.5 0-3.4-2.8-6.4-6.1-6.4z" fill="#dc143c" stroke="#dc143c" stroke-width="0.3"/>
+      <circle cx="12" cy="8" r="2.5" fill="#000000"/>
+    </svg>
+  </div>`,
+  iconSize: [44, 52],
+  iconAnchor: [22, 48],
+});
+
+const defaultMarkerIcon = new L.Icon.Default();
+
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/common/Button";
 import A4PreviewSheet from "../components/common/A4PreviewSheet";
@@ -658,7 +674,7 @@ export default function MiningMapPage() {
 
   return (
     <div className="min-h-screen bg-base text-ink">
-      <style>{`
+            <style>{`
         .leaflet-tooltip.mine-tooltip {
           background: #ffffff;
           border: 1px solid var(--color-line, #e5e7eb);
@@ -670,6 +686,10 @@ export default function MiningMapPage() {
         }
         .leaflet-tooltip.mine-tooltip::before {
           border-top-color: var(--color-line, #e5e7eb);
+        }
+        @keyframes mine-pulse {
+          0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.9; }
+          100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
         }
       `}</style>
 
@@ -885,8 +905,13 @@ export default function MiningMapPage() {
             {mines.map((mine) => {
               const latLng = getLatLng(mine);
               if (!latLng) return null;
-              return (
-                <Marker key={mine.id} position={latLng} eventHandlers={{ click: () => handleMarkerClick(mine) }}>
+                return (
+                <Marker
+                  key={mine.id}
+                  position={latLng}
+                  icon={selectedMine?.id === mine.id ? highlightedMarkerIcon : defaultMarkerIcon}
+                  eventHandlers={{ click: () => handleMarkerClick(mine) }}
+                >
                   <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
                     <div
                       style={{
