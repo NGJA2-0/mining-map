@@ -789,7 +789,7 @@ export default function MiningMapPage() {
             <Button variant="primary" size="md">
               Search
             </Button>
-            <Button
+                        <Button
               className="!text-ink"
               variant="secondary"
               size="md"
@@ -797,6 +797,12 @@ export default function MiningMapPage() {
                 setDistrict("");
                 setRegionalOffice("");
                 setSearch("");
+                setFilterApplied(false);
+                setFilteredResults([]);
+                setFilteredTotal(0);
+                setFilteredPage(1);
+                setFilteredTotalPages(1);
+                setFilteredError("");
               }}
             >
               Clear
