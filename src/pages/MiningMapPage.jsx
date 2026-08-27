@@ -393,6 +393,10 @@ export default function MiningMapPage() {
   const [districtsLoading, setDistrictsLoading] = useState(true);
   const [districtsError, setDistrictsError] = useState("");
 
+  const [regionalOffices, setRegionalOffices] = useState([]);
+  const [regionalOfficesLoading, setRegionalOfficesLoading] = useState(false);
+  const [regionalOfficesError, setRegionalOfficesError] = useState("");
+
   const inputStyle = {
     padding: "8px 12px",
     borderRadius: "6px",
@@ -456,12 +460,52 @@ export default function MiningMapPage() {
     }
   }, [token]);
 
-  useEffect(() => {
+    useEffect(() => {
     (async () => {
       const data = await fetchDistricts();
       setDistricts(data);
     })();
   }, [fetchDistricts]);
+
+  const fetchRegionalOffices = useCallback(
+    async (selectedDistrict) => {
+      setRegionalOfficesLoading(true);
+      setRegionalOfficesError("");
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/mining-licenses/regional-offices?district=${encodeURIComponent(selectedDistrict)}`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        return Array.isArray(json?.data) ? json.data : [];
+      } catch (err) {
+        setRegionalOfficesError(err.message || "Failed to load regional offices.");
+        return [];
+      } finally {
+        setRegionalOfficesLoading(false);
+      }
+    },
+    [token]
+  );
+
+  useEffect(() => {
+    if (!district) {
+      setRegionalOffices([]);
+      setRegionalOfficesError("");
+      return;
+    }
+    (async () => {
+      const data = await fetchRegionalOffices(district);
+      setRegionalOffices(data);
+    })();
+  }, [district, fetchRegionalOffices]);
 
   const handleMarkerClick = useCallback(
     async (mine) => {
@@ -606,8 +650,21 @@ export default function MiningMapPage() {
               ))}
             </select>
 
-            <select value={regionalOffice} onChange={(e) => setRegionalOffice(e.target.value)} style={selectStyle}>
-              <option value="">All regional offices</option>
+            <select
+              value={regionalOffice}
+              onChange={(e) => setRegionalOffice(e.target.value)}
+              style={selectStyle}
+              disabled={!district || regionalOfficesLoading}
+            >
+              <option value="">
+                {regionalOfficesLoading ? "Loading regional offices…" : "All regional offices"}
+              </option>
+              {regionalOfficesError && <option value="" disabled>{regionalOfficesError}</option>}
+              {regionalOffices.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
             </select>
 
             <input
