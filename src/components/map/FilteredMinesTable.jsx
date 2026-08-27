@@ -182,6 +182,10 @@ export default function FilteredMinesTable({
         borderRadius: "12px",
         background: "var(--color-surface, #fff)",
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
       }}
     >
       <div
@@ -248,13 +252,14 @@ export default function FilteredMinesTable({
 
       {!loading && !error && results.length > 0 && (
         <>
-          <div
+         <div
             style={{
               display: "flex",
               flexDirection: "column",
               gap: "12px",
               padding: "14px",
-              maxHeight: "400px",
+              flex: 1,
+              minHeight: 0,
               overflowY: "auto",
             }}
           >
