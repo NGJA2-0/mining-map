@@ -62,6 +62,7 @@ function MineCard({ mine }) {
         boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 20px -12px rgba(0,0,0,0.15)",
         overflow: "hidden",
         transition: "box-shadow 0.2s ease, transform 0.2s ease",
+        flexShrink: 0,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.06), 0 14px 28px -12px rgba(0,0,0,0.2)";
@@ -253,6 +254,8 @@ export default function FilteredMinesTable({
               flexDirection: "column",
               gap: "12px",
               padding: "14px",
+              maxHeight: "400px",
+              overflowY: "auto",
             }}
           >
             {results.map((mine) => (
