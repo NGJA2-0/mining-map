@@ -937,6 +937,7 @@ export default function MiningMapPage() {
               onPageChange={handleFilterPageChange}
               onLimitChange={handleFilterLimitChange}
               onCardClick={handleFilteredCardClick}
+              onViewMore={handleOpenPreview}
             />
           )}
         </div>

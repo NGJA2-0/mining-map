@@ -52,7 +52,7 @@ const pagerButtonStyle = (disabled) => ({
   fontFamily: "inherit",
 });
 
-function MineCard({ mine, onClick }) {
+function MineCard({ mine, onClick, onViewMore }) {
   return (
     <div
       role="button"
@@ -169,6 +169,31 @@ function MineCard({ mine, onClick }) {
             </span>
           </div>
         ))}
+
+        {onViewMore && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewMore(mine.id);
+            }}
+            style={{
+              width: "100%",
+              marginTop: "6px",
+              padding: "8px 12px",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: "700",
+              border: "1px solid #93c5fd",
+              background: "linear-gradient(135deg, #bfdbfe, #ffffff)",
+              color: "var(--color-ink, #1a1a1a)",
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            View more
+          </button>
+        )}
       </div>
     </div>
   );
@@ -185,6 +210,7 @@ export default function FilteredMinesTable({
   onPageChange,
   onLimitChange,
   onCardClick,
+  onViewMore,
 }) {
   return (
     <div
@@ -275,7 +301,7 @@ export default function FilteredMinesTable({
             }}
           >
             {results.map((mine) => (
-              <MineCard key={mine.id} mine={mine} onClick={onCardClick} />
+              <MineCard key={mine.id} mine={mine} onClick={onCardClick} onViewMore={onViewMore} />
             ))}
           </div>
 
