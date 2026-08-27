@@ -131,7 +131,7 @@ function ResetViewControl() {
   return null;
 }
 
-function MineDetailPanel({ mine, loading, error, onPreview }) {
+function MineDetailPanel({ mine, loading, error, onPreview, hideEmptyMessage }) {
   if (loading) {
     return (
       <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", padding: "12px 4px" }}>
@@ -143,6 +143,7 @@ function MineDetailPanel({ mine, loading, error, onPreview }) {
     return <p style={{ fontSize: "13px", color: "#dc2626", padding: "12px 4px" }}>{error}</p>;
   }
   if (!mine) {
+    if (hideEmptyMessage) return null;
     return (
       <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", padding: "12px 4px" }}>
         Click a marker on the map to view mine details.
@@ -814,6 +815,7 @@ export default function MiningMapPage() {
             loading={detailLoading}
             error={detailError}
             onPreview={() => selectedDetails?.id && handleOpenPreview(selectedDetails.id)}
+            hideEmptyMessage={filterApplied}
           />
 
           {filterApplied && (
