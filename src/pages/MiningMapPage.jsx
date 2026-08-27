@@ -557,9 +557,13 @@ export default function MiningMapPage() {
     [token]
   );
 
-  const applyFilter = useCallback(
+   const applyFilter = useCallback(
     async (targetPage = 1, targetLimit = filteredLimit) => {
       setFilterApplied(true);
+      setSelectedMine(null);
+      setSelectedDetails(null);
+      setDetailError("");
+      mapRef.current?.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
       const result = await fetchFilteredMines(district, regionalOffice, targetPage, targetLimit);
       if (result) {
         setFilteredResults(result.data || []);
@@ -586,6 +590,7 @@ export default function MiningMapPage() {
       setSelectedDetails(null);
       setDetailError("");
       setDetailLoading(true);
+      setFilterApplied(false);
 
       // Fly directly, since setSelectedMine may pass the same object
       // reference as before (e.g. after a reset), which would otherwise
