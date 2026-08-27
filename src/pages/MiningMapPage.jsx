@@ -389,6 +389,10 @@ export default function MiningMapPage() {
   const [regionalOffice, setRegionalOffice] = useState("");
   const [search, setSearch] = useState("");
 
+  const [districts, setDistricts] = useState([]);
+  const [districtsLoading, setDistrictsLoading] = useState(true);
+  const [districtsError, setDistrictsError] = useState("");
+
   const inputStyle = {
     padding: "8px 12px",
     borderRadius: "6px",
@@ -399,6 +403,8 @@ export default function MiningMapPage() {
     fontFamily: "inherit",
     outline: "none",
   };
+
+  const selectStyle = { ...inputStyle, fontSize: "15px" };
 
   const fetchMines = useCallback(async () => {
     setLoading(true);
@@ -421,12 +427,41 @@ export default function MiningMapPage() {
     }
   }, [token]);
 
-  useEffect(() => {
+    useEffect(() => {
     (async () => {
       const data = await fetchMines();
       setMines(data);
     })();
   }, [fetchMines]);
+
+  const fetchDistricts = useCallback(async () => {
+    setDistrictsLoading(true);
+    setDistrictsError("");
+    try {
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/districts`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || `Error ${res.status}`);
+      }
+      const json = await res.json();
+      return Array.isArray(json?.data) ? json.data : [];
+    } catch (err) {
+      setDistrictsError(err.message || "Failed to load districts.");
+      return [];
+    } finally {
+      setDistrictsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    (async () => {
+      const data = await fetchDistricts();
+      setDistricts(data);
+    })();
+  }, [fetchDistricts]);
 
   const handleMarkerClick = useCallback(
     async (mine) => {
@@ -554,11 +589,24 @@ export default function MiningMapPage() {
         >
           {/* filter bar (UI only — not wired to any filtering logic) */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
-            <select value={district} onChange={(e) => setDistrict(e.target.value)} style={inputStyle}>
-              <option value="">All districts</option>
+            <select
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              style={selectStyle}
+              disabled={districtsLoading}
+            >
+              <option value="">
+                {districtsLoading ? "Loading districts…" : "All districts"}
+              </option>
+              {districtsError && <option value="" disabled>{districtsError}</option>}
+              {districts.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
             </select>
 
-            <select value={regionalOffice} onChange={(e) => setRegionalOffice(e.target.value)} style={inputStyle}>
+            <select value={regionalOffice} onChange={(e) => setRegionalOffice(e.target.value)} style={selectStyle}>
               <option value="">All regional offices</option>
             </select>
 
