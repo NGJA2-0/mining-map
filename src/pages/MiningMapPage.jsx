@@ -1,7 +1,10 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -14,8 +17,58 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+const highlightedMarkerIcon = L.divIcon({
+  className: "mine-marker-highlighted",
+  html: `<div style="position:relative;width:44px;height:52px;">
+    <div style="position:absolute;left:50%;top:38px;width:26px;height:26px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(220,20,60,0.35);animation:mine-pulse 1.6s ease-out infinite;"></div>
+    <svg width="44" height="44" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.45));">
+      <path d="M12 0C7.6 0 4 3.6 4 8c0 5.4 7 15.4 7.3 15.8.2.3.7.5 1.1.5s.9-.2 1.1-.5C13.7 23.4 20 13.4 20 8c0-4.4-3.6-8-8-8z" fill="#000000"/>
+      <path d="M12 1.6C8.4 1.6 5.6 4.6 5.6 8c0 4.6 5.7 12.9 6.1 13.5.1.1.2.1.3 0 .4-.6 6.1-8.9 6.1-13.5 0-3.4-2.8-6.4-6.1-6.4z" fill="#dc143c" stroke="#dc143c" stroke-width="0.3"/>
+      <circle cx="12" cy="8" r="2.5" fill="#000000"/>
+    </svg>
+  </div>`,
+  iconSize: [44, 52],
+  iconAnchor: [22, 48],
+});
+
+const defaultMarkerIcon = new L.Icon.Default();
+
+// Cluster icon: a location-pin shape (matching the style of the individual
+// markers) instead of the default numbered circle badge. Scales up with the
+// number of mines inside the cluster so dense areas are visually distinct
+// from sparse ones, without showing a literal count.
+const CLUSTER_SIZE_TIERS = [
+  { max: 9, size: 30 },
+  { max: 49, size: 40 },
+  { max: Infinity, size: 52 },
+];
+
+function createClusterIcon(cluster) {
+  const count = cluster.getChildCount();
+  const { size } = CLUSTER_SIZE_TIERS.find((tier) => count <= tier.max);
+  // Keep proportions consistent with the base 36x44 pin, plus a little
+  // extra bottom space so the anchor point (the pin's tip) stays accurate.
+  const height = Math.round(size * (44 / 36));
+
+  return L.divIcon({
+    className: "mine-cluster-icon",
+    html: `<div style="position:relative;width:${size}px;height:${height}px;">
+      <svg width="${size}" height="${size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
+        <path d="M12 0C7.6 0 4 3.6 4 8c0 5.4 7 15.4 7.3 15.8.2.3.7.5 1.1.5s.9-.2 1.1-.5C13.7 23.4 20 13.4 20 8c0-4.4-3.6-8-8-8z" fill="#000000"/>
+        <path d="M12 1.6C8.4 1.6 5.6 4.6 5.6 8c0 4.6 5.7 12.9 6.1 13.5.1.1.2.1.3 0 .4-.6 6.1-8.9 6.1-13.5 0-3.4-2.8-6.4-6.1-6.4z" fill="#2563eb" stroke="#2563eb" stroke-width="0.3"/>
+        <circle cx="12" cy="8" r="3" fill="#ffffff"/>
+      </svg>
+    </div>`,
+    iconSize: [size, height],
+    iconAnchor: [size / 2, height - 4],
+  });
+}
+
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/common/Button";
+import A4PreviewSheet from "../components/common/A4PreviewSheet";
+import ExtendRecordPreviewSheet from "../components/common/ExtendRecordPreviewSheet";
+import FilteredMinesTable from "../components/map/FilteredMinesTable";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const SRI_LANKA_CENTER = [7.8731, 80.7718];
@@ -24,10 +77,8 @@ const DEFAULT_ZOOM = 8;
 /* ─────────────────────────── helpers ─────────────────────────── */
 
 function getLatLng(mine) {
-  const point = mine.gpsPoints?.[0];
-  if (!point) return null;
-  const lat = Number(point.latitude);
-  const lng = Number(point.longitude);
+  const lat = Number(String(mine.latitude).trim());
+  const lng = Number(String(mine.longitude).trim());
   if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
   return [lat, lng];
 }
@@ -43,30 +94,329 @@ function FlyToMine({ mine }) {
   return null;
 }
 
-function MineListItem({ mine, active, onClick }) {
+// Adds a native Leaflet control button that toggles street/satellite tiles,
+// stacking directly below the default zoom control. Must live inside <MapContainer>.
+function ToggleViewControl({ mapView, setMapView }) {
+  const map = useMap();
+  const viewRef = useRef(mapView);
+  const buttonRef = useRef(null);
+
+  useEffect(() => {
+    viewRef.current = mapView;
+  }, [mapView]);
+
+  useEffect(() => {
+        const control = L.control({ position: "topleft" });
+
+    control.onAdd = () => {
+      const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+      const button = L.DomUtil.create("a", "", container);
+      buttonRef.current = button;
+      button.href = "#";
+      button.style.display = "flex";
+      button.style.alignItems = "center";
+      button.style.justifyContent = "center";
+      button.style.width = "30px";
+      button.style.height = "30px";
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.on(button, "click", (e) => {
+        L.DomEvent.preventDefault(e);
+        setMapView(viewRef.current === "street" ? "satellite" : "street");
+      });
+
+      return container;
+    };
+
+    control.addTo(map);
+    return () => control.remove();
+  }, [map, setMapView]);
+
+  // Keep the icon/title in sync with the current view without rebuilding the control.
+  useEffect(() => {
+    if (!buttonRef.current) return;
+    const satelliteIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 7 5 5-8.5 8.5a3.54 3.54 0 1 1-5-5L13 7Z"/><path d="m18 2 4 4"/><path d="m17 7-3-3"/><path d="M6.5 12.5 4 15a3.54 3.54 0 1 0 5 5l2.5-2.5"/></svg>`;
+    const mapIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`;
+    buttonRef.current.innerHTML = mapView === "street" ? satelliteIcon : mapIcon;
+    buttonRef.current.title = mapView === "street" ? "Satellite view" : "Street view";
+    buttonRef.current.setAttribute("aria-label", buttonRef.current.title);
+  }, [mapView]);
+
+  return null;
+}
+
+// Adds a native Leaflet control button, positioned in the same corner as
+// (and stacking directly below) the default zoom control. Must live inside <MapContainer>.
+function ResetViewControl({ onReset }) {
+  const map = useMap();
+  const onResetRef = useRef(onReset);
+  useEffect(() => {
+    onResetRef.current = onReset;
+  }, [onReset]);
+
+  useEffect(() => {
+    const control = L.control({ position: "topleft" });
+
+    control.onAdd = () => {
+      const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+      const button = L.DomUtil.create("a", "", container);
+      button.href = "#";
+      button.title = "Reset view";
+      button.setAttribute("aria-label", "Reset view");
+      button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`;
+      button.style.display = "flex";
+      button.style.alignItems = "center";
+      button.style.justifyContent = "center";
+      button.style.width = "30px";
+      button.style.height = "30px";
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.on(button, "click", (e) => {
+        L.DomEvent.preventDefault(e);
+        map.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
+        onResetRef.current?.();
+      });
+
+      return container;
+    };
+
+    control.addTo(map);
+    return () => control.remove();
+  }, [map]);
+
+  return null;
+}
+
+function MineDetailPanel({ mine, loading, error, onPreview, hideEmptyMessage }) {
+  if (loading) {
+    return (
+      <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", padding: "12px 4px" }}>
+        Loading details…
+      </p>
+    );
+  }
+  if (error) {
+    return <p style={{ fontSize: "13px", color: "#dc2626", padding: "12px 4px" }}>{error}</p>;
+  }
+  if (!mine) {
+    if (hideEmptyMessage) return null;
+    return (
+      <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", padding: "12px 4px" }}>
+        Click a marker on the map to view mine details.
+      </p>
+    );
+  }
+
+  const point = mine.gpsPoints?.[0];
+  const rows = [
+    { label: "Applicant", value: mine.applicantName },
+    { label: "Phone", value: mine.applicantPhone },
+    { label: "TIN", value: mine.tin },
+    { label: "GML", value: mine.gmlNumber },
+    { label: "GPS", value: point ? `${point.latitude}, ${point.longitude}` : null },
+    { label: "Created by", value: mine.createdBy },
+    { label: "Created at", value: mine.createdAt && new Date(mine.createdAt).toLocaleString() },
+    { label: "Updated at", value: mine.updatedAt && new Date(mine.updatedAt).toLocaleString() },
+  ].filter((r) => r.value);
+
+  const statusColors = {
+    draft: { bg: "#fef3c7", fg: "#92400e" },
+    approved: { bg: "#d1fae5", fg: "#065f46" },
+    rejected: { bg: "#fee2e2", fg: "#991b1b" },
+  };
+  const statusStyle = statusColors[mine.status?.toLowerCase()] || { bg: "#e5e7eb", fg: "#374151" };
+
   return (
-    <button
-      onClick={onClick}
+    <div
       style={{
-        width: "100%", textAlign: "left", cursor: "pointer",
-        background: active ? "var(--color-teal, #0d9488)11" : "var(--color-surface, #fff)",
         border: "1px solid var(--color-line, #e5e7eb)",
-        borderLeft: `3px solid ${active ? "var(--color-teal, #0d9488)" : "var(--color-line, #e5e7eb)"}`,
-        borderRadius: "8px", padding: "12px 14px",
-        display: "flex", flexDirection: "column", gap: "4px",
-        fontFamily: "inherit", transition: "background 0.15s, border-color 0.15s",
+        borderRadius: "12px",
+        background: "var(--color-surface, #fff)",
+        overflow: "hidden",
       }}
     >
-      <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--color-ink, #1a1a1a)" }}>
-        {mine.applicantName || "—"}
-      </span>
-      <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
-        {mine.landName || "—"} · {mine.village || "—"}, {mine.district || "—"}
-      </span>
-      <span style={{ fontSize: "10px", fontFamily: "monospace", color: "var(--color-ink-muted, #6b7280)" }}>
-        GML {mine.gmlNumber || "—"} · TIN {mine.tin || "—"}
-      </span>
-    </button>
+      {/* header */}
+            <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          padding: "16px",
+          background: "linear-gradient(135deg, #ccfbf1, #fde8d7)",
+        }}
+      >
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.7)",
+            color: "var(--color-teal, #0d9488)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: "700",
+            fontSize: "14px",
+            flexShrink: 0,
+          }}
+        >
+          {(mine.applicantName || "?")
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2)}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+          <span
+            style={{
+              fontSize: "15px",
+              fontWeight: "700",
+              color: "var(--color-ink, #1a1a1a)",
+              lineHeight: "1.2",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {mine.applicantName || "—"}
+          </span>
+          {mine.status && (
+            <span
+              style={{
+                alignSelf: "flex-start",
+                fontSize: "10px",
+                fontWeight: "700",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                padding: "2px 8px",
+                borderRadius: "999px",
+                background: statusStyle.bg,
+                color: statusStyle.fg,
+              }}
+            >
+              {mine.status}
+            </span>
+          )}
+        </div>
+      </div>
+
+            {/* details */}
+      <div style={{ padding: "6px 16px 12px" }}>
+        {rows.map((r, i) => (
+          <div
+            key={r.label}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "88px 1fr",
+              gap: "12px",
+              padding: "10px 0",
+              borderTop: i === 0 ? "none" : "1px solid var(--color-line, #f1f2f4)",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: "700",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: "var(--color-ink-muted, #6b7280)",
+              }}
+            >
+              {r.label}
+            </span>
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "var(--color-ink, #1a1a1a)",
+                wordBreak: "break-word",
+              }}
+            >
+              {r.value}
+            </span>
+          </div>
+        ))}
+
+        {onPreview && (
+          <Button
+            variant="primary"
+            size="md"
+            onClick={onPreview}
+            style={{
+              width: "100%",
+              marginTop: "10px",
+              background: "linear-gradient(135deg, #bfdbfe, #ffffff)",
+              color: "var(--color-ink, #1a1a1a)",
+              border: "1px solid #93c5fd",
+            }}
+          >
+            View full application
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PreviewOverlay({ open, loading, error, form, isExtend, onClose }) {
+  if (!open) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "var(--color-base, #f7f7f5)",
+        zIndex: 1000,
+        overflowY: "auto",
+      }}
+    >
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          padding: "14px 20px",
+          background: "var(--color-surface, #fff)",
+          borderBottom: "1px solid var(--color-line, #e5e7eb)",
+          zIndex: 1,
+        }}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: "600",
+            color: "var(--color-ink-muted, #6b7280)",
+            fontFamily: "inherit",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          Back to map
+        </button>
+      </div>
+
+      <div style={{ padding: "20px" }}>
+        {loading && (
+          <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)" }}>Loading application…</p>
+        )}
+        {error && <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>}
+        {!loading && !error && form && (
+          isExtend ? <ExtendRecordPreviewSheet form={form} /> : <A4PreviewSheet form={form} />
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -75,33 +425,79 @@ function MineListItem({ mine, active, onClick }) {
 export default function MiningMapPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const mapRef = useRef(null);
   const [mapView, setMapView] = useState("street"); // "street" | "satellite"
-  const [allMines, setAllMines] = useState([]);   // unfiltered, fetched once — powers dropdowns
-  const [mines, setMines] = useState([]);          // currently displayed set
+  const [mines, setMines] = useState([]); // pins from /latest
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedMine, setSelectedMine] = useState(null);
 
+  const [selectedMine, setSelectedMine] = useState(null); // clicked pin summary (drives flyTo)
+  const [selectedDetails, setSelectedDetails] = useState(null); // full record from /:id
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const [previewForm, setPreviewForm] = useState(null);
+  const [previewIsExtend, setPreviewIsExtend] = useState(false);
+
+  // UI-only filter state — kept for layout purposes; not wired to any fetch/filter logic.
   const [district, setDistrict] = useState("");
   const [regionalOffice, setRegionalOffice] = useState("");
-  const [search, setSearch] = useState(""); // matched against tin / nic / gmlNumber / landName
+  const [search, setSearch] = useState("");
 
-  const fetchMines = useCallback(async (params = {}) => {
+  const [districts, setDistricts] = useState([]);
+  const [districtsLoading, setDistrictsLoading] = useState(true);
+  const [districtsError, setDistrictsError] = useState("");
+
+  const [regionalOffices, setRegionalOffices] = useState([]);
+  const [regionalOfficesLoading, setRegionalOfficesLoading] = useState(false);
+  const [regionalOfficesError, setRegionalOfficesError] = useState("");
+
+  const [filterApplied, setFilterApplied] = useState(false);
+  const [filteredResults, setFilteredResults] = useState([]);
+  const [filteredTotal, setFilteredTotal] = useState(0);
+  const [filteredPage, setFilteredPage] = useState(1);
+  const [filteredLimit, setFilteredLimit] = useState(10);
+  const [filteredTotalPages, setFilteredTotalPages] = useState(1);
+  const [filteredLoading, setFilteredLoading] = useState(false);
+  const [filteredError, setFilteredError] = useState("");
+
+  const inputStyle = {
+    padding: "8px 12px",
+    borderRadius: "6px",
+    fontSize: "13px",
+    border: "1px solid var(--color-line, #e5e7eb)",
+    background: "var(--color-surface, #fff)",
+    color: "var(--color-ink, #1a1a1a)",
+    fontFamily: "inherit",
+    outline: "none",
+  };
+
+  const selectStyle = (disabled) => ({
+    ...inputStyle,
+    fontSize: "15px",
+    ...(disabled && {
+      opacity: 0.5,
+      cursor: "not-allowed",
+      background: "var(--color-base, #f3f4f6)",
+    }),
+  });
+
+  const fetchMines = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const qs = new URLSearchParams();
-      if (params.district) qs.set("district", params.district);
-      if (params.regionalOffice) qs.set("regionalOffice", params.regionalOffice);
-      if (params.search) qs.set("q", params.search);
-      const url = `${BASE_URL}/api/mining-licenses/map${qs.toString() ? `?${qs}` : ""}`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/latest`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
         throw new Error(errData?.error || `Error ${res.status}`);
       }
       const json = await res.json();
-      return json.data || [];
+      return Array.isArray(json) ? json : json.data || [];
     } catch (err) {
       setError(err.message || "Failed to load mines.");
       return [];
@@ -110,77 +506,283 @@ export default function MiningMapPage() {
     }
   }, [token]);
 
-  // Initial load — unfiltered, used both as the default map view and as the
-  // source for dropdown options.
-  useEffect(() => {
+    useEffect(() => {
     (async () => {
       const data = await fetchMines();
-      setAllMines(data);
       setMines(data);
     })();
   }, [fetchMines]);
 
-  const districtOptions = useMemo(
-    () => [...new Set(allMines.map((m) => m.district).filter(Boolean))].sort(),
-    [allMines]
+  const fetchDistricts = useCallback(async () => {
+    setDistrictsLoading(true);
+    setDistrictsError("");
+    try {
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/districts`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || `Error ${res.status}`);
+      }
+      const json = await res.json();
+      return Array.isArray(json?.data) ? json.data : [];
+    } catch (err) {
+      setDistrictsError(err.message || "Failed to load districts.");
+      return [];
+    } finally {
+      setDistrictsLoading(false);
+    }
+  }, [token]);
+
+    useEffect(() => {
+    (async () => {
+      const data = await fetchDistricts();
+      setDistricts(data);
+    })();
+  }, [fetchDistricts]);
+
+  const fetchRegionalOffices = useCallback(
+    async (selectedDistrict) => {
+      setRegionalOfficesLoading(true);
+      setRegionalOfficesError("");
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/mining-licenses/regional-offices?district=${encodeURIComponent(selectedDistrict)}`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        return Array.isArray(json?.data) ? json.data : [];
+      } catch (err) {
+        setRegionalOfficesError(err.message || "Failed to load regional offices.");
+        return [];
+      } finally {
+        setRegionalOfficesLoading(false);
+      }
+    },
+    [token]
   );
-  const regionalOfficeOptions = useMemo(
-    () => [...new Set(allMines.map((m) => m.regionalOffice).filter(Boolean))].sort(),
-    [allMines]
+
+    useEffect(() => {
+    if (!district) {
+      setRegionalOffices([]);
+      setRegionalOfficesError("");
+      return;
+    }
+    (async () => {
+      const data = await fetchRegionalOffices(district);
+      setRegionalOffices(data);
+    })();
+  }, [district, fetchRegionalOffices]);
+
+  const fetchFilteredMines = useCallback(
+    async (selectedDistrict, selectedRegionalOffice, targetPage, targetLimit) => {
+      setFilteredLoading(true);
+      setFilteredError("");
+      try {
+        const params = new URLSearchParams({
+          district: selectedDistrict || "",
+          regionalOffice: selectedRegionalOffice || "",
+          page: String(targetPage),
+          limit: String(targetLimit),
+        });
+        const res = await fetch(`${BASE_URL}/api/mining-licenses/filter?${params.toString()}`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        return json?.data || { data: [], total: 0, page: targetPage, limit: targetLimit, totalPages: 1 };
+      } catch (err) {
+        setFilteredError(err.message || "Failed to load filtered results.");
+        return null;
+      } finally {
+        setFilteredLoading(false);
+      }
+    },
+    [token]
   );
 
-  const handleSearch = async () => {
-    setSelectedMine(null);
-    const data = await fetchMines({ district, regionalOffice, search: search.trim() });
-    setMines(data);
+   const applyFilter = useCallback(
+    async (targetPage = 1, targetLimit = filteredLimit) => {
+      setFilterApplied(true);
+      setSelectedMine(null);
+      setSelectedDetails(null);
+      setDetailError("");
+      mapRef.current?.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
+      const result = await fetchFilteredMines(district, regionalOffice, targetPage, targetLimit);
+      if (result) {
+        setFilteredResults(result.data || []);
+        setFilteredTotal(result.total || 0);
+        setFilteredPage(result.page || targetPage);
+        setFilteredLimit(result.limit || targetLimit);
+        setFilteredTotalPages(result.totalPages || 1);
+      }
+    },
+    [district, regionalOffice, filteredLimit, fetchFilteredMines]
+  );
+
+  const handleFilterPageChange = (newPage) => {
+    applyFilter(newPage, filteredLimit);
   };
 
-  const handleClear = async () => {
-    setDistrict("");
-    setRegionalOffice("");
-    setSearch("");
-    setSelectedMine(null);
-    const data = await fetchMines();
-    setMines(data);
+  const handleFilterLimitChange = (newLimit) => {
+    applyFilter(1, newLimit);
   };
 
-  const inputStyle = {
-    padding: "8px 12px", borderRadius: "6px", fontSize: "13px",
-    border: "1px solid var(--color-line, #e5e7eb)",
-    background: "var(--color-surface, #fff)", color: "var(--color-ink, #1a1a1a)",
-    fontFamily: "inherit", outline: "none",
-  };
+  const handleMarkerClick = useCallback(
+    async (mine) => {
+      setSelectedMine(mine);
+      setSelectedDetails(null);
+      setDetailError("");
+      setDetailLoading(true);
+      setFilterApplied(false);
 
-  <style>{`
-  .leaflet-tooltip.mine-tooltip {
-    background: #ffffff;
-    border: 1px solid var(--color-line, #e5e7eb);
-    border-radius: 10px;
-    padding: 0;
-    overflow: hidden;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.18);
-    font-family: inherit;
-  }
-  .leaflet-tooltip.mine-tooltip::before {
-    border-top-color: var(--color-line, #e5e7eb);
-  }
-`}</style>
+      // Fly directly, since setSelectedMine may pass the same object
+      // reference as before (e.g. after a reset), which would otherwise
+      // skip FlyToMine's effect and leave the map un-zoomed.
+      const latLng = getLatLng(mine);
+      if (latLng) mapRef.current?.flyTo(latLng, 13, { duration: 0.8 });
+
+      try {
+        const res = await fetch(`${BASE_URL}/api/mining-licenses/${mine.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        setSelectedDetails(json.data || null);
+      } catch (err) {
+        setDetailError(err.message || "Failed to load mine details.");
+      } finally {
+                setDetailLoading(false);
+      }
+    },
+    [token]
+  );
+
+  const handleFilteredCardClick = useCallback(
+    (mine) => {
+      const point = mine?.gpsPoints?.[0];
+      const lat = point ? Number(String(point.latitude).trim()) : NaN;
+      const lng = point ? Number(String(point.longitude).trim()) : NaN;
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+            // Built directly from the filtered item itself — no need to depend
+      // on it also existing in the (potentially huge, unpaginated) /latest
+      // list. Note: if this mine isn't currently rendered as a marker on
+      // the map (e.g. outside the loaded set), flyTo still zooms to the
+      // right spot, it just won't show the special highlighted icon.
+      setSelectedMine({ id: mine.id, latitude: point.latitude, longitude: point.longitude });
+      mapRef.current?.flyTo([lat, lng], 13, { duration: 0.8 });
+
+      setSelectedDetails(null);
+      setDetailError("");
+      setDetailLoading(true);
+      fetch(`${BASE_URL}/api/mining-licenses/${mine.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const errData = await res.json().catch(() => null);
+            throw new Error(errData?.error || `Error ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((json) => setSelectedDetails(json.data || null))
+        .catch((err) => setDetailError(err.message || "Failed to load mine details."))
+        .finally(() => setDetailLoading(false));
+    },
+    [mines, token]
+  );
+
+    const handleOpenPreview = useCallback(
+    async (id) => {
+      setPreviewOpen(true);
+      setPreviewLoading(true);
+      setPreviewError("");
+      setPreviewForm(null);
+      try {
+        const res = await fetch(`${BASE_URL}/api/mining-licenses/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        const record = json.data || null;
+        setPreviewIsExtend(Boolean(record?.privateSaleValue || record?.auctionSaleValue));
+        setPreviewForm(record);
+      } catch (err) {
+        setPreviewError(err.message || "Failed to load application.");
+      } finally {
+        setPreviewLoading(false);
+      }
+    },
+    [token]
+  );
+
+  const handleClosePreview = () => {
+    setPreviewOpen(false);
+    setPreviewForm(null);
+    setPreviewError("");
+  };
 
   return (
     <div className="min-h-screen bg-base text-ink">
+            <style>{`
+        .leaflet-tooltip.mine-tooltip {
+          background: #ffffff;
+          border: 1px solid var(--color-line, #e5e7eb);
+          border-radius: 10px;
+          padding: 0;
+          overflow: hidden;
+          box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+          font-family: inherit;
+        }
+        .leaflet-tooltip.mine-tooltip::before {
+          border-top-color: var(--color-line, #e5e7eb);
+        }
+        @keyframes mine-pulse {
+          0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.9; }
+          100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+        }
+      `}</style>
+
       {/* header */}
       <header className="border-b border-line">
         <div className="flex items-center justify-between px-4 py-4 sm:px-6">
           <button
             onClick={() => navigate("/dashboard")}
             style={{
-              display: "flex", alignItems: "center", gap: "6px",
-              background: "transparent", border: "none", cursor: "pointer",
-              fontSize: "13px", fontWeight: "600", color: "var(--color-ink-muted, #6b7280)",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: "600",
+              color: "var(--color-ink-muted, #6b7280)",
               fontFamily: "inherit",
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
             Back to dashboard
           </button>
           <h1 className="font-display text-lg font-semibold sm:text-xl">Mine locations</h1>
@@ -188,88 +790,170 @@ export default function MiningMapPage() {
         </div>
       </header>
 
-            {/* map + list */}
-      <div
-        className="px-4 pb-0 pt-4 sm:px-6"
-        style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}
-      >
-        {/* list panel */}
-        <div style={{
-          flex: "1 1 280px", maxWidth: "420px", maxHeight: "calc(100vh - 96px)", overflowY: "auto",
-          display: "flex", flexDirection: "column", gap: "8px",
-        }}>
-          {/* filter bar */}
+      {/* map + detail panel */}
+      <div className="px-4 pb-0 pt-4 sm:px-6" style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+        {/* detail panel */}
+        <div
+          style={{
+            flex: "1 1 280px",
+            maxWidth: "420px",
+            maxHeight: "calc(100vh - 96px)",
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          {/* filter bar (UI only — not wired to any filtering logic) */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
             <select
               value={district}
-              onChange={(e) => { setDistrict(e.target.value); setVillage(""); }}
-              style={inputStyle}
+              onChange={(e) => setDistrict(e.target.value)}
+              style={selectStyle(districtsLoading)}
+              disabled={districtsLoading}
             >
-              <option value="">All districts</option>
-              {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
+              <option value="">
+                {districtsLoading ? "Loading districts…" : "All districts"}
+              </option>
+              {districtsError && <option value="" disabled>{districtsError}</option>}
+              {districts.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
             </select>
 
-            <select
-              value={regionalOffice}
-              onChange={(e) => setRegionalOffice(e.target.value)}
-              style={inputStyle}
-            >
-              <option value="">All regional offices</option>
-              {regionalOfficeOptions.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <select
+                value={regionalOffice}
+                onChange={(e) => setRegionalOffice(e.target.value)}
+                style={selectStyle(!district || regionalOfficesLoading)}
+                disabled={!district || regionalOfficesLoading}
+              >
+                <option value="">
+                  {regionalOfficesLoading ? "Loading regional offices…" : "All regional offices"}
+                </option>
+                {regionalOfficesError && <option value="" disabled>{regionalOfficesError}</option>}
+                {regionalOffices.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={() => applyFilter(1, filteredLimit)}
+                disabled={!district || filteredLoading}
+                title="Apply filter"
+                aria-label="Apply filter"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "34px",
+                  height: "34px",
+                  flexShrink: 0,
+                  borderRadius: "6px",
+                  border: "1px solid var(--color-line, #e5e7eb)",
+                  background:
+                    !district || filteredLoading ? "var(--color-base, #f3f4f6)" : "var(--color-surface, #fff)",
+                  color: !district || filteredLoading ? "var(--color-ink-muted, #9ca3af)" : "#059669",
+                  cursor: !district || filteredLoading ? "not-allowed" : "pointer",
+                  opacity: !district || filteredLoading ? 0.5 : 1,
+                }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </button>
+            </div>
 
             <input
               type="text"
               placeholder="Search TIN / NIC / GML / land name"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               style={{ ...inputStyle, width: "100%" }}
             />
 
-            <Button variant="primary" size="md" onClick={handleSearch} disabled={loading}>
-              {loading ? "Searching…" : "Search"}
+            <Button variant="primary" size="md">
+              Search
             </Button>
-            <Button className="!text-ink" variant="secondary" size="md" onClick={handleClear} disabled={loading}>
+                        <Button
+              className="!text-ink"
+              variant="secondary"
+              size="md"
+              onClick={() => {
+                setDistrict("");
+                setRegionalOffice("");
+                setSearch("");
+                setFilterApplied(false);
+                setFilteredResults([]);
+                setFilteredTotal(0);
+                setFilteredPage(1);
+                setFilteredTotalPages(1);
+                setFilteredError("");
+              }}
+            >
               Clear
             </Button>
-            <Button
-              variant="secondary"
-              className="!text-ink"
-              size="md"
-              onClick={() => setMapView((v) => (v === "street" ? "satellite" : "street"))}
-            >
-              {mapView === "street" ? "Satellite view" : "Street view"}
-            </Button>
-          </div>
+            </div>
 
-          {error && (
-            <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>
-          )}
+          {error && <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>}
           {!loading && !error && (
             <p style={{ fontSize: "12px", color: "var(--color-ink-muted, #6b7280)" }}>
-              {mines.length} mine{mines.length !== 1 ? "s" : ""} shown
+              {mines.length} mine{mines.length !== 1 ? "s" : ""} on map
             </p>
           )}
 
-          {mines.map((mine) => (
-            <MineListItem
-              key={mine.id || mine._id}
-              mine={mine}
-              active={selectedMine && (selectedMine.id || selectedMine._id) === (mine.id || mine._id)}
-              onClick={() => setSelectedMine(mine)}
+                    {!filterApplied && (
+            <MineDetailPanel
+              mine={selectedDetails}
+              loading={detailLoading}
+              error={detailError}
+              onPreview={() => selectedDetails?.id && handleOpenPreview(selectedDetails.id)}
             />
-          ))}
-          {!loading && mines.length === 0 && (
-            <p style={{ fontSize: "13px", color: "var(--color-ink-muted, #6b7280)", padding: "12px 4px" }}>
-              No mines match these filters.
-            </p>
+          )}
+
+          {filterApplied && (
+            <FilteredMinesTable
+              results={filteredResults}
+              loading={filteredLoading}
+              error={filteredError}
+              total={filteredTotal}
+              page={filteredPage}
+              limit={filteredLimit}
+              totalPages={filteredTotalPages}
+              onPageChange={handleFilterPageChange}
+              onLimitChange={handleFilterLimitChange}
+              onCardClick={handleFilteredCardClick}
+              onViewMore={handleOpenPreview}
+            />
           )}
         </div>
 
         {/* map */}
-        <div style={{ flex: "2 1 480px", minWidth: "300px", height: "calc(100vh - 96px)", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--color-line, #e5e7eb)" }}>
-          <MapContainer center={SRI_LANKA_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
+        <div
+          style={{
+            flex: "2 1 480px",
+            minWidth: "300px",
+            height: "calc(100vh - 96px)",
+            borderRadius: "10px",
+            overflow: "hidden",
+            border: "1px solid var(--color-line, #e5e7eb)",
+          }}
+        >
+          <MapContainer ref={mapRef} center={SRI_LANKA_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
             {mapView === "street" ? (
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -282,71 +966,76 @@ export default function MiningMapPage() {
               />
             )}
             <FlyToMine mine={selectedMine} />
-            {mines.map((mine) => {
-              const latLng = getLatLng(mine);
-              if (!latLng) return null;
-              return (
-                <Marker
-                  key={mine.id || mine._id}
-                  position={latLng}
-                  eventHandlers={{ click: () => setSelectedMine(mine) }}
-                >
-                  <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
-                    <div style={{ width: "220px", fontFamily: "inherit" }}>
-                      {/* header strip */}
-                      <div style={{
-                        display: "flex", alignItems: "center", gap: "10px",
-                        padding: "10px 12px",
-                        background: "linear-gradient(135deg, var(--color-teal, #0d9488), var(--color-copper, #b85a29))",
-                        borderRadius: "8px 8px 0 0",
-                      }}>
-                        <div style={{
-                          width: "30px", height: "30px", borderRadius: "50%",
-                          background: "rgba(255,255,255,0.22)", color: "#fff",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontWeight: "700", fontSize: "12px", flexShrink: 0,
-                        }}>
-                          {(mine.applicantName || "?").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
-                        </div>
-                        <span style={{ fontWeight: "700", fontSize: "13px", color: "#fff", lineHeight: "1.2" }}>
+            <ToggleViewControl mapView={mapView} setMapView={setMapView} />
+            <ResetViewControl
+              onReset={() => {
+                setSelectedMine(null);
+                setSelectedDetails(null);
+                setDetailError("");
+              }}
+            />
+                        <MarkerClusterGroup
+              chunkedLoading
+              maxClusterRadius={70}
+              spiderfyOnMaxZoom
+              zoomToBoundsOnClick
+              disableClusteringAtZoom={16}
+              iconCreateFunction={createClusterIcon}
+              // Keeps a selected/highlighted marker's cluster from collapsing
+              // it back in with the rest once it's been picked out.
+              key={selectedMine?.id || "no-selection"}
+            >
+              {mines.map((mine) => {
+                const latLng = getLatLng(mine);
+                if (!latLng) return null;
+                return (
+                  <Marker
+                    key={mine.id}
+                    position={latLng}
+                    icon={selectedMine?.id === mine.id ? highlightedMarkerIcon : defaultMarkerIcon}
+                    eventHandlers={{ click: () => handleMarkerClick(mine) }}
+                  >
+                    <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
+                      <div
+                        style={{
+                          width: "200px",
+                          fontFamily: "inherit",
+                          padding: "10px 12px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                        }}
+                      >
+                        <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--color-ink, #1a1a1a)" }}>
                           {mine.applicantName || "—"}
                         </span>
+                        <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                          Status: {mine.status || "—"}
+                        </span>
+                        <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                          Lat: {mine.latitude}
+                        </span>
+                        <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                          Lng: {mine.longitude}
+                        </span>
                       </div>
-
-                      {/* details */}
-                      <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                        {[
-                          { label: "NIC", value: mine.nic },
-                          { label: "TIN", value: mine.tin },
-                          { label: "GML", value: mine.gmlNumber },
-                          { label: "License type", value: mine.licenseeType },
-                          { label: "Cultivation", value: mine.landCultivation },
-                        ].filter((r) => r.value).map((r) => (
-                          <div key={r.label} style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
-                            <span style={{
-                              fontSize: "10px", fontWeight: "700", letterSpacing: "0.05em",
-                              textTransform: "uppercase", color: "var(--color-ink-muted, #6b7280)",
-                              whiteSpace: "nowrap",
-                            }}>
-                              {r.label}
-                            </span>
-                            <span style={{
-                              fontSize: "12px", fontWeight: "600", color: "var(--color-ink, #1a1a1a)",
-                              textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                            }}>
-                              {r.value}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </Tooltip>
-                </Marker>
-              );
-            })}
+                    </Tooltip>
+                  </Marker>
+                );
+              })}
+            </MarkerClusterGroup>
           </MapContainer>
-        </div>
+                </div>
       </div>
+
+      <PreviewOverlay
+        open={previewOpen}
+        loading={previewLoading}
+        error={previewError}
+        form={previewForm}
+        isExtend={previewIsExtend}
+        onClose={handleClosePreview}
+      />
     </div>
   );
 }
