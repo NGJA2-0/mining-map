@@ -374,11 +374,13 @@ function PreviewOverlay({ open, loading, error, form, isExtend, onClose }) {
       }}
     >
       <div
+        className="print-hide"
         style={{
           position: "sticky",
           top: 0,
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           gap: "10px",
           padding: "14px 20px",
           background: "var(--color-surface, #fff)",
@@ -405,6 +407,26 @@ function PreviewOverlay({ open, loading, error, form, isExtend, onClose }) {
             <path d="m15 18-6-6 6-6" />
           </svg>
           Back to map
+        </button>
+
+        <button
+          onClick={() => window.print()}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "8px 16px",
+            borderRadius: "6px",
+            background: "var(--color-ink, #1a1a1a)",
+            color: "#fff",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: "600",
+            fontFamily: "inherit",
+          }}
+        >
+          Download PDF
         </button>
       </div>
 
@@ -761,6 +783,11 @@ export default function MiningMapPage() {
           0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.9; }
           100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
         }
+           @media print {
+    .print-hide {
+      display: none !important;
+    }
+  }
       `}</style>
 
       {/* header */}
