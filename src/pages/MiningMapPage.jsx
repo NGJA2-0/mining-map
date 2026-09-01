@@ -106,7 +106,7 @@ function ToggleViewControl({ mapView, setMapView }) {
   }, [mapView]);
 
   useEffect(() => {
-        const control = L.control({ position: "topleft" });
+    const control = L.control({ position: "topleft" });
 
     control.onAdd = () => {
       const container = L.DomUtil.create("div", "leaflet-bar leaflet-control");
@@ -232,11 +232,12 @@ function MineDetailPanel({ mine, loading, error, onPreview, hideEmptyMessage }) 
         border: "1px solid var(--color-line, #e5e7eb)",
         borderRadius: "12px",
         background: "var(--color-surface, #fff)",
-        overflow: "hidden",
+        maxHeight: "calc(100vh - 240px)",   // ← tweak this value to taste
+        overflowY: "auto",
       }}
     >
       {/* header */}
-            <div
+      <div
         style={{
           display: "flex",
           alignItems: "center",
@@ -301,7 +302,7 @@ function MineDetailPanel({ mine, loading, error, onPreview, hideEmptyMessage }) 
         </div>
       </div>
 
-            {/* details */}
+      {/* details */}
       <div style={{ padding: "6px 16px 12px" }}>
         {rows.map((r, i) => (
           <div
@@ -506,7 +507,7 @@ export default function MiningMapPage() {
     }
   }, [token]);
 
-    useEffect(() => {
+  useEffect(() => {
     (async () => {
       const data = await fetchMines();
       setMines(data);
@@ -535,7 +536,7 @@ export default function MiningMapPage() {
     }
   }, [token]);
 
-    useEffect(() => {
+  useEffect(() => {
     (async () => {
       const data = await fetchDistricts();
       setDistricts(data);
@@ -570,7 +571,7 @@ export default function MiningMapPage() {
     [token]
   );
 
-    useEffect(() => {
+  useEffect(() => {
     if (!district) {
       setRegionalOffices([]);
       setRegionalOfficesError("");
@@ -613,7 +614,7 @@ export default function MiningMapPage() {
     [token]
   );
 
-   const applyFilter = useCallback(
+  const applyFilter = useCallback(
     async (targetPage = 1, targetLimit = filteredLimit) => {
       setFilterApplied(true);
       setSelectedMine(null);
@@ -667,7 +668,7 @@ export default function MiningMapPage() {
       } catch (err) {
         setDetailError(err.message || "Failed to load mine details.");
       } finally {
-                setDetailLoading(false);
+        setDetailLoading(false);
       }
     },
     [token]
@@ -680,7 +681,7 @@ export default function MiningMapPage() {
       const lng = point ? Number(String(point.longitude).trim()) : NaN;
       if (Number.isNaN(lat) || Number.isNaN(lng)) return;
 
-            // Built directly from the filtered item itself — no need to depend
+      // Built directly from the filtered item itself — no need to depend
       // on it also existing in the (potentially huge, unpaginated) /latest
       // list. Note: if this mine isn't currently rendered as a marker on
       // the map (e.g. outside the loaded set), flyTo still zooms to the
@@ -708,7 +709,7 @@ export default function MiningMapPage() {
     [mines, token]
   );
 
-    const handleOpenPreview = useCallback(
+  const handleOpenPreview = useCallback(
     async (id) => {
       setPreviewOpen(true);
       setPreviewLoading(true);
@@ -743,7 +744,7 @@ export default function MiningMapPage() {
 
   return (
     <div className="min-h-screen bg-base text-ink">
-            <style>{`
+      <style>{`
         .leaflet-tooltip.mine-tooltip {
           background: #ffffff;
           border: 1px solid var(--color-line, #e5e7eb);
@@ -823,7 +824,7 @@ export default function MiningMapPage() {
               ))}
             </select>
 
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <select
                 value={regionalOffice}
                 onChange={(e) => setRegionalOffice(e.target.value)}
@@ -889,7 +890,7 @@ export default function MiningMapPage() {
             <Button variant="primary" size="md">
               Search
             </Button>
-                        <Button
+            <Button
               className="!text-ink"
               variant="secondary"
               size="md"
@@ -907,7 +908,7 @@ export default function MiningMapPage() {
             >
               Clear
             </Button>
-            </div>
+          </div>
 
           {error && <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>}
           {!loading && !error && (
@@ -916,7 +917,7 @@ export default function MiningMapPage() {
             </p>
           )}
 
-                    {!filterApplied && (
+          {!filterApplied && (
             <MineDetailPanel
               mine={selectedDetails}
               loading={detailLoading}
@@ -974,7 +975,7 @@ export default function MiningMapPage() {
                 setDetailError("");
               }}
             />
-                        <MarkerClusterGroup
+            <MarkerClusterGroup
               chunkedLoading
               maxClusterRadius={70}
               spiderfyOnMaxZoom
@@ -1025,7 +1026,7 @@ export default function MiningMapPage() {
               })}
             </MarkerClusterGroup>
           </MapContainer>
-                </div>
+        </div>
       </div>
 
       <PreviewOverlay
