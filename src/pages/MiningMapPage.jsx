@@ -487,6 +487,17 @@ export default function MiningMapPage() {
   const [filteredLoading, setFilteredLoading] = useState(false);
   const [filteredError, setFilteredError] = useState("");
 
+  // TIN search state (mirrors dashboard search)
+  const [searchApplied, setSearchApplied] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchPage, setSearchPage] = useState(1);
+  const [searchLimit, setSearchLimit] = useState(10);
+  const [searchTotalPages, setSearchTotalPages] = useState(1);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
+
   const inputStyle = {
     padding: "8px 12px",
     borderRadius: "6px",
@@ -604,6 +615,50 @@ export default function MiningMapPage() {
       setRegionalOffices(data);
     })();
   }, [district, fetchRegionalOffices]);
+
+  // Mirrors dashboard's fetchResults — calls /api/mining-licenses/tin/:tin
+  const fetchTinSearch = useCallback(
+    async (tin, pg, limit) => {
+      if (!tin) return;
+      setSearchLoading(true);
+      setSearchError("");
+      try {
+        const url = `${BASE_URL}/api/mining-licenses/tin/${encodeURIComponent(tin)}?page=${pg}&limit=${limit}`;
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.message || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        const d = json.data;
+        setSearchResults(d.data || []);
+        setSearchTotal(d.total ?? 0);
+        setSearchTotalPages(d.totalPages ?? 1);
+      } catch (err) {
+        setSearchError(err.message || "Something went wrong. Please try again.");
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    },
+    [token]
+  );
+
+  const handleSearch = useCallback(() => {
+    const tin = search.trim();
+    if (!tin) return;
+    setSearchPage(1);
+    setActiveSearch(tin);
+    setSearchApplied(true);
+    setFilterApplied(false);
+    setSelectedMine(null);
+    setSelectedDetails(null);
+    setDetailError("");
+    mapRef.current?.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
+    fetchTinSearch(tin, 1, searchLimit);
+  }, [search, searchLimit, fetchTinSearch]);
 
   const fetchFilteredMines = useCallback(
     async (selectedDistrict, selectedRegionalOffice, targetPage, targetLimit) => {
@@ -908,14 +963,15 @@ export default function MiningMapPage() {
 
             <input
               type="text"
-              placeholder="Search TIN / NIC / GML / land name"
+              placeholder="Search By TIN"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               style={{ ...inputStyle, width: "100%" }}
             />
 
-            <Button variant="primary" size="md">
-              Search
+            <Button variant="primary" size="md" onClick={handleSearch} disabled={searchLoading}>
+              {searchLoading ? "Searching…" : "Search"}
             </Button>
             <Button
               className="!text-ink"
@@ -931,6 +987,13 @@ export default function MiningMapPage() {
                 setFilteredPage(1);
                 setFilteredTotalPages(1);
                 setFilteredError("");
+                setSearchApplied(false);
+                setSearchResults([]);
+                setSearchTotal(0);
+                setSearchPage(1);
+                setSearchTotalPages(1);
+                setSearchError("");
+                setActiveSearch("");
               }}
             >
               Clear
@@ -944,7 +1007,7 @@ export default function MiningMapPage() {
             </p>
           )}
 
-          {!filterApplied && (
+          {!filterApplied && !searchApplied && (
             <MineDetailPanel
               mine={selectedDetails}
               loading={detailLoading}
@@ -953,7 +1016,7 @@ export default function MiningMapPage() {
             />
           )}
 
-          {filterApplied && (
+          {filterApplied && !searchApplied && (
             <FilteredMinesTable
               results={filteredResults}
               loading={filteredLoading}
@@ -964,6 +1027,29 @@ export default function MiningMapPage() {
               totalPages={filteredTotalPages}
               onPageChange={handleFilterPageChange}
               onLimitChange={handleFilterLimitChange}
+              onCardClick={handleFilteredCardClick}
+              onViewMore={handleOpenPreview}
+            />
+          )}
+
+          {searchApplied && (
+            <FilteredMinesTable
+              results={searchResults}
+              loading={searchLoading}
+              error={searchError}
+              total={searchTotal}
+              page={searchPage}
+              limit={searchLimit}
+              totalPages={searchTotalPages}
+              onPageChange={(newPage) => {
+                setSearchPage(newPage);
+                fetchTinSearch(activeSearch, newPage, searchLimit);
+              }}
+              onLimitChange={(newLimit) => {
+                setSearchLimit(newLimit);
+                setSearchPage(1);
+                fetchTinSearch(activeSearch, 1, newLimit);
+              }}
               onCardClick={handleFilteredCardClick}
               onViewMore={handleOpenPreview}
             />
