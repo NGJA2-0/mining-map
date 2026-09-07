@@ -332,9 +332,9 @@ export default function NewRecordPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-8">
-        <div className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 sm:p-10">
-          <TopoBackground className="text-teal/15" />
+     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-8 print:m-0 print:max-w-none print:p-0">
+        <div className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 sm:p-10 print:rounded-none print:border-0 print:bg-transparent print:p-0 print:shadow-none">
+          <TopoBackground className="text-teal/15 print:hidden" />
 
           <form onSubmit={handleSubmit} className="print-hide relative z-10 flex flex-col gap-10">
             {/* Header block */}
