@@ -846,7 +846,7 @@ export default function MiningMapPage() {
       `}</style>
 
       {/* header */}
-      <header className="border-b border-line">
+      <header className="border-b border-line print-hide">
         <div className="flex items-center justify-between px-4 py-4 sm:px-6">
           <button
             onClick={() => navigate("/dashboard")}
@@ -874,7 +874,7 @@ export default function MiningMapPage() {
       </header>
 
       {/* map + detail panel */}
-      <div className="px-4 pb-0 pt-4 sm:px-6" style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+      <div className="px-4 pb-0 pt-4 sm:px-6 print-hide" style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
         {/* detail panel */}
         <div
           style={{
