@@ -40,7 +40,7 @@ export default function ExtendRecordPreviewSheet({ form, isResubmit = false, hig
                     <p>ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</p>
                     <h2>
                         යාන්ත්‍රික මැණික් පතල් කැණීමේ අවසරය ලබා ගැනීම
-                        {isResubmit ? " (නැවත ඉදිරිපත් කිරීම)" : " (නව)"}
+                        {isResubmit ? " (නැවත ඉදිරිපත් කිරීම)" : " (දීර්ඝ)"}
                     </h2>
                     <p>අධ්‍යක්ෂ (ඉඩම්/කැණීම්/පරිසර) නිර්දේශය</p>
                 </div>
