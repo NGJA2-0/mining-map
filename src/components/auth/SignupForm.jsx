@@ -37,7 +37,7 @@ export default function SignupForm() {
     try {
       setLoading(true);
       await signup({ name: form.name, nic: form.nic, password: form.password });
-      navigate("/dashboard");
+      navigate("/select-app");
     } catch (err) {
       setApiError(err.message);
     } finally {
