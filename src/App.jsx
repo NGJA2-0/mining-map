@@ -9,6 +9,8 @@ import NewRecordPage from "./pages/NewRecordPage";
 import UpdateRecordPage from "./pages/UpdateRecordPage";
 import SearchResultPage from "./pages/SearchResultPage";
 import ExtendRecordPage from "./pages/ExtendRecordPage";
+import AppSelectionPage from "./pages/AppSelectionPage";
+import MiniSahanaForm from "./pages/minisahana/MiniSahanaForm";
 import "./index.css";
 
 export default function App() {
@@ -18,6 +20,14 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route
+            path="/select-app"
+            element={
+              <ProtectedRoute>
+                <AppSelectionPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={
@@ -59,6 +69,14 @@ export default function App() {
             }
           />
           <Route path="/dashboard/map" element={<MiningMapPage />} />
+          <Route
+            path="/minisahana"
+            element={
+              <ProtectedRoute>
+                <MiniSahanaForm />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

@@ -4,7 +4,7 @@
 @theme {
   --color-ink: #1C1F22;
   --color-ink-muted: #6B7280;
-  --color-base: #F7F6F3;
+  --color-page: #F7F6F3;
   --color-surface: #FFFFFF;
   --color-line: #E3E1DC;
   --color-amber: #E8A33D;
@@ -15,13 +15,18 @@
   --font-display: "Space Grotesk", sans-serif;
   --font-body: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+  --font-sinhala: "Noto Sans Sinhala", "Iskoola Pota", sans-serif;
 }
 
 body {
-  background-color: var(--color-base);
+  background-color: var(--color-page);
   color: var(--color-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+}
+
+.font-sinhala {
+  -webkit-font-smoothing: auto;
 }
 
 @keyframes modalIn {
