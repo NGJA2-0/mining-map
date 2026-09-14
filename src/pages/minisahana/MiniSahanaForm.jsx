@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Sinhala grapheme clustering: keeps consonant + virama + ZWJ + ර/ය
 // (rakaransaya/yansaya conjuncts, e.g. ප්‍ර, ද්‍ර) fused as one unit,
@@ -159,19 +160,50 @@ const CharGrid = ({
 };
 
 const MiniSahanaForm = () => {
+  const navigate = useNavigate();
+  const yearDigit1Ref = useRef(null);
+  const yearDigit2Ref = useRef(null);
+
+  const handleYearDigitChange = (e, nextRef) => {
+    const digit = e.target.value.replace(/\D/g, '').slice(-1);
+    e.target.value = digit;
+    if (digit && nextRef?.current) {
+      nextRef.current.focus();
+    }
+  };
+
+  const handleYearDigitKeyDown = (e, prevRef) => {
+    if (e.key === 'Backspace' && !e.target.value && prevRef?.current) {
+      prevRef.current.value = '';
+      prevRef.current.focus();
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-8 bg-white text-black font-sinhala">
-      
+
+      {/* Back button */}
+      <button
+        type="button"
+        onClick={() => navigate("/select-app")}
+        className="mb-4 flex items-center gap-1 text-sm text-gray-600 hover:text-black focus:outline-none"
+      >
+        ← ආපසු
+      </button>
+
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
     <h1 className="text-lg sm:text-xl font-bold mb-1 flex flex-wrap items-baseline gap-1">
-      <span>මිණිපහන ශිෂ්‍යත්ව අයදුම්පත -20</span>
+      <span>මිණිසහන ශිෂ්‍යත්ව අයදුම්පත -20</span>
       <input
         type="text"
         maxLength={1}
         inputMode="numeric"
         aria-label="අවුරුද්ද - පළමු අංකය"
+        ref={yearDigit1Ref}
+        onChange={(e) => handleYearDigitChange(e, yearDigit2Ref)}
+        onKeyDown={(e) => handleYearDigitKeyDown(e, null)}
         className="w-6 sm:w-7 border-b-2 border-black text-center focus:outline-none focus:bg-blue-100 bg-transparent"
       />
       <input
@@ -179,6 +211,9 @@ const MiniSahanaForm = () => {
         maxLength={1}
         inputMode="numeric"
         aria-label="අවුරුද්ද - දෙවන අංකය"
+        ref={yearDigit2Ref}
+        onChange={(e) => handleYearDigitChange(e, null)}
+        onKeyDown={(e) => handleYearDigitKeyDown(e, yearDigit1Ref)}
         className="w-6 sm:w-7 border-b-2 border-black text-center focus:outline-none focus:bg-blue-100 bg-transparent"
       />
     </h1>
@@ -213,7 +248,7 @@ const MiniSahanaForm = () => {
             {/* Example reference row - read only, shown as a guide */}
             <div>
                 <span className="text-[10px] sm:text-xs text-gray-500 italic block mb-0.5">උදාහරණය / Example:</span>
-                <CharGrid length={32} rows={2} example="GAMAGE ARUNA DE SILVA" fitWidth readOnly />
+                <CharGrid length={32} rows={1} example="GAMAGE ARUNA DE SILVA" fitWidth readOnly />
             </div>
             {/* Actual input rows for the applicant to fill */}
             <CharGrid length={32} rows={2} fitWidth />
