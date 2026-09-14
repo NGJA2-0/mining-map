@@ -22,7 +22,7 @@ export default function AppSelectionPage() {
   }, [profileOpen]);
 
   return (
-    <div className="min-h-screen bg-base text-ink flex flex-col">
+    <div className="min-h-screen bg-page text-ink flex flex-col">
       {/* ── header ── */}
       <header className="border-b border-line">
         <div className="flex items-center justify-between px-6 py-5 sm:px-10 lg:px-16">
@@ -144,7 +144,7 @@ export default function AppSelectionPage() {
                 variant="secondary"
                 size="lg"
                 className="w-full"
-                onClick={() => {}}
+                onClick={() => navigate("/minisahana")}
               >
                 Mini Sahana
               </Button>
