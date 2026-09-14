@@ -138,7 +138,7 @@ const CharGrid = ({
                 onFocus={readOnly ? undefined : (e) => e.target.select()}
                 className={`
                   font-sinhala p-0 leading-none
-                  ${fitWidth ? "w-full min-w-0 aspect-square text-sm sm:text-base" : "w-5 sm:w-6 h-6 sm:h-7 text-sm sm:text-base"}
+                  ${fitWidth ? "w-full min-w-0 aspect-square text-xs sm:text-sm" : "w-5 sm:w-6 h-6 sm:h-7 text-xs sm:text-sm"}
                   text-center uppercase focus:outline-none font-medium
                   transition-all duration-150 ease-out relative z-0 focus:z-10
                   ${i > 0 ? '-ml-px' : ''} ${r > 0 ? '-mt-px' : ''}
@@ -165,7 +165,7 @@ const MiniSahanaForm = () => {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-    <h1 className="text-xl sm:text-2xl font-bold mb-1 flex flex-wrap items-baseline gap-1">
+    <h1 className="text-lg sm:text-xl font-bold mb-1 flex flex-wrap items-baseline gap-1">
       <span>මිණිපහන ශිෂ්‍යත්ව අයදුම්පත -20</span>
       <input
         type="text"
@@ -182,17 +182,17 @@ const MiniSahanaForm = () => {
         className="w-6 sm:w-7 border-b-2 border-black text-center focus:outline-none focus:bg-blue-100 bg-transparent"
       />
     </h1>
-    <h2 className="text-lg font-semibold">ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</h2>
+    <h2 className="text-base font-semibold">ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</h2>
   </div>
   <input
     type="text"
     placeholder="කාර්යාලීය ප්‍රයෝජනය සඳහා"
-    className="border border-black p-2 w-full sm:w-48 text-center text-sm focus:outline-none focus:bg-blue-100 cursor-text"
+    className="border border-black p-2 w-full sm:w-48 text-center text-xs focus:outline-none focus:bg-blue-100 cursor-text"
   />
       </div>
 
       {/* Main Form Container */}
-      <div className="border-2 border-black flex flex-col text-sm sm:text-base">
+      <div className="border-2 border-black flex flex-col text-xs sm:text-sm">
         
         {/* Row 1 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
