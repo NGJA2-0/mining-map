@@ -194,28 +194,30 @@ const MiniSahanaForm = () => {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-    <h1 className="text-lg sm:text-xl font-bold mb-1 flex flex-wrap items-baseline gap-1">
-      <span>මිණිසහන ශිෂ්‍යත්ව අයදුම්පත -20</span>
-      <input
-        type="text"
-        maxLength={1}
-        inputMode="numeric"
-        aria-label="අවුරුද්ද - පළමු අංකය"
-        ref={yearDigit1Ref}
-        onChange={(e) => handleYearDigitChange(e, yearDigit2Ref)}
-        onKeyDown={(e) => handleYearDigitKeyDown(e, null)}
-        className="w-6 sm:w-7 border-b-2 border-black text-center focus:outline-none focus:bg-blue-100 bg-transparent"
-      />
-      <input
-        type="text"
-        maxLength={1}
-        inputMode="numeric"
-        aria-label="අවුරුද්ද - දෙවන අංකය"
-        ref={yearDigit2Ref}
-        onChange={(e) => handleYearDigitChange(e, null)}
-        onKeyDown={(e) => handleYearDigitKeyDown(e, yearDigit1Ref)}
-        className="w-6 sm:w-7 border-b-2 border-black text-center focus:outline-none focus:bg-blue-100 bg-transparent"
-      />
+    <h1 className="text-xl sm:text-2xl font-bold mb-1 flex flex-wrap items-baseline gap-1">
+      <span>මිණිපහන ශිෂ්‍යත්ව අයදුම්පත -20</span>
+      <span className="flex items-baseline">
+        <input
+          type="text"
+          maxLength={1}
+          inputMode="numeric"
+          aria-label="අවුරුද්ද - පළමු අංකය"
+          ref={yearDigit1Ref}
+          onChange={(e) => handleYearDigitChange(e, yearDigit2Ref)}
+          onKeyDown={(e) => handleYearDigitKeyDown(e, null)}
+          className="w-3 sm:w-3.5 border-b-2 border-black text-center focus:outline-none focus:bg-blue-100 bg-transparent"
+        />
+        <input
+          type="text"
+          maxLength={1}
+          inputMode="numeric"
+          aria-label="අවුරුද්ද - දෙවන අංකය"
+          ref={yearDigit2Ref}
+          onChange={(e) => handleYearDigitChange(e, null)}
+          onKeyDown={(e) => handleYearDigitKeyDown(e, yearDigit1Ref)}
+          className="w-3 sm:w-3.5 border-b-2 border-black text-center focus:outline-none focus:bg-blue-100 bg-transparent"
+        />
+      </span>
     </h1>
     <h2 className="text-base font-semibold">ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</h2>
   </div>
