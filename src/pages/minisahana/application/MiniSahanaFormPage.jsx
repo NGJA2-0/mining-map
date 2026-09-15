@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MiniSahanaForm from "../MiniSahanaForm";
+import MiniSahanaFormTwo from "./MiniSahanaFormTwo";
 
 const MiniSahanaFormPage = () => {
   const navigate = useNavigate();
@@ -47,11 +48,7 @@ const MiniSahanaFormPage = () => {
       {/* Main content */}
       <div className="flex-1 min-w-0 overflow-x-auto">
         {activeForm === "form1" && <MiniSahanaForm />}
-        {activeForm === "form2" && (
-          <div className="p-8 text-gray-500 text-sm">
-            Form 2 — coming soon
-          </div>
-        )}
+        {activeForm === "form2" && <MiniSahanaFormTwo />}
       </div>
     </div>
   );
