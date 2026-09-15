@@ -10,13 +10,19 @@ import UpdateRecordPage from "./pages/UpdateRecordPage";
 import SearchResultPage from "./pages/SearchResultPage";
 import ExtendRecordPage from "./pages/ExtendRecordPage";
 import AppSelectionPage from "./pages/AppSelectionPage";
-import MiniSahanaForm from "./pages/minisahana/MiniSahanaForm";
+import MiniSahanaSelectionPage from "./pages/minisahana/MiniSahanaSelectionPage";
+import MiniSahanaDashboardPage from "./pages/minisahana/MiniSahanaDashboardPage";
+import MiniSahanaFormPage from "./pages/minisahana/application/MiniSahanaFormPage";
+import ReportCardsDashboardPage from "./pages/minisahana/reportcards/ReportCardsDashboardPage";
+import ReportCardForm from "./pages/minisahana/reportcards/ReportCardForm";
+import SideNav from "./pages/SideNav";
 import "./index.css";
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <SideNav />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -73,7 +79,39 @@ export default function App() {
             path="/minisahana"
             element={
               <ProtectedRoute>
-                <MiniSahanaForm />
+                <MiniSahanaSelectionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minisahana/applications"
+            element={
+              <ProtectedRoute>
+                <MiniSahanaDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minisahana/applications/new"
+            element={
+              <ProtectedRoute>
+                <MiniSahanaFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minisahana/report-cards"
+            element={
+              <ProtectedRoute>
+                <ReportCardsDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minisahana/report-cards/new"
+            element={
+              <ProtectedRoute>
+                <ReportCardForm />
               </ProtectedRoute>
             }
           />
