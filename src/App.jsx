@@ -14,6 +14,7 @@ import MiniSahanaSelectionPage from "./pages/minisahana/MiniSahanaSelectionPage"
 import MiniSahanaDashboardPage from "./pages/minisahana/MiniSahanaDashboardPage";
 import MiniSahanaFormPage from "./pages/minisahana/application/MiniSahanaFormPage";
 import ReportCardsDashboardPage from "./pages/minisahana/reportcards/ReportCardsDashboardPage";
+import ReportCardForm from "./pages/minisahana/reportcards/ReportCardForm";
 import "./index.css";
 
 export default function App() {
@@ -101,6 +102,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ReportCardsDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minisahana/report-cards/new"
+            element={
+              <ProtectedRoute>
+                <ReportCardForm />
               </ProtectedRoute>
             }
           />
