@@ -1,14 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import TopoBackground from "../../components/common/TopoBackground";
-import Button from "../../components/common/Button";
-import { useAuth } from "../../context/AuthContext";
+import Button from "../../../components/common/Button";
+import { useAuth } from "../../../context/AuthContext";
 
-export default function MiniSahanaSelectionPage() {
+const GRADE_DATA = [
+  { grade: "6", students: 24 },
+  { grade: "7", students: 31 },
+  { grade: "8", students: 28 },
+  { grade: "9", students: 19 },
+  { grade: "10", students: 22 },
+  { grade: "11", students: 17 },
+  { grade: "12", students: 12 },
+  { grade: "13", students: 9 },
+];
+
+export default function ReportCardsDashboardPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const [profileOpen, setProfileOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -29,8 +40,8 @@ export default function MiniSahanaSelectionPage() {
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               type="button"
-              onClick={() => navigate("/select-app")}
-              aria-label="Back to app selection"
+              onClick={() => navigate("/minisahana")}
+              aria-label="Back to Mini Sahana menu"
               className="flex items-center gap-1.5 rounded-md p-2 text-ink-muted transition-colors hover:bg-line/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -130,42 +141,67 @@ export default function MiniSahanaSelectionPage() {
       </header>
 
       {/* ── main ── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
-        <div
-          className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface p-6 sm:p-12 text-center"
-          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
-        >
-          <TopoBackground className="text-teal/15" />
+      <main className="flex-1 px-4 py-8 sm:px-10 lg:px-16">
+        <div className="mx-auto max-w-6xl">
+          {/* Title */}
+          <div className="mb-6">
+            <h2 className="font-display text-2xl font-bold sm:text-3xl" style={{ letterSpacing: "-0.02em" }}>
+              Report Cards
+            </h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              Browse student report cards by grade, or search for a specific student.
+            </p>
+          </div>
 
-          <div className="relative z-10 flex flex-col items-center gap-8">
-            <div>
-              <h2 className="font-display text-2xl font-bold sm:text-4xl" style={{ letterSpacing: "-0.02em" }}>
-                Mini Sahana
-              </h2>
-              <p className="mt-2 text-sm text-ink-muted">
-                Please select an option to continue.
-              </p>
+          {/* Search bar + Add button */}
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:max-w-sm">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by student name or NIC..."
+                className="w-full rounded-lg border border-line bg-surface py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-copper/20"
+              />
             </div>
 
-            <div className="flex w-full flex-col gap-4">
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full"
-                onClick={() => navigate("/minisahana/applications")}
-              >
-                Applications
-              </Button>
+            <Button
+              variant="primary"
+              size="md"
+              className="w-full sm:w-auto"
+              onClick={() => {}}
+            >
+              + Add New Report Card
+            </Button>
+          </div>
 
-              <Button
-                variant="secondary"
-                size="lg"
-                className="w-full"
-                onClick={() => navigate("/minisahana/report-cards")}
+          {/* Grade cards */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
+            {GRADE_DATA.map((item) => (
+              <button
+                key={item.grade}
+                type="button"
+                onClick={() => {}}
+                className="group flex flex-col items-start gap-2 rounded-xl border border-line bg-surface p-4 text-left transition-all hover:-translate-y-0.5 hover:border-copper/40 hover:shadow-md sm:p-5"
               >
-                Report Cards
-              </Button>
-            </div>
+                <span className="rounded-md bg-teal/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal">
+                  Grade {item.grade}
+                </span>
+                <span className="font-display text-3xl font-bold sm:text-4xl">
+                  {item.students}
+                </span>
+                <span className="text-xs text-ink-muted">Students</span>
+              </button>
+            ))}
           </div>
         </div>
       </main>
