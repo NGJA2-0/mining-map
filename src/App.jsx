@@ -11,6 +11,7 @@ import SearchResultPage from "./pages/SearchResultPage";
 import ExtendRecordPage from "./pages/ExtendRecordPage";
 import AppSelectionPage from "./pages/AppSelectionPage";
 import MiniSahanaSelectionPage from "./pages/minisahana/MiniSahanaSelectionPage";
+import MiniSahanaDashboardPage from "./pages/minisahana/MiniSahanaDashboardPage";
 import MiniSahanaForm from "./pages/minisahana/MiniSahanaForm";
 import "./index.css";
 
@@ -80,6 +81,14 @@ export default function App() {
           />
           <Route
             path="/minisahana/applications"
+            element={
+              <ProtectedRoute>
+                <MiniSahanaDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minisahana/applications/new"
             element={
               <ProtectedRoute>
                 <MiniSahanaForm />
