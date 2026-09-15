@@ -10,6 +10,7 @@ import UpdateRecordPage from "./pages/UpdateRecordPage";
 import SearchResultPage from "./pages/SearchResultPage";
 import ExtendRecordPage from "./pages/ExtendRecordPage";
 import AppSelectionPage from "./pages/AppSelectionPage";
+import MiniSahanaSelectionPage from "./pages/minisahana/MiniSahanaSelectionPage";
 import MiniSahanaForm from "./pages/minisahana/MiniSahanaForm";
 import "./index.css";
 
@@ -71,6 +72,14 @@ export default function App() {
           <Route path="/dashboard/map" element={<MiningMapPage />} />
           <Route
             path="/minisahana"
+            element={
+              <ProtectedRoute>
+                <MiniSahanaSelectionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minisahana/applications"
             element={
               <ProtectedRoute>
                 <MiniSahanaForm />

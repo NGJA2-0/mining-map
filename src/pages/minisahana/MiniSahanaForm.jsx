@@ -185,7 +185,7 @@ const MiniSahanaForm = () => {
       {/* Back button */}
       <button
         type="button"
-        onClick={() => navigate("/select-app")}
+        onClick={() => navigate("/minisahana")}
         className="mb-4 flex items-center gap-1 text-sm text-gray-600 hover:text-black focus:outline-none"
       >
         ← ආපසු
