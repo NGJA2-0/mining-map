@@ -1,52 +1,48 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import MiniSahanaForm from "../MiniSahanaForm";
 import MiniSahanaFormTwo from "./MiniSahanaFormTwo";
+import MiniSahanaFormHeader from "./MiniSahanaFormHeader";
+
+const TABS = [
+  { id: "form1", label: "Form 1" },
+  { id: "form2", label: "Form 2" },
+];
 
 const MiniSahanaFormPage = () => {
-  const navigate = useNavigate();
   const [activeForm, setActiveForm] = useState("form1");
 
   return (
-    <div className="min-h-screen bg-white font-sinhala flex flex-col lg:flex-row">
-      {/* Sidebar (top bar on mobile, left column on desktop) */}
-      <div className="w-full lg:w-56 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-200 p-4 lg:p-6">
-        <button
-          type="button"
-          onClick={() => navigate("/minisahana/applications")}
-          className="mb-4 flex items-center gap-1 text-sm text-gray-600 hover:text-black focus:outline-none"
-        >
-          ← ආපසු
-        </button>
+    <div className="min-h-screen bg-page">
+      <MiniSahanaFormHeader />
 
-        <div className="flex lg:flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveForm("form1")}
-            className={`flex-1 lg:flex-none px-4 py-2 rounded-md text-sm font-medium border transition-colors focus:outline-none ${
-              activeForm === "form1"
-                ? "bg-black text-white border-black"
-                : "bg-white text-gray-700 border-gray-300 hover:border-black"
-            }`}
-          >
-            Form 1
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveForm("form2")}
-            className={`flex-1 lg:flex-none px-4 py-2 rounded-md text-sm font-medium border transition-colors focus:outline-none ${
-              activeForm === "form2"
-                ? "bg-black text-white border-black"
-                : "bg-white text-gray-700 border-gray-300 hover:border-black"
-            }`}
-          >
-            Form 2
-          </button>
+      {/* Tab bar */}
+      <div className="border-b border-line">
+        <div className="flex gap-1 px-4 sm:px-10 lg:px-16 overflow-x-auto">
+          {TABS.map((tab) => {
+            const isActive = activeForm === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveForm(tab.id)}
+                className={`relative shrink-0 px-5 py-3.5 text-sm font-medium transition-colors focus:outline-none ${
+                  isActive ? "text-copper" : "text-ink-muted hover:text-ink"
+                }`}
+              >
+                {tab.label}
+                <span
+                  className={`absolute inset-x-3 -bottom-px h-0.5 rounded-full transition-opacity ${
+                    isActive ? "bg-copper opacity-100" : "opacity-0"
+                  }`}
+                />
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 min-w-0 overflow-x-auto">
+      {/* Form content */}
+      <div className="font-sinhala overflow-x-auto">
         {activeForm === "form1" && <MiniSahanaForm />}
         {activeForm === "form2" && <MiniSahanaFormTwo />}
       </div>
