@@ -15,12 +15,14 @@ import MiniSahanaDashboardPage from "./pages/minisahana/MiniSahanaDashboardPage"
 import MiniSahanaFormPage from "./pages/minisahana/application/MiniSahanaFormPage";
 import ReportCardsDashboardPage from "./pages/minisahana/reportcards/ReportCardsDashboardPage";
 import ReportCardForm from "./pages/minisahana/reportcards/ReportCardForm";
+import SideNav from "./pages/SideNav";
 import "./index.css";
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <SideNav />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
