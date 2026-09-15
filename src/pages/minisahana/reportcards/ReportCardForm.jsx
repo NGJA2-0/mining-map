@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import ReportCardFormHeader from "./ReportCardFormHeader";
 
 // Sinhala grapheme clustering: keeps consonant + virama + ZWJ + ර/ය
 // (rakaransaya/yansaya conjuncts, e.g. ප්‍ර, ද්‍ර) fused as one unit,
@@ -164,8 +165,11 @@ const OFFICE_USE_ROWS = [
 
 const ReportCardForm = () => {
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-8 bg-white text-black font-sinhala text-xs sm:text-sm">
-      {/* Title */}
+    <div className="min-h-screen bg-page">
+      <ReportCardFormHeader />
+
+      <div className="max-w-5xl mx-auto p-4 sm:p-8 bg-white text-black font-sinhala text-xs sm:text-sm">
+        {/* Title */}
       <div className="text-center mb-4">
         <h1 className="text-sm sm:text-lg font-bold leading-snug">
           &ldquo;මිණි සහන&rdquo; ශිෂ්‍යත්ව වැඩසටහන - ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය
@@ -452,6 +456,7 @@ const ReportCardForm = () => {
             </div>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );
