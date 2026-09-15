@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const MenuIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -58,6 +59,7 @@ const CardIcon = (props) => (
 export default function SideNav() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [miniSahanaExpanded, setMiniSahanaExpanded] = useState(false);
 
@@ -79,6 +81,11 @@ export default function SideNav() {
     navigate(path);
     setOpen(false);
   };
+
+  const isAuthRoute =
+    location.pathname === "/login" || location.pathname === "/signup";
+
+  if (!user || isAuthRoute) return null;
 
   return (
     <>
