@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -89,6 +89,28 @@ import FilteredMinesTable from "../components/map/FilteredMinesTable";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const SRI_LANKA_CENTER = [7.8731, 80.7718];
 const DEFAULT_ZOOM = 8;
+
+// near SRI_LANKA_CENTER / DEFAULT_ZOOM
+const ZOOM_THRESHOLDS = {
+  DISTRICT_MAX: 9,   // zoom <= 9  → district level
+  OFFICE_MAX: 12,    // 9 < zoom <= 12 → office level
+  // zoom > 12 → mines level
+};
+
+function levelForZoom(zoom) {
+  if (zoom <= ZOOM_THRESHOLDS.DISTRICT_MAX) return "district";
+  if (zoom <= ZOOM_THRESHOLDS.OFFICE_MAX) return "office";
+  return "mines";
+}
+
+// finds whichever cluster the user is actually zooming toward
+function findNearestCluster(clusters, center) {
+  if (!clusters.length) return null;
+  return clusters.reduce((best, c) => {
+    const d = Math.hypot(c.latitude - center.lat, c.longitude - center.lng);
+    return d < best.dist ? { cluster: c, dist: d } : best;
+  }, { cluster: clusters[0], dist: Infinity }).cluster;
+}
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 
@@ -200,6 +222,53 @@ function ResetViewControl({ onReset }) {
     return () => control.remove();
   }, [map]);
 
+  return null;
+}
+
+function ZoomLevelController({
+  mapLevel,
+  districtClusters,
+  officeClusters,
+  activeDistrict,
+  onDrillToOffice,
+  onDrillToMines,
+  onCollapseToDistrict,
+  onCollapseToOffice,
+  busyRef,
+}) {
+  const map = useMapEvents({
+    zoomend: () => {
+      if (busyRef.current) return; // a drill/collapse is already in flight
+      const zoom = map.getZoom();
+      const targetLevel = levelForZoom(zoom);
+      const center = map.getCenter();
+
+      if (targetLevel === mapLevel) return;
+
+      busyRef.current = true;
+      (async () => {
+        try {
+          if (mapLevel === "district" && targetLevel !== "district") {
+            const cluster = findNearestCluster(districtClusters, center);
+            if (cluster) {
+              await onDrillToOffice(cluster, { fly: false });
+              // if the zoom jumped straight past OFFICE_MAX, drill again next tick
+            }
+          } else if (mapLevel === "office" && targetLevel === "mines") {
+            const cluster = findNearestCluster(officeClusters, center);
+            if (cluster) await onDrillToMines(cluster, { fly: false });
+          } else if (mapLevel === "office" && targetLevel === "district") {
+            await onCollapseToDistrict({ fly: false });
+          } else if (mapLevel === "mines" && targetLevel !== "mines") {
+            await onCollapseToOffice({ fly: false });
+            if (targetLevel === "district") await onCollapseToDistrict({ fly: false });
+          }
+        } finally {
+          busyRef.current = false;
+        }
+      })();
+    },
+  });
   return null;
 }
 
@@ -465,6 +534,7 @@ export default function MiningMapPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const mapRef = useRef(null);
+  const zoomBusyRef = useRef(false);
   const [mapView, setMapView] = useState("street"); // "street" | "satellite"
   const [mines, setMines] = useState([]); // pins from /latest
   const [loading, setLoading] = useState(true);
@@ -618,38 +688,40 @@ export default function MiningMapPage() {
   }, [fetchDistrictClusters]);
 
   const handleDistrictClusterClick = useCallback(
-    async (cluster) => {
+    async (cluster, { fly = true } = {}) => {
       setActiveDistrict(cluster.district);
       setActiveOffice(null);
       const data = await fetchOfficeClusters(cluster.district);
       setOfficeClusters(data);
       setMapLevel("office");
-      mapRef.current?.flyTo([cluster.latitude, cluster.longitude], 10, { duration: 0.8 });
+      if (fly) mapRef.current?.flyTo([cluster.latitude, cluster.longitude], 10, { duration: 0.8 });
     },
     [fetchOfficeClusters]
   );
 
   const handleOfficeClusterClick = useCallback(
-    async (cluster) => {
+    async (cluster, { fly = true } = {}) => {
       setActiveOffice(cluster.regionalOffice);
       const data = await fetchMineMarkers(cluster.district, cluster.regionalOffice);
       setMines(data);
       setMapLevel("mines");
-      mapRef.current?.flyTo([cluster.latitude, cluster.longitude], 13, { duration: 0.8 });
+      if (fly) mapRef.current?.flyTo([cluster.latitude, cluster.longitude], 13, { duration: 0.8 });
     },
     [fetchMineMarkers]
   );
 
-  const handleBackToDistricts = useCallback(() => {
+  const handleBackToDistricts = useCallback((opts = {}) => {
+    const { fly = true } = opts;
     setMapLevel("district");
     setActiveDistrict(null);
     setActiveOffice(null);
     setOfficeClusters([]);
     setMines([]);
-    mapRef.current?.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
+    if (fly) mapRef.current?.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
   }, []);
 
-  const handleBackToOffices = useCallback(async () => {
+  const handleBackToOffices = useCallback(async (opts = {}) => {
+    const { fly = false } = opts; // no default flyTo needed here already
     setMapLevel("office");
     setActiveOffice(null);
     setMines([]);
@@ -1217,6 +1289,17 @@ export default function MiningMapPage() {
             )}
             <FlyToMine mine={selectedMine} />
             <ToggleViewControl mapView={mapView} setMapView={setMapView} />
+            <ZoomLevelController
+              mapLevel={mapLevel}
+              districtClusters={districtClusters}
+              officeClusters={officeClusters}
+              activeDistrict={activeDistrict}
+              onDrillToOffice={handleDistrictClusterClick}
+              onDrillToMines={handleOfficeClusterClick}
+              onCollapseToDistrict={handleBackToDistricts}
+              onCollapseToOffice={handleBackToOffices}
+              busyRef={zoomBusyRef}
+            />
             <ResetViewControl
               onReset={() => {
                 setSelectedMine(null);
@@ -1225,6 +1308,7 @@ export default function MiningMapPage() {
                 handleBackToDistricts();
               }}
             />
+
             {mapLevel === "district" &&
               districtClusters.map((cluster) => (
                 <Marker
