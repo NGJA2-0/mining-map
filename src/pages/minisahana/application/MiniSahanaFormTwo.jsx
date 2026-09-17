@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 const Blank = ({ widthClass = "w-32 sm:w-48" }) => (
   <input
@@ -6,6 +6,20 @@ const Blank = ({ widthClass = "w-32 sm:w-48" }) => (
     className={`inline-block ${widthClass} border-b border-black bg-transparent focus:outline-none focus:bg-blue-100 mx-1 px-1 text-center`}
   />
 );
+
+const ToggleStrike = ({ children }) => {
+  const [struck, setStruck] = useState(false);
+  return (
+    <span
+      onClick={() => setStruck(!struck)}
+      className={`cursor-pointer select-none ${
+        struck ? "line-through text-gray-400" : ""
+      }`}
+    >
+      {children}
+    </span>
+  );
+};
 
 const SignatureBlock = ({ label, sub, align = "left", widthClass = "w-48 sm:w-64" }) => (
   <div
@@ -24,8 +38,10 @@ const MiniSahanaFormTwo = () => {
     <div className="max-w-5xl mx-auto p-4 sm:p-8 bg-white text-black font-sinhala text-sm sm:text-base">
       {/* Paragraph 1 */}
       <p className="text-justify leading-relaxed mb-8">
-        ඉහත නම සඳහන් ශිෂ්‍ය/ශිෂ්‍යාව <Blank widthClass="w-32 sm:w-56" /> දින වන විට මෙම පාසලේ{" "}
-        <Blank widthClass="w-32 sm:w-56" /> ශ්‍රේණියේ ඉගෙනුම ලබන බව සනාථ කරන අතර ඇයට/ඔහුට මෙම
+        ඉහත නම සඳහන් <ToggleStrike>ශිෂ්‍ය</ToggleStrike>/<ToggleStrike>ශිෂ්‍යාව</ToggleStrike>{" "}
+        <Blank widthClass="w-32 sm:w-56" /> දින වන විට මෙම පාසලේ{" "}
+        <Blank widthClass="w-32 sm:w-56" /> ශ්‍රේණියේ ඉගෙනුම ලබන බව සනාථ කරන අතර{" "}
+        <ToggleStrike>ඇයට</ToggleStrike>/<ToggleStrike>ඔහුට</ToggleStrike> මෙම
         වැඩසටහන යටතේ ශිෂ්‍යත්වයක් ලබාදීම සුදුසු බවට නිර්දේශ කරමි.
       </p>
 
@@ -64,8 +80,10 @@ const MiniSahanaFormTwo = () => {
       {/* Office use section */}
       <h3 className="font-semibold mb-2">කාර්යාලීය ප්‍රයෝජනය සඳහා</h3>
       <p className="text-justify leading-relaxed mb-8">
-        ඉහත අයදුම්පතෙහි අදාල සියලු තොරතුරු නිසි ආකාරයෙන් සම්පූර්ණ කොට ඇති/නැති බැවින්
-        ක්‍රියාත්මක නිලධාරී නිර්දේශය සඳහා ඉදිරිපත් කරමි/නොකරමි.
+        ඉහත අයදුම්පතෙහි අදාල සියලු තොරතුරු නිසි ආකාරයෙන් සම්පූර්ණ කොට{" "}
+        <ToggleStrike>ඇති</ToggleStrike>/<ToggleStrike>නැති</ToggleStrike> බැවින්
+        ක්‍රියාත්මක නිලධාරී නිර්දේශය සඳහා ඉදිරිපත්{" "}
+        <ToggleStrike>කරමි</ToggleStrike>/<ToggleStrike>නොකරමි</ToggleStrike>.
       </p>
 
       <h3 className="font-semibold mb-2">පරීක්ෂා කළෙමි (වි.ලි)</h3>
