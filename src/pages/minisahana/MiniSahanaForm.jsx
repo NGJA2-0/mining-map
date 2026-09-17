@@ -158,6 +158,20 @@ const CharGrid = ({
   );
 };
 
+const ToggleStrike = ({ children }) => {
+  const [struck, setStruck] = React.useState(false);
+  return (
+    <span
+      onClick={() => setStruck(!struck)}
+      className={`cursor-pointer select-none ${
+        struck ? "line-through text-gray-400" : ""
+      }`}
+    >
+      {children}
+    </span>
+  );
+};
+
 const MiniSahanaForm = () => {
   const yearDigit1Ref = useRef(null);
   const yearDigit2Ref = useRef(null);
@@ -222,7 +236,7 @@ const MiniSahanaForm = () => {
         {/* Row 1 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
           <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-            1. අයදුම්කරුගේ සම්පූර්ණ නම (ශිෂ්‍ය/ශිෂ්‍යාව)
+            1. අයදුම්කරුගේ සම්පූර්ණ නම (<ToggleStrike>ශිෂ්‍ය</ToggleStrike>/<ToggleStrike>ශිෂ්‍යාව</ToggleStrike>)
           </div>
           <div className="sm:w-[60%] p-2">
             <input type="text" className="w-full h-full focus:outline-none bg-transparent" />
@@ -380,7 +394,7 @@ const MiniSahanaForm = () => {
         {/* Row 15 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
           <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-            15. මව/පියා/භාරකරුගේ නම
+            15. <ToggleStrike>මව</ToggleStrike>/<ToggleStrike>පියා</ToggleStrike>/<ToggleStrike>භාරකරු</ToggleStrike>ගේ නම
           </div>
           <div className="sm:w-[60%] p-2">
             <input type="text" className="w-full h-full focus:outline-none bg-transparent" />
@@ -461,7 +475,7 @@ const MiniSahanaForm = () => {
         {/* Row 23 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
           <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-            23. ස්වාමිපුරුෂයා/බිරිඳගේ නම
+            23. <ToggleStrike>ස්වාමිපුරුෂයා</ToggleStrike>/<ToggleStrike>බිරිඳ</ToggleStrike>ගේ නම
           </div>
           <div className="sm:w-[60%] p-2">
             <input type="text" className="w-full h-full focus:outline-none bg-transparent" />
