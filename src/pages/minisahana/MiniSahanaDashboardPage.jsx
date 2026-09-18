@@ -18,23 +18,141 @@ const STATS = {
   ],
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
 export default function MiniSahanaDashboardPage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
 
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
+
   const [searchInput, setSearchInput] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const searchRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setProfileOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
+      }
     }
-    if (profileOpen) document.addEventListener("mousedown", handleClickOutside);
+    if (profileOpen || searchOpen) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [profileOpen]);
+  }, [profileOpen, searchOpen]);
+
+  // Debounced search: fires ~300ms after the user stops typing.
+  useEffect(() => {
+    const query = searchInput.trim();
+
+    if (!query) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      setSearchError("");
+      setSearchOpen(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setSearchLoading(true);
+    setSearchError("");
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/mini-sahana-form/search?q=${encodeURIComponent(query)}`,
+          {
+            method: "GET",
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            signal: controller.signal,
+          }
+        );
+
+        if (res.status === 401) {
+          logout();
+          navigate("/login");
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Search failed");
+        }
+
+        const data = await res.json();
+        setSearchResults(Array.isArray(data) ? data : []);
+        setSearchOpen(true);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error(err);
+          setSearchError("Couldn't load results. Try again.");
+          setSearchResults([]);
+          setSearchOpen(true);
+        }
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchInput, token, logout, navigate]);
+
+  // Given a search result item, find which field matched the typed query,
+  // and return just that value to display (per the "no other data" requirement).
+  const getMatchedValue = (item, query) => {
+    const q = query.trim().toLowerCase();
+    const fieldsInPriorityOrder = ["nic", "bankAccountNumber", "applicantFullNameSinhala"];
+    for (const field of fieldsInPriorityOrder) {
+      const val = item?.[field];
+      if (val && String(val).toLowerCase().includes(q)) {
+        return String(val);
+      }
+    }
+    // Fallback: shouldn't normally happen since the backend already filtered by q.
+    return item?.applicantFullNameSinhala || item?.nic || item?.bankAccountNumber || "";
+  };
+
+  const handleSelectResult = async (id) => {
+    setSearchOpen(false);
+    setSearchLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/mini-sahana-form/${id}`, {
+        method: "GET",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (res.status === 401) {
+        logout();
+        navigate("/login");
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error("Failed to load record");
+      }
+
+      const record = await res.json();
+      // NOTE: adjust this route to wherever you want the full record to land.
+      navigate(`/minisahana/applications/${id}`, { state: { record } });
+    } catch (err) {
+      console.error(err);
+      alert("Couldn't load that application. Please try again.");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-page text-ink flex flex-col">
@@ -170,7 +288,7 @@ export default function MiniSahanaDashboardPage() {
           </div>
 
           {/* Search bar */}
-          <div className="relative w-full sm:max-w-sm">
+          <div className="relative w-full sm:max-w-sm" ref={searchRef}>
             <svg
               xmlns="http://www.w3.org/2000/svg" width="16" height="16"
               viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -185,8 +303,43 @@ export default function MiniSahanaDashboardPage() {
               placeholder="Search applications"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              onFocus={() => {
+                if (searchResults.length > 0 || searchError) setSearchOpen(true);
+              }}
               className="w-full rounded-md border border-line bg-surface py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
             />
+
+            {searchOpen && (
+              <div
+                role="listbox"
+                className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 max-h-72 overflow-y-auto rounded-md border border-line bg-surface"
+                style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+              >
+                {searchLoading && (
+                  <div className="px-4 py-3 text-sm text-ink-muted">Searching…</div>
+                )}
+
+                {!searchLoading && searchError && (
+                  <div className="px-4 py-3 text-sm text-red-600">{searchError}</div>
+                )}
+
+                {!searchLoading && !searchError && searchResults.length === 0 && (
+                  <div className="px-4 py-3 text-sm text-ink-muted">No matches found.</div>
+                )}
+
+                {!searchLoading && !searchError && searchResults.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="option"
+                    onClick={() => handleSelectResult(item.id)}
+                    className="block w-full truncate px-4 py-2.5 text-left text-sm text-ink hover:bg-line/50 focus:bg-line/50 focus:outline-none"
+                  >
+                    {getMatchedValue(item, searchInput)}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Total applications card */}
