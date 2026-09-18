@@ -54,9 +54,9 @@ export default function ReportCardEntryForm({ student }) {
 
       {/* Body */}
       <form onSubmit={handleSubmit} className="px-5 py-6 sm:px-7 sm:py-7">
-        <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex flex-col gap-6">
           {/* PDF upload container */}
-          <div className="lg:w-72 lg:shrink-0">
+          <div className="w-full">
             <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
               Report Card PDF
             </label>
@@ -117,35 +117,35 @@ export default function ReportCardEntryForm({ student }) {
           </div>
 
           {/* Fields */}
-          <div className="flex flex-1 flex-col gap-5">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="flex flex-1 flex-col">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
                   Start Date
                 </label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
+                  className="w-full min-w-[150px] rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20 [&::-webkit-calendar-picker-indicator]:ml-2"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
                   End Date
                 </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
+                  className="w-full min-w-[150px] rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20 [&::-webkit-calendar-picker-indicator]:ml-2"
                 />
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  Monthly Amount
+              <div className="col-span-2 sm:col-span-1">
+                <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Amount
                 </label>
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted">
@@ -165,10 +165,10 @@ export default function ReportCardEntryForm({ student }) {
               </div>
             </div>
 
-            <div className="mt-1 flex justify-end">
+            <div className="mt-6 flex justify-end border-t border-line pt-5">
               <button
                 type="submit"
-                className="w-full rounded-lg bg-copper px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-copper/30 sm:w-auto"
+                className="w-full rounded-lg bg-copper px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-copper/30 sm:w-auto"
               >
                 Submit
               </button>
