@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -63,6 +63,22 @@ function createClusterIcon(cluster) {
     iconAnchor: [size / 2, height - 4],
   });
 }
+function createCountIcon(count, color = "#2563eb") {
+  const { size } = CLUSTER_SIZE_TIERS.find((tier) => count <= tier.max);
+  const height = Math.round(size * (44 / 36));
+  return L.divIcon({
+    className: "mine-cluster-icon",
+    html: `<div style="position:relative;width:${size}px;height:${height}px;">
+      <svg width="${size}" height="${size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35));">
+        <path d="M12 0C7.6 0 4 3.6 4 8c0 5.4 7 15.4 7.3 15.8.2.3.7.5 1.1.5s.9-.2 1.1-.5C13.7 23.4 20 13.4 20 8c0-4.4-3.6-8-8-8z" fill="#000000"/>
+        <path d="M12 1.6C8.4 1.6 5.6 4.6 5.6 8c0 4.6 5.7 12.9 6.1 13.5.1.1.2.1.3 0 .4-.6 6.1-8.9 6.1-13.5 0-3.4-2.8-6.4-6.1-6.4z" fill="${color}" stroke="${color}" stroke-width="0.3"/>
+        <circle cx="12" cy="8" r="3" fill="#ffffff"/>
+      </svg>
+    </div>`,
+    iconSize: [size, height],
+    iconAnchor: [size / 2, height - 4],
+  });
+}
 
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/common/Button";
@@ -72,7 +88,48 @@ import FilteredMinesTable from "../components/map/FilteredMinesTable";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const SRI_LANKA_CENTER = [7.8731, 80.7718];
+// In-memory cache: lives only for this page load. Clears automatically on
+// browser refresh (module re-executes), but survives re-renders and the
+// map's "reset view" button since that button doesn't touch this object.
+const MAP_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const mapDataCache = new Map();
+
+function getCached(key) {
+  const entry = mapDataCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() - entry.timestamp > MAP_CACHE_TTL_MS) {
+    mapDataCache.delete(key);
+    return undefined;
+  }
+  return entry.data;
+}
+
+function setCached(key, data) {
+  mapDataCache.set(key, { data, timestamp: Date.now() });
+}
 const DEFAULT_ZOOM = 8;
+
+// near SRI_LANKA_CENTER / DEFAULT_ZOOM
+const ZOOM_THRESHOLDS = {
+  DISTRICT_MAX: 9,   // zoom <= 9  → district level
+  OFFICE_MAX: 12,    // 9 < zoom <= 12 → office level
+  // zoom > 12 → mines level
+};
+
+function levelForZoom(zoom) {
+  if (zoom <= ZOOM_THRESHOLDS.DISTRICT_MAX) return "district";
+  if (zoom <= ZOOM_THRESHOLDS.OFFICE_MAX) return "office";
+  return "mines";
+}
+
+// finds whichever cluster the user is actually zooming toward
+function findNearestCluster(clusters, center) {
+  if (!clusters.length) return null;
+  return clusters.reduce((best, c) => {
+    const d = Math.hypot(c.latitude - center.lat, c.longitude - center.lng);
+    return d < best.dist ? { cluster: c, dist: d } : best;
+  }, { cluster: clusters[0], dist: Infinity }).cluster;
+}
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 
@@ -184,6 +241,53 @@ function ResetViewControl({ onReset }) {
     return () => control.remove();
   }, [map]);
 
+  return null;
+}
+
+function ZoomLevelController({
+  mapLevel,
+  districtClusters,
+  officeClusters,
+  activeDistrict,
+  onDrillToOffice,
+  onDrillToMines,
+  onCollapseToDistrict,
+  onCollapseToOffice,
+  busyRef,
+}) {
+  const map = useMapEvents({
+    zoomend: () => {
+      if (busyRef.current) return; // a drill/collapse is already in flight
+      const zoom = map.getZoom();
+      const targetLevel = levelForZoom(zoom);
+      const center = map.getCenter();
+
+      if (targetLevel === mapLevel) return;
+
+      busyRef.current = true;
+      (async () => {
+        try {
+          if (mapLevel === "district" && targetLevel !== "district") {
+            const cluster = findNearestCluster(districtClusters, center);
+            if (cluster) {
+              await onDrillToOffice(cluster, { fly: false });
+              // if the zoom jumped straight past OFFICE_MAX, drill again next tick
+            }
+          } else if (mapLevel === "office" && targetLevel === "mines") {
+            const cluster = findNearestCluster(officeClusters, center);
+            if (cluster) await onDrillToMines(cluster, { fly: false });
+          } else if (mapLevel === "office" && targetLevel === "district") {
+            await onCollapseToDistrict({ fly: false });
+          } else if (mapLevel === "mines" && targetLevel !== "mines") {
+            await onCollapseToOffice({ fly: false });
+            if (targetLevel === "district") await onCollapseToDistrict({ fly: false });
+          }
+        } finally {
+          busyRef.current = false;
+        }
+      })();
+    },
+  });
   return null;
 }
 
@@ -449,6 +553,7 @@ export default function MiningMapPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const mapRef = useRef(null);
+  const zoomBusyRef = useRef(false);
   const [mapView, setMapView] = useState("street"); // "street" | "satellite"
   const [mines, setMines] = useState([]); // pins from /latest
   const [loading, setLoading] = useState(true);
@@ -519,11 +624,24 @@ export default function MiningMapPage() {
     }),
   });
 
-  const fetchMines = useCallback(async () => {
+  // mapLevel drives which layer of pins is shown: aggregated districts first,
+  // then aggregated regional offices within a district, then individual mines
+  // within a regional office. `mines` is reused as the leaf-level marker list.
+  const [mapLevel, setMapLevel] = useState("district"); // "district" | "office" | "mines"
+  const [districtClusters, setDistrictClusters] = useState([]);
+  const [officeClusters, setOfficeClusters] = useState([]);
+  const [activeDistrict, setActiveDistrict] = useState(null);
+  const [activeOffice, setActiveOffice] = useState(null);
+
+  const fetchDistrictClusters = useCallback(async () => {
+    const cacheKey = "districts";
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${BASE_URL}/api/mining-licenses/latest`, {
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/map/districts`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -531,7 +649,65 @@ export default function MiningMapPage() {
         throw new Error(errData?.error || `Error ${res.status}`);
       }
       const json = await res.json();
-      return Array.isArray(json) ? json : json.data || [];
+      const data = json.data || [];
+      setCached(cacheKey, data);
+      return data;
+    } catch (err) {
+      setError(err.message || "Failed to load district clusters.");
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const fetchOfficeClusters = useCallback(async (selectedDistrict) => {
+    const cacheKey = `offices:${selectedDistrict}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/mining-licenses/map/regional-offices?district=${encodeURIComponent(selectedDistrict)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || `Error ${res.status}`);
+      }
+      const json = await res.json();
+      const data = json.data || [];
+      setCached(cacheKey, data);
+      return data;
+    } catch (err) {
+      setError(err.message || "Failed to load regional office clusters.");
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const fetchMineMarkers = useCallback(async (selectedDistrict, selectedOffice) => {
+    const cacheKey = `mines:${selectedDistrict}:${selectedOffice}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    setLoading(true);
+    setError("");
+    try {
+      const params = new URLSearchParams({ district: selectedDistrict, regionalOffice: selectedOffice });
+      const res = await fetch(`${BASE_URL}/api/mining-licenses/map/mines?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || `Error ${res.status}`);
+      }
+      const json = await res.json();
+      const data = json.data || [];
+      setCached(cacheKey, data);
+      return data;
     } catch (err) {
       setError(err.message || "Failed to load mines.");
       return [];
@@ -540,12 +716,57 @@ export default function MiningMapPage() {
     }
   }, [token]);
 
+  // First load: district-level clusters only.
   useEffect(() => {
     (async () => {
-      const data = await fetchMines();
-      setMines(data);
+      const data = await fetchDistrictClusters();
+      setDistrictClusters(data);
     })();
-  }, [fetchMines]);
+  }, [fetchDistrictClusters]);
+
+  const handleDistrictClusterClick = useCallback(
+    async (cluster, { fly = true } = {}) => {
+      setActiveDistrict(cluster.district);
+      setActiveOffice(null);
+      const data = await fetchOfficeClusters(cluster.district);
+      setOfficeClusters(data);
+      setMapLevel("office");
+      if (fly) mapRef.current?.flyTo([cluster.latitude, cluster.longitude], 10, { duration: 0.8 });
+    },
+    [fetchOfficeClusters]
+  );
+
+  const handleOfficeClusterClick = useCallback(
+    async (cluster, { fly = true } = {}) => {
+      setActiveOffice(cluster.regionalOffice);
+      const data = await fetchMineMarkers(cluster.district, cluster.regionalOffice);
+      setMines(data);
+      setMapLevel("mines");
+      if (fly) mapRef.current?.flyTo([cluster.latitude, cluster.longitude], 13, { duration: 0.8 });
+    },
+    [fetchMineMarkers]
+  );
+
+  const handleBackToDistricts = useCallback((opts = {}) => {
+    const { fly = true } = opts;
+    setMapLevel("district");
+    setActiveDistrict(null);
+    setActiveOffice(null);
+    setOfficeClusters([]);
+    setMines([]);
+    if (fly) mapRef.current?.flyTo(SRI_LANKA_CENTER, DEFAULT_ZOOM, { duration: 0.8 });
+  }, []);
+
+  const handleBackToOffices = useCallback(async (opts = {}) => {
+    const { fly = false } = opts; // no default flyTo needed here already
+    setMapLevel("office");
+    setActiveOffice(null);
+    setMines([]);
+    if (activeDistrict) {
+      const data = await fetchOfficeClusters(activeDistrict);
+      setOfficeClusters(data);
+    }
+  }, [activeDistrict, fetchOfficeClusters]);
 
   const fetchDistricts = useCallback(async () => {
     setDistrictsLoading(true);
@@ -1002,9 +1223,33 @@ export default function MiningMapPage() {
 
           {error && <p style={{ fontSize: "13px", color: "#dc2626" }}>{error}</p>}
           {!loading && !error && (
-            <p style={{ fontSize: "12px", color: "var(--color-ink-muted, #6b7280)" }}>
-              {mines.length} mine{mines.length !== 1 ? "s" : ""} on map
-            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              {mapLevel === "district" && (
+                <p style={{ fontSize: "12px", color: "var(--color-ink-muted, #6b7280)" }}>
+                  {districtClusters.length} district{districtClusters.length !== 1 ? "s" : ""} with mines
+                </p>
+              )}
+              {mapLevel === "office" && (
+                <>
+                  <button type="button" onClick={handleBackToDistricts} style={{ fontSize: "12px", cursor: "pointer", background: "none", border: "none", color: "#2563eb", fontFamily: "inherit" }}>
+                    ← Districts
+                  </button>
+                  <p style={{ fontSize: "12px", color: "var(--color-ink-muted, #6b7280)" }}>
+                    {activeDistrict}: {officeClusters.length} office{officeClusters.length !== 1 ? "s" : ""} with mines
+                  </p>
+                </>
+              )}
+              {mapLevel === "mines" && (
+                <>
+                  <button type="button" onClick={handleBackToOffices} style={{ fontSize: "12px", cursor: "pointer", background: "none", border: "none", color: "#2563eb", fontFamily: "inherit" }}>
+                    ← {activeDistrict}
+                  </button>
+                  <p style={{ fontSize: "12px", color: "var(--color-ink-muted, #6b7280)" }}>
+                    {activeOffice}: {mines.length} mine{mines.length !== 1 ? "s" : ""}
+                  </p>
+                </>
+              )}
+            </div>
           )}
 
           {!filterApplied && !searchApplied && (
@@ -1081,63 +1326,116 @@ export default function MiningMapPage() {
             )}
             <FlyToMine mine={selectedMine} />
             <ToggleViewControl mapView={mapView} setMapView={setMapView} />
+            <ZoomLevelController
+              mapLevel={mapLevel}
+              districtClusters={districtClusters}
+              officeClusters={officeClusters}
+              activeDistrict={activeDistrict}
+              onDrillToOffice={handleDistrictClusterClick}
+              onDrillToMines={handleOfficeClusterClick}
+              onCollapseToDistrict={handleBackToDistricts}
+              onCollapseToOffice={handleBackToOffices}
+              busyRef={zoomBusyRef}
+            />
             <ResetViewControl
               onReset={() => {
                 setSelectedMine(null);
                 setSelectedDetails(null);
                 setDetailError("");
+                handleBackToDistricts();
               }}
             />
-            <MarkerClusterGroup
-              chunkedLoading
-              maxClusterRadius={70}
-              spiderfyOnMaxZoom
-              zoomToBoundsOnClick
-              disableClusteringAtZoom={16}
-              iconCreateFunction={createClusterIcon}
-              // Keeps a selected/highlighted marker's cluster from collapsing
-              // it back in with the rest once it's been picked out.
-              key={selectedMine?.id || "no-selection"}
-            >
-              {mines.map((mine) => {
-                const latLng = getLatLng(mine);
-                if (!latLng) return null;
-                return (
-                  <Marker
-                    key={mine.id}
-                    position={latLng}
-                    icon={selectedMine?.id === mine.id ? highlightedMarkerIcon : defaultMarkerIcon}
-                    eventHandlers={{ click: () => handleMarkerClick(mine) }}
-                  >
-                    <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
-                      <div
-                        style={{
-                          width: "200px",
-                          fontFamily: "inherit",
-                          padding: "10px 12px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "6px",
-                        }}
-                      >
-                        <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--color-ink, #1a1a1a)" }}>
-                          {mine.applicantName || "—"}
-                        </span>
-                        <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
-                          Status: {mine.status || "—"}
-                        </span>
-                        <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
-                          Lat: {mine.latitude}
-                        </span>
-                        <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
-                          Lng: {mine.longitude}
-                        </span>
+
+            {mapLevel === "district" &&
+              districtClusters.map((cluster) => (
+                <Marker
+                  key={cluster.district}
+                  position={[cluster.latitude, cluster.longitude]}
+                  icon={createCountIcon(cluster.count, "#7c3aed")}
+                  eventHandlers={{ click: () => handleDistrictClusterClick(cluster) }}
+                >
+                  <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
+                    <div style={{ padding: "10px 12px", fontFamily: "inherit" }}>
+                      <strong>{cluster.district}</strong>
+                      <div style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                        {cluster.count} mine{cluster.count !== 1 ? "s" : ""}
                       </div>
-                    </Tooltip>
-                  </Marker>
-                );
-              })}
-            </MarkerClusterGroup>
+                    </div>
+                  </Tooltip>
+                </Marker>
+              ))}
+
+            {mapLevel === "office" &&
+              officeClusters.map((cluster) => (
+                <Marker
+                  key={cluster.regionalOffice}
+                  position={[cluster.latitude, cluster.longitude]}
+                  icon={createCountIcon(cluster.count, "#2563eb")}
+                  eventHandlers={{ click: () => handleOfficeClusterClick(cluster) }}
+                >
+                  <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
+                    <div style={{ padding: "10px 12px", fontFamily: "inherit" }}>
+                      <strong>{cluster.regionalOffice}</strong>
+                      <div style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                        {cluster.count} mine{cluster.count !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                  </Tooltip>
+                </Marker>
+              ))}
+
+            {mapLevel === "mines" && (
+              <MarkerClusterGroup
+                chunkedLoading
+                maxClusterRadius={70}
+                spiderfyOnMaxZoom
+                zoomToBoundsOnClick
+                disableClusteringAtZoom={16}
+                iconCreateFunction={createClusterIcon}
+                // Keeps a selected/highlighted marker's cluster from collapsing
+                // it back in with the rest once it's been picked out.
+                key={selectedMine?.id || "no-selection"}
+              >
+                {mines.map((mine) => {
+                  const latLng = getLatLng(mine);
+                  if (!latLng) return null;
+                  return (
+                    <Marker
+                      key={mine.id}
+                      position={latLng}
+                      icon={selectedMine?.id === mine.id ? highlightedMarkerIcon : defaultMarkerIcon}
+                      eventHandlers={{ click: () => handleMarkerClick(mine) }}
+                    >
+                      <Tooltip direction="top" offset={[0, -38]} opacity={1} className="mine-tooltip">
+                        <div
+                          style={{
+                            width: "200px",
+                            fontFamily: "inherit",
+                            padding: "10px 12px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                          }}
+                        >
+                          <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--color-ink, #1a1a1a)" }}>
+                            {mine.applicantName || "—"}
+                          </span>
+                          <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                            Status: {mine.status || "—"}
+                          </span>
+                          <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                            Lat: {mine.latitude}
+                          </span>
+                          <span style={{ fontSize: "11px", color: "var(--color-ink-muted, #6b7280)" }}>
+                            Lng: {mine.longitude}
+                          </span>
+                        </div>
+                      </Tooltip>
+                    </Marker>
+                  );
+                })}
+              </MarkerClusterGroup>
+            )}
           </MapContainer>
         </div>
       </div>
