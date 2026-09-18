@@ -1,4 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext'; // adjust path to wherever your AuthContext.jsx lives
 
 // Sinhala grapheme clustering: keeps consonant + virama + ZWJ + ර/ය
 // (rakaransaya/yansaya conjuncts, e.g. ප්‍ර, ද්‍ර) fused as one unit,
@@ -182,6 +184,8 @@ const ToggleStrikeGroup = ({ options, value, onChange, error }) => {
 };
 
 const MiniSahanaForm = () => {
+  const { token, logout } = useAuth();
+  const navigate = useNavigate();
   const yearDigit1Ref = useRef(null);
   const yearDigit2Ref = useRef(null);
 
@@ -267,6 +271,13 @@ const MiniSahanaForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!token) {
+      alert('ඔබගේ සැසිය අවසන් වී ඇත. කරුණාකර නැවත පිවිසෙන්න. (Your session has expired. Please log in again.)');
+      navigate('/login');
+      return;
+    }
+
     const newErrors = {};
 
     const checkRequired = (fields) => {
@@ -372,11 +383,18 @@ const MiniSahanaForm = () => {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
       const response = await fetch(`${API_BASE_URL}/api/mini-sahana-form`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(payload),
       });
       if (response.ok) {
         alert('සාර්ථකව යවන ලදී! (Submitted successfully!)');
+      } else if (response.status === 401) {
+        alert('ඔබගේ සැසිය අවසන් වී ඇත. කරුණාකර නැවත පිවිසෙන්න. (Your session has expired. Please log in again.)');
+        logout();
+        navigate('/login');
       } else {
         const errData = await response.json().catch(() => ({}));
         console.error('Backend validation failed:', errData);
