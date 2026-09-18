@@ -1,26 +1,74 @@
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 
-const STUDENTS = [
-  { id: 1, name: "Ashen Perera", nic: "200412345678", grade: "9" },
-  { id: 2, name: "Dilki Fernando", nic: "200501234567", grade: "10" },
-  { id: 3, name: "Nethmi Silva", nic: "200612345098", grade: "8" },
-  { id: 4, name: "Kavindu Jayasuriya", nic: "200711223344", grade: "11" },
-];
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 export default function ReportCardSearchPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const { token, logout } = useAuth();
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return STUDENTS;
-    return STUDENTS.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.nic.toLowerCase().includes(q)
-    );
-  }, [search]);
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Debounced search: fires ~300ms after the user stops typing.
+  useEffect(() => {
+    const query = search.trim();
+
+    if (!query) {
+      setResults([]);
+      setLoading(false);
+      setError("");
+      return;
+    }
+
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/mini-sahana-form/search?q=${encodeURIComponent(query)}`,
+          {
+            method: "GET",
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            signal: controller.signal,
+          }
+        );
+
+        if (res.status === 401) {
+          logout();
+          navigate("/login");
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Search failed");
+        }
+
+        const data = await res.json();
+        setResults(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error(err);
+          setError("Couldn't load results. Try again.");
+          setResults([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [search, token, logout, navigate]);
 
   return (
     <div className="min-h-screen bg-page text-ink flex flex-col">
@@ -83,13 +131,25 @@ export default function ReportCardSearchPage() {
 
           {/* Results */}
           <div className="flex flex-col gap-2 sm:gap-3">
-            {filtered.length === 0 && (
+            {loading && (
+              <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-ink-muted">
+                Searching…
+              </p>
+            )}
+
+            {!loading && error && (
+              <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-red-600">
+                {error}
+              </p>
+            )}
+
+            {!loading && !error && search.trim() && results.length === 0 && (
               <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-ink-muted">
                 No students found.
               </p>
             )}
 
-            {filtered.map((s) => (
+            {!loading && !error && results.map((s) => (
               <button
                 key={s.id}
                 type="button"
@@ -104,9 +164,11 @@ export default function ReportCardSearchPage() {
                     NIC: {s.nic}
                   </span>
                 </div>
-                <span className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal">
-                  Grade {s.grade}
-                </span>
+                {s.grade && (
+                  <span className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal">
+                    Grade {s.grade}
+                  </span>
+                )}
               </button>
             ))}
           </div>
