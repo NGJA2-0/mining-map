@@ -17,6 +17,7 @@ import ReportCardsDashboardPage from "./pages/minisahana/reportcards/ReportCards
 import ReportCardForm from "./pages/minisahana/reportcards/ReportCardForm";
 import SideNav from "./pages/SideNav";
 import "./index.css";
+import MiniSahanaApplicationPreview from './pages/minisahana/application/MiniSahanaApplicationPreview';
 
 export default function App() {
   return (
@@ -116,6 +117,7 @@ export default function App() {
             }
           />
           <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="/minisahana/applications/:id" element={<MiniSahanaApplicationPreview />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
