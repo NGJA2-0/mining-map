@@ -15,6 +15,7 @@ import MiniSahanaDashboardPage from "./pages/minisahana/MiniSahanaDashboardPage"
 import MiniSahanaFormPage from "./pages/minisahana/application/MiniSahanaFormPage";
 import ReportCardsDashboardPage from "./pages/minisahana/reportcards/ReportCardsDashboardPage";
 import ReportCardForm from "./pages/minisahana/reportcards/ReportCardForm";
+import ReportCardSearchPage from "./pages/minisahana/reportcards/ReportCardSearchPage";
 import SideNav from "./pages/SideNav";
 import "./index.css";
 import MiniSahanaApplicationPreview from './pages/minisahana/application/MiniSahanaApplicationPreview';
@@ -113,6 +114,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ReportCardForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minisahana/report-cards/search"
+            element={
+              <ProtectedRoute>
+                <ReportCardSearchPage />
               </ProtectedRoute>
             }
           />
