@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import ReportCardEntryForm from "./ReportCardEntryForm";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -12,15 +13,24 @@ export default function ReportCardSearchPage() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const skipNextSearch = useRef(false);
 
   // Debounced search: fires ~300ms after the user stops typing.
   useEffect(() => {
+    if (skipNextSearch.current) {
+      skipNextSearch.current = false;
+      return;
+    }
+
     const query = search.trim();
 
     if (!query) {
       setResults([]);
       setLoading(false);
       setError("");
+      setDropdownOpen(false);
       return;
     }
 
@@ -53,11 +63,13 @@ export default function ReportCardSearchPage() {
 
         const data = await res.json();
         setResults(Array.isArray(data) ? data : []);
+        setDropdownOpen(true);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error(err);
           setError("Couldn't load results. Try again.");
           setResults([]);
+          setDropdownOpen(true);
         }
       } finally {
         setLoading(false);
@@ -69,6 +81,16 @@ export default function ReportCardSearchPage() {
       controller.abort();
     };
   }, [search, token, logout, navigate]);
+
+  const getDisplayValue = (item) =>
+    item?.nic || item?.name || item?.applicantFullNameSinhala || "";
+
+  const handleSelectStudent = (s) => {
+    skipNextSearch.current = true;
+    setSelectedStudent(s);
+    setSearch(getDisplayValue(s));
+    setDropdownOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-page text-ink flex flex-col">
@@ -122,56 +144,66 @@ export default function ReportCardSearchPage() {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setSelectedStudent(null);
+              }}
+              onFocus={() => {
+                if (results.length > 0 && !selectedStudent) setDropdownOpen(true);
+              }}
               placeholder="Search by student name or NIC..."
               autoFocus
               className="w-full rounded-lg border border-line bg-surface py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-copper/20"
             />
           </div>
 
-          {/* Results */}
-          <div className="flex flex-col gap-2 sm:gap-3">
-            {loading && (
-              <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-ink-muted">
-                Searching…
-              </p>
-            )}
+          {/* Results dropdown */}
+          {dropdownOpen && (
+            <div className="flex flex-col gap-2 sm:gap-3">
+              {loading && (
+                <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-ink-muted">
+                  Searching…
+                </p>
+              )}
 
-            {!loading && error && (
-              <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-red-600">
-                {error}
-              </p>
-            )}
+              {!loading && error && (
+                <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-red-600">
+                  {error}
+                </p>
+              )}
 
-            {!loading && !error && search.trim() && results.length === 0 && (
-              <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-ink-muted">
-                No students found.
-              </p>
-            )}
+              {!loading && !error && search.trim() && results.length === 0 && (
+                <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-ink-muted">
+                  No students found.
+                </p>
+              )}
 
-            {!loading && !error && results.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => navigate(`/minisahana/report-cards/new?studentId=${s.id}`)}
-                className="group flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3 text-left transition-all hover:-translate-y-0.5 hover:border-copper/40 hover:shadow-md sm:p-4"
-              >
-                <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-sm font-semibold sm:text-base">
-                    {s.name}
-                  </span>
-                  <span className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
-                    NIC: {s.nic}
-                  </span>
-                </div>
-                {s.grade && (
-                  <span className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal">
-                    Grade {s.grade}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+              {!loading && !error && results.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => handleSelectStudent(s)}
+                  className="group flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3 text-left transition-all hover:-translate-y-0.5 hover:border-copper/40 hover:shadow-md sm:p-4"
+                >
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-sm font-semibold sm:text-base">
+                      {s.name}
+                    </span>
+                    <span className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
+                      NIC: {s.nic}
+                    </span>
+                  </div>
+                  {s.grade && (
+                    <span className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal">
+                      Grade {s.grade}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {selectedStudent && <ReportCardEntryForm student={selectedStudent} />}
         </div>
       </main>
     </div>
