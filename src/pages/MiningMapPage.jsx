@@ -88,6 +88,25 @@ import FilteredMinesTable from "../components/map/FilteredMinesTable";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const SRI_LANKA_CENTER = [7.8731, 80.7718];
+// In-memory cache: lives only for this page load. Clears automatically on
+// browser refresh (module re-executes), but survives re-renders and the
+// map's "reset view" button since that button doesn't touch this object.
+const MAP_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const mapDataCache = new Map();
+
+function getCached(key) {
+  const entry = mapDataCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() - entry.timestamp > MAP_CACHE_TTL_MS) {
+    mapDataCache.delete(key);
+    return undefined;
+  }
+  return entry.data;
+}
+
+function setCached(key, data) {
+  mapDataCache.set(key, { data, timestamp: Date.now() });
+}
 const DEFAULT_ZOOM = 8;
 
 // near SRI_LANKA_CENTER / DEFAULT_ZOOM
@@ -615,6 +634,10 @@ export default function MiningMapPage() {
   const [activeOffice, setActiveOffice] = useState(null);
 
   const fetchDistrictClusters = useCallback(async () => {
+    const cacheKey = "districts";
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     setLoading(true);
     setError("");
     try {
@@ -626,7 +649,9 @@ export default function MiningMapPage() {
         throw new Error(errData?.error || `Error ${res.status}`);
       }
       const json = await res.json();
-      return json.data || [];
+      const data = json.data || [];
+      setCached(cacheKey, data);
+      return data;
     } catch (err) {
       setError(err.message || "Failed to load district clusters.");
       return [];
@@ -636,6 +661,10 @@ export default function MiningMapPage() {
   }, [token]);
 
   const fetchOfficeClusters = useCallback(async (selectedDistrict) => {
+    const cacheKey = `offices:${selectedDistrict}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     setLoading(true);
     setError("");
     try {
@@ -648,7 +677,9 @@ export default function MiningMapPage() {
         throw new Error(errData?.error || `Error ${res.status}`);
       }
       const json = await res.json();
-      return json.data || [];
+      const data = json.data || [];
+      setCached(cacheKey, data);
+      return data;
     } catch (err) {
       setError(err.message || "Failed to load regional office clusters.");
       return [];
@@ -658,6 +689,10 @@ export default function MiningMapPage() {
   }, [token]);
 
   const fetchMineMarkers = useCallback(async (selectedDistrict, selectedOffice) => {
+    const cacheKey = `mines:${selectedDistrict}:${selectedOffice}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     setLoading(true);
     setError("");
     try {
@@ -670,7 +705,9 @@ export default function MiningMapPage() {
         throw new Error(errData?.error || `Error ${res.status}`);
       }
       const json = await res.json();
-      return json.data || [];
+      const data = json.data || [];
+      setCached(cacheKey, data);
+      return data;
     } catch (err) {
       setError(err.message || "Failed to load mines.");
       return [];
