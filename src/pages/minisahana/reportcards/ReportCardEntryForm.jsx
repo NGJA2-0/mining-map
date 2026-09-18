@@ -38,11 +38,16 @@ export default function ReportCardEntryForm({ student }) {
           New Report Card
         </p>
         <h3 className="mt-0.5 truncate font-display text-lg font-bold sm:text-xl">
-          {student?.name}
+          {student?.applicantFullNameSinhala}
         </h3>
         {student?.nic && (
           <p className="mt-0.5 font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
             NIC: {student.nic}
+          </p>
+        )}
+        {student?.bankAccountNumber && (
+          <p className="mt-0.5 font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
+            A/C: {student.bankAccountNumber}
           </p>
         )}
       </div>

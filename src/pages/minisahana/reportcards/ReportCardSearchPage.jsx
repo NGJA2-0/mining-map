@@ -83,7 +83,7 @@ export default function ReportCardSearchPage() {
   }, [search, token, logout, navigate]);
 
   const getDisplayValue = (item) =>
-    item?.nic || item?.name || item?.applicantFullNameSinhala || "";
+    item?.applicantFullNameSinhala || item?.nic || "";
 
   const handleSelectStudent = (s) => {
     skipNextSearch.current = true;
@@ -187,10 +187,13 @@ export default function ReportCardSearchPage() {
                 >
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate text-sm font-semibold sm:text-base">
-                      {s.name}
+                      {s.applicantFullNameSinhala}
                     </span>
                     <span className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
                       NIC: {s.nic}
+                    </span>
+                    <span className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
+                      A/C: {s.bankAccountNumber}
                     </span>
                   </div>
                   {s.grade && (
