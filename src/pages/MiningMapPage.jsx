@@ -1230,6 +1230,12 @@ export default function MiningMapPage() {
                 setSearchTotalPages(1);
                 setSearchError("");
                 setActiveSearch("");
+                // NEW — clear the leftover selected-mine detail state
+                setSelectedMine(null);
+                setSelectedDetails(null);
+                setDetailError("");
+                setDetailLoading(false);
+                handleBackToDistricts();
               }}
             >
               Clear
