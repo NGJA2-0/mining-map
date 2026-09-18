@@ -1108,26 +1108,37 @@ export default function MiningMapPage() {
             gap: "12px",
           }}
         >
-          {/* filter bar (UI only — not wired to any filtering logic) */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
-            <select
-              value={district}
-              onChange={(e) => setDistrict(e.target.value)}
-              style={selectStyle(districtsLoading)}
-              disabled={districtsLoading}
-            >
-              <option value="">
-                {districtsLoading ? "Loading districts…" : "All districts"}
-              </option>
-              {districtsError && <option value="" disabled>{districtsError}</option>}
-              {districts.map((d) => (
-                <option key={d} value={d}>
-                  {d}
+          {/* filter bar */}
+          <div
+            style={{
+              border: "1px solid var(--color-line, #e5e7eb)",
+              borderRadius: "10px",
+              background: "var(--color-surface, #fff)",
+              padding: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+            }}
+          >
+            {/* container 1: district + regional office combo boxes */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
+              <select
+                value={district}
+                onChange={(e) => setDistrict(e.target.value)}
+                style={selectStyle(districtsLoading)}
+                disabled={districtsLoading}
+              >
+                <option value="">
+                  {districtsLoading ? "Loading districts…" : "All districts"}
                 </option>
-              ))}
-            </select>
+                {districtsError && <option value="" disabled>{districtsError}</option>}
+                {districts.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <select
                 value={regionalOffice}
                 onChange={(e) => setRegionalOffice(e.target.value)}
@@ -1182,18 +1193,22 @@ export default function MiningMapPage() {
               </button>
             </div>
 
-            <input
-              type="text"
-              placeholder="Search By TIN"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              style={{ ...inputStyle, width: "100%" }}
-            />
+            {/* container 2: TIN search box + search button, side by side */}
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <input
+                type="text"
+                placeholder="Search By TIN"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <Button variant="primary" size="md" onClick={handleSearch} disabled={searchLoading}>
+                {searchLoading ? "Searching…" : "Search"}
+              </Button>
+            </div>
 
-            <Button variant="primary" size="md" onClick={handleSearch} disabled={searchLoading}>
-              {searchLoading ? "Searching…" : "Search"}
-            </Button>
+            {/* clear button — resets both the combo-box filter and the TIN search */}
             <Button
               className="!text-ink"
               variant="secondary"
