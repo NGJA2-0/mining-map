@@ -178,7 +178,7 @@ export default function ReportCardsDashboardPage() {
               variant="primary"
               size="md"
               className="w-full sm:w-auto"
-              onClick={() => navigate("/minisahana/report-cards/new")}
+              onClick={() => navigate("/minisahana/report-cards/search")}
             >
               + Add New Report Card
             </Button>
