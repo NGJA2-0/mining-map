@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
+import ReportCardSummary from "./ReportCardSummary";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -15,6 +16,7 @@ export default function ReportCardEntryForm({ student }) {
   const [monthlyAmount, setMonthlyAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [savedAccNumber, setSavedAccNumber] = useState(null);
 
   const handleFile = (file) => {
     if (!file) return;
@@ -64,12 +66,13 @@ export default function ReportCardEntryForm({ student }) {
         throw new Error("Failed to submit report card");
       }
 
-      // Success — reset form fields.
+      // Success — reset form fields and switch to the summary view.
       setStartDate("");
       setEndDate("");
       setMonthlyAmount("");
       setFileName("");
       setSelectedFile(null);
+      setSavedAccNumber(student?.bankAccountNumber || "");
     } catch (err) {
       console.error(err);
       setSubmitError("Couldn't submit. Try again.");
@@ -77,6 +80,16 @@ export default function ReportCardEntryForm({ student }) {
       setSubmitting(false);
     }
   };
+
+  if (savedAccNumber) {
+    return (
+      <ReportCardSummary
+        accNumber={savedAccNumber}
+        token={token}
+        onDone={() => setSavedAccNumber(null)}
+      />
+    );
+  }
 
   return (
     <div
