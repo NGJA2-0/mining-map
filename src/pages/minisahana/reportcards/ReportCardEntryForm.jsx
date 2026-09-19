@@ -4,7 +4,7 @@ import ReportCardSummary from "./ReportCardSummary";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-export default function ReportCardEntryForm({ student }) {
+export default function ReportCardEntryForm({ student, onBack }) {
   const { token } = useAuth();
   const fileInputRef = useRef(null);
   const [fileName, setFileName] = useState("");
@@ -102,6 +102,19 @@ export default function ReportCardEntryForm({ student }) {
     >
       {/* Header */}
       <div className="border-b border-line bg-gradient-to-r from-copper/5 to-transparent px-5 py-4 sm:px-7 sm:py-5">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="mb-3 inline-flex items-center gap-1.5 rounded-md text-xs font-semibold text-ink-muted transition-colors hover:text-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Back to Report Card History
+          </button>
+        )}
         <p className="text-[11px] font-semibold uppercase tracking-wide text-copper">
           New Report Card
         </p>
