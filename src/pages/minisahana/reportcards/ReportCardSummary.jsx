@@ -88,6 +88,7 @@ export default function ReportCardSummary({ accNumber, token, record: providedRe
         { label: "Full Name", value: record.fullName || "—" },
         { label: "Account Number", value: record.accNumber || "—" },
         { label: "NIC", value: record.nic || "—" },
+        { label: "Grade", value: record.grade || "—" },
         { label: "Start Date", value: formatDate(record.startDate) },
         { label: "End Date", value: formatDate(record.endDate) },
         { label: "Monthly Amount", value: formatCurrency(record.amount) },
