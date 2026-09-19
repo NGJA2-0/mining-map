@@ -19,12 +19,21 @@ function formatCurrency(value) {
   return `Rs. ${n.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function ReportCardSummary({ accNumber, token, onDone, onClose }) {
-  const [record, setRecord] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function ReportCardSummary({ accNumber, token, record: providedRecord, onDone, onClose }) {
+  const [record, setRecord] = useState(providedRecord || null);
+  const [loading, setLoading] = useState(!providedRecord);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // If the caller already has the full record (e.g. picked from a search
+    // dropdown), use it directly and skip the network round-trip.
+    if (providedRecord) {
+      setRecord(providedRecord);
+      setLoading(false);
+      setError("");
+      return;
+    }
+
     if (!accNumber) {
       setLoading(false);
       setError("No account number available for this record.");
@@ -72,7 +81,7 @@ export default function ReportCardSummary({ accNumber, token, onDone, onClose })
     })();
 
     return () => controller.abort();
-  }, [accNumber, token]);
+  }, [accNumber, token, providedRecord]);
 
   const fields = record
     ? [
