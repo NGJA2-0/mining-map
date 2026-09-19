@@ -6,7 +6,7 @@ import ReportCardSummary from "./ReportCardSummary";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-export default function ReportCardDashboardSearch() {
+export default function ReportCardDashboardSearch({ onSelectionChange }) {
   const navigate = useNavigate();
   const { token } = useAuth();
 
@@ -88,6 +88,11 @@ export default function ReportCardDashboardSearch() {
     if (dropdownOpen) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [dropdownOpen]);
+
+  // Let the parent know whether a record is currently selected/displayed.
+  useEffect(() => {
+    onSelectionChange?.(Boolean(selectedRecord));
+  }, [selectedRecord, onSelectionChange]);
 
   const handleSelect = (item) => {
     skipNextSearch.current = true;

@@ -20,6 +20,7 @@ export default function ReportCardsDashboardPage() {
   const { user, logout } = useAuth();
 
   const [profileOpen, setProfileOpen] = useState(false);
+  const [showingSummary, setShowingSummary] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -154,9 +155,10 @@ export default function ReportCardsDashboardPage() {
           </div>
 
           {/* Search bar + Add button, with the summary card shown on selection */}
-          <ReportCardDashboardSearch />
+          <ReportCardDashboardSearch onSelectionChange={setShowingSummary} />
 
-          {/* Grade cards */}
+          {/* Grade cards — hidden while a report card summary is displayed */}
+          {!showingSummary && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
             {GRADE_DATA.map((item) => (
               <button
@@ -175,6 +177,7 @@ export default function ReportCardsDashboardPage() {
               </button>
             ))}
           </div>
+          )}
         </div>
       </main>
     </div>
