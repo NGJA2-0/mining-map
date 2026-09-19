@@ -16,6 +16,8 @@ export default function ReportCardSearchPage() {
   const [error, setError] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showEntryForm, setShowEntryForm] = useState(false);
+  const [existingCount, setExistingCount] = useState(null); // null = not yet known
   const skipNextSearch = useRef(false);
 
   // Debounced search: fires ~300ms after the user stops typing.
@@ -91,6 +93,8 @@ export default function ReportCardSearchPage() {
     setSelectedStudent(s);
     setSearch(getDisplayValue(s));
     setDropdownOpen(false);
+    setShowEntryForm(false);
+    setExistingCount(null);
   };
 
   return (
@@ -209,11 +213,23 @@ export default function ReportCardSearchPage() {
 
           {selectedStudent && (
             <>
-              <ExistingReportCards
-                applicationId={selectedStudent.id}
-                token={token}
-              />
-              <ReportCardEntryForm student={selectedStudent} />
+              {existingCount !== 0 && !showEntryForm && (
+                <ExistingReportCards
+                  applicationId={selectedStudent.id}
+                  onLoaded={(total) => {
+                    setExistingCount(total);
+                    if (total === 0) setShowEntryForm(true);
+                  }}
+                  onAddNew={() => setShowEntryForm(true)}
+                  showAddButton={existingCount > 0}
+                />
+              )}
+              {showEntryForm && (
+                <ReportCardEntryForm
+                  student={selectedStudent}
+                  onBack={existingCount > 0 ? () => setShowEntryForm(false) : undefined}
+                />
+              )}
             </>
           )}
         </div>

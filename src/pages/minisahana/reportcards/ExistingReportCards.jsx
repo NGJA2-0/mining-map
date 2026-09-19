@@ -23,7 +23,7 @@ function formatAmount(value) {
   return `Rs. ${n.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function ExistingReportCards({ applicationId }) {
+export default function ExistingReportCards({ applicationId, onLoaded, onAddNew, showAddButton }) {
   const navigate = useNavigate();
   const { token, logout } = useAuth();
 
@@ -69,6 +69,7 @@ export default function ExistingReportCards({ applicationId }) {
         setRecords(Array.isArray(data.data) ? data.data : []);
         setTotal(data.total ?? 0);
         setTotalPages(data.totalPages ?? 1);
+        onLoaded?.(data.total ?? 0);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error(err);
@@ -240,6 +241,22 @@ export default function ExistingReportCards({ applicationId }) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {!loading && !error && showAddButton && (
+          <div className="mt-5 flex justify-end border-t border-line pt-5">
+            <button
+              type="button"
+              onClick={onAddNew}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-copper px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-copper/30 sm:w-auto"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add New Report Card
+            </button>
           </div>
         )}
 
