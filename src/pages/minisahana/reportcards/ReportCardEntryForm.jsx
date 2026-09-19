@@ -7,6 +7,7 @@ export default function ReportCardEntryForm({ student }) {
   const { token } = useAuth();
   const fileInputRef = useRef(null);
   const [fileName, setFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const [startDate, setStartDate] = useState("");
@@ -19,6 +20,7 @@ export default function ReportCardEntryForm({ student }) {
     if (!file) return;
     if (file.type !== "application/pdf") return;
     setFileName(file.name);
+    setSelectedFile(file);
   };
 
   const handleDrop = (e) => {
@@ -31,24 +33,31 @@ export default function ReportCardEntryForm({ student }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError("");
+
+    if (!selectedFile) {
+      setSubmitError("Please attach the report card PDF.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
+      const formData = new FormData();
+      formData.append("applicationId", student?.id || "");
+      formData.append("fullName", student?.applicantFullNameSinhala || "");
+      formData.append("accNumber", student?.bankAccountNumber || "");
+      formData.append("nic", student?.nic || "");
+      formData.append("startDate", startDate);
+      formData.append("endDate", endDate);
+      formData.append("amount", monthlyAmount);
+      formData.append("pdf", selectedFile);
+
       const res = await fetch(`${API_BASE_URL}/api/report-cards`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          applicationId: student?.id || "",
-          fullName: student?.applicantFullNameSinhala || "",
-          accNumber: student?.bankAccountNumber || "",
-          nic: student?.nic || "",
-          startDate,
-          endDate,
-          amount: monthlyAmount ? Number(monthlyAmount) : 0,
-        }),
+        body: formData,
       });
 
       if (!res.ok) {
@@ -60,6 +69,7 @@ export default function ReportCardEntryForm({ student }) {
       setEndDate("");
       setMonthlyAmount("");
       setFileName("");
+      setSelectedFile(null);
     } catch (err) {
       console.error(err);
       setSubmitError("Couldn't submit. Try again.");
