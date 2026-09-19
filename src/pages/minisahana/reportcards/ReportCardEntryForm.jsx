@@ -1,18 +1,28 @@
 import { useRef, useState } from "react";
+import { useAuth } from "../../../context/AuthContext";
+import ReportCardSummary from "./ReportCardSummary";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 export default function ReportCardEntryForm({ student }) {
+  const { token } = useAuth();
   const fileInputRef = useRef(null);
   const [fileName, setFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [monthlyAmount, setMonthlyAmount] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [savedAccNumber, setSavedAccNumber] = useState(null);
 
   const handleFile = (file) => {
     if (!file) return;
     if (file.type !== "application/pdf") return;
     setFileName(file.name);
+    setSelectedFile(file);
   };
 
   const handleDrop = (e) => {
@@ -22,10 +32,68 @@ export default function ReportCardEntryForm({ student }) {
     handleFile(file);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // UI only for now — wire up to the API later.
+    setSubmitError("");
+
+    if (!selectedFile) {
+      setSubmitError("Please attach the report card PDF.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("applicationId", student?.id || "");
+      formData.append("fullName", student?.applicantFullNameSinhala || "");
+      formData.append("accNumber", student?.bankAccountNumber || "");
+      formData.append("nic", student?.nic || "");
+      formData.append("grade", student?.grade || "");
+      formData.append("startDate", startDate);
+      formData.append("endDate", endDate);
+      formData.append("amount", monthlyAmount);
+      formData.append("pdf", selectedFile);
+
+      const res = await fetch(`${API_BASE_URL}/api/report-cards`, {
+        method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to submit report card");
+      }
+
+      // Success — reset form fields and switch to the summary view.
+      setStartDate("");
+      setEndDate("");
+      setMonthlyAmount("");
+      setFileName("");
+      setSelectedFile(null);
+      setSavedAccNumber(student?.bankAccountNumber || "");
+    } catch (err) {
+      console.error(err);
+      setSubmitError("Couldn't submit. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (savedAccNumber) {
+    const refreshPage = () => window.location.reload();
+
+    return (
+      <ReportCardSummary
+        accNumber={savedAccNumber}
+        token={token}
+        onDone={refreshPage}
+        onClose={refreshPage}
+      />
+    );
+  }
 
   return (
     <div
@@ -165,12 +233,16 @@ export default function ReportCardEntryForm({ student }) {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end border-t border-line pt-5">
+            <div className="mt-6 flex items-center justify-end gap-3 border-t border-line pt-5">
+              {submitError && (
+                <p className="text-xs font-medium text-red-600">{submitError}</p>
+              )}
               <button
                 type="submit"
-                className="w-full rounded-lg bg-copper px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-copper/30 sm:w-auto"
+                disabled={submitting}
+                className="w-full rounded-lg bg-copper px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-copper/30 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
-                Submit
+                {submitting ? "Submitting…" : "Submit"}
               </button>
             </div>
           </div>

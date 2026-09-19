@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import { useAuth } from "../../../context/AuthContext";
+import ReportCardDashboardSearch from "./ReportCardDashboardSearch";
 
 const GRADE_DATA = [
   { grade: "6", students: 24 },
@@ -19,7 +20,7 @@ export default function ReportCardsDashboardPage() {
   const { user, logout } = useAuth();
 
   const [profileOpen, setProfileOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [showingSummary, setShowingSummary] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -153,38 +154,11 @@ export default function ReportCardsDashboardPage() {
             </p>
           </div>
 
-          {/* Search bar + Add button */}
-          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative w-full sm:max-w-sm">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by student name or NIC..."
-                className="w-full rounded-lg border border-line bg-surface py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-copper/20"
-              />
-            </div>
+          {/* Search bar + Add button, with the summary card shown on selection */}
+          <ReportCardDashboardSearch onSelectionChange={setShowingSummary} />
 
-            <Button
-              variant="primary"
-              size="md"
-              className="w-full sm:w-auto"
-              onClick={() => navigate("/minisahana/report-cards/search")}
-            >
-              + Add New Report Card
-            </Button>
-          </div>
-
-          {/* Grade cards */}
+          {/* Grade cards — hidden while a report card summary is displayed */}
+          {!showingSummary && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
             {GRADE_DATA.map((item) => (
               <button
@@ -203,6 +177,7 @@ export default function ReportCardsDashboardPage() {
               </button>
             ))}
           </div>
+          )}
         </div>
       </main>
     </div>
