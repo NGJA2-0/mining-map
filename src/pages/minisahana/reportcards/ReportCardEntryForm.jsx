@@ -82,11 +82,14 @@ export default function ReportCardEntryForm({ student }) {
   };
 
   if (savedAccNumber) {
+    const refreshPage = () => window.location.reload();
+
     return (
       <ReportCardSummary
         accNumber={savedAccNumber}
         token={token}
-        onDone={() => setSavedAccNumber(null)}
+        onDone={refreshPage}
+        onClose={refreshPage}
       />
     );
   }
