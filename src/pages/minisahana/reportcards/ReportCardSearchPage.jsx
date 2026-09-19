@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import ReportCardEntryForm from "./ReportCardEntryForm";
+import ExistingReportCards from "./ExistingReportCards";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -206,7 +207,15 @@ export default function ReportCardSearchPage() {
             </div>
           )}
 
-          {selectedStudent && <ReportCardEntryForm student={selectedStudent} />}
+          {selectedStudent && (
+            <>
+              <ExistingReportCards
+                applicationId={selectedStudent.id}
+                token={token}
+              />
+              <ReportCardEntryForm student={selectedStudent} />
+            </>
+          )}
         </div>
       </main>
     </div>
