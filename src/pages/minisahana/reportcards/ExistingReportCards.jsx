@@ -147,97 +147,117 @@ export default function ExistingReportCards({ applicationId, onLoaded, onAddNew,
         )}
 
         {!loading && !error && records.length > 0 && (
-          <div className="flex flex-col gap-4">
-            {records.map((r) => (
+          <div className="flex flex-col gap-5 sm:gap-6">
+            {records.map((r, idx) => (
               <div
                 key={r.id}
-                className="rounded-xl border border-line bg-page px-4 py-4 sm:px-5 sm:py-5"
+                className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-shadow hover:shadow-md"
+                style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 20px -12px rgba(0,0,0,0.12)" }}
               >
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
-                  <span className="font-mono text-[11px] font-semibold uppercase tracking-wide text-copper">
-                    {r.refNumber || "—"}
-                  </span>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-page px-4 py-3 sm:px-6">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-copper/10 text-[10px] font-bold text-copper">
+                      {idx + 1}
+                    </span>
+                    <span className="rounded-full bg-copper/10 px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wide text-copper">
+                      {r.refNumber || "—"}
+                    </span>
+                  </div>
                   <span className="text-[11px] text-ink-muted">
                     Submitted {formatDate(r.createdAt)}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <div>
-                    <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Start Date
-                    </label>
-                    <input
-                      type="text"
-                      readOnly
-                      disabled
-                      value={formatDate(r.startDate)}
-                      className="w-full cursor-not-allowed rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ink-muted"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      End Date
-                    </label>
-                    <input
-                      type="text"
-                      readOnly
-                      disabled
-                      value={formatDate(r.endDate)}
-                      className="w-full cursor-not-allowed rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ink-muted"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Monthly Amount
-                    </label>
-                    <input
-                      type="text"
-                      readOnly
-                      disabled
-                      value={formatAmount(r.amount)}
-                      className="w-full cursor-not-allowed rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ink-muted"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Total Amount
-                    </label>
-                    <input
-                      type="text"
-                      readOnly
-                      disabled
-                      value={formatAmount(r.totalAmount)}
-                      className="w-full cursor-not-allowed rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ink-muted"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
-                  <span className="text-xs text-ink-muted">
-                    Duration:{" "}
-                    <span className="font-semibold text-ink">
-                      {r.totalDuration ?? "—"} month(s)
+                <div className="px-4 py-4 sm:px-6 sm:py-5">
+                  <div className="mb-4 flex flex-col gap-0.5 border-b border-line pb-4">
+                    <span className="truncate text-sm font-semibold text-ink">
+                      {r.fullName || "—"}
                     </span>
-                  </span>
+                    <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                      NIC: {r.nic || "—"}
+                    </span>
+                    <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                      A/C: {r.accNumber || "—"}
+                    </span>
+                  </div>
 
-                  {r.pdfUrl && (
-                    <a
-                      href={`${API_BASE_URL}/${r.pdfUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-copper/40 hover:text-copper"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                      </svg>
-                      View PDF
-                    </a>
-                  )}
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+                    <div>
+                      <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                        Start Date
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        disabled
+                        value={formatDate(r.startDate)}
+                        className="w-full cursor-not-allowed rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink-muted"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                        End Date
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        disabled
+                        value={formatDate(r.endDate)}
+                        className="w-full cursor-not-allowed rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink-muted"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                        Monthly Amount
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        disabled
+                        value={formatAmount(r.amount)}
+                        className="w-full cursor-not-allowed rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink-muted"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                        Total Amount
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        disabled
+                        value={formatAmount(r.totalAmount)}
+                        className="w-full cursor-not-allowed rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink-muted"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+                    <span className="text-xs text-ink-muted">
+                      Duration:{" "}
+                      <span className="font-semibold text-ink">
+                        {r.totalDuration ?? "—"} month(s)
+                      </span>
+                    </span>
+
+                    {r.pdfUrl && (
+                      <a
+                        href={`${API_BASE_URL}/${r.pdfUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-page px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-copper/40 hover:text-copper"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        View PDF
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
