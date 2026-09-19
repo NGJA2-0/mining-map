@@ -49,6 +49,7 @@ export default function ReportCardEntryForm({ student }) {
       formData.append("fullName", student?.applicantFullNameSinhala || "");
       formData.append("accNumber", student?.bankAccountNumber || "");
       formData.append("nic", student?.nic || "");
+      formData.append("grade", student?.grade || "");
       formData.append("startDate", startDate);
       formData.append("endDate", endDate);
       formData.append("amount", monthlyAmount);
