@@ -6,6 +6,8 @@ import ExistingReportCards from "./ExistingReportCards";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+const SEARCHABLE_FIELDS = ["Name", "NIC", "Grade", "Account No.", "Regional Office"];
+
 export default function ReportCardSearchPage() {
   const navigate = useNavigate();
   const { token, logout } = useAuth();
@@ -126,90 +128,131 @@ export default function ReportCardSearchPage() {
       {/* ── main ── */}
       <main className="flex-1 px-4 py-8 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-3xl">
-          <div className="mb-6">
-            <h2 className="font-display text-2xl font-bold sm:text-3xl" style={{ letterSpacing: "-0.02em" }}>
-              Search Student
-            </h2>
-            <p className="mt-1 text-sm text-ink-muted">
-              Search by student name or NIC to create a new report card.
-            </p>
-          </div>
-
-          {/* Search bar */}
-          <div className="relative mb-6 w-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setSelectedStudent(null);
-              }}
-              onFocus={() => {
-                if (results.length > 0 && !selectedStudent) setDropdownOpen(true);
-              }}
-              placeholder="Search by student name or NIC..."
-              autoFocus
-              className="w-full rounded-lg border border-line bg-surface py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-copper/20"
-            />
-          </div>
-
-          {/* Results dropdown */}
-          {dropdownOpen && (
-            <div className="flex flex-col gap-2 sm:gap-3">
-              {loading && (
-                <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-ink-muted">
-                  Searching…
+          {/* Single unified search card */}
+          <div
+            className="overflow-hidden rounded-2xl border border-line bg-surface"
+            style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 16px 40px -16px rgba(0,0,0,0.14)" }}
+          >
+            {/* Header strip */}
+            <div className="flex items-center gap-3 border-b border-line bg-gradient-to-r from-copper/5 to-transparent px-5 py-5 sm:px-7 sm:py-6">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-copper/10 text-copper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
+              <div>
+                <h2 className="font-display text-xl font-bold sm:text-2xl" style={{ letterSpacing: "-0.02em" }}>
+                  Search Student
+                </h2>
+                <p className="mt-0.5 text-sm text-ink-muted">
+                  Find a student to view or create a report card.
                 </p>
-              )}
-
-              {!loading && error && (
-                <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-red-600">
-                  {error}
-                </p>
-              )}
-
-              {!loading && !error && search.trim() && results.length === 0 && (
-                <p className="rounded-lg border border-line bg-surface p-4 text-center text-sm text-ink-muted">
-                  No students found.
-                </p>
-              )}
-
-              {!loading && !error && results.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => handleSelectStudent(s)}
-                  className="group flex items-center justify-between gap-3 rounded-lg border border-line bg-surface p-3 text-left transition-all hover:-translate-y-0.5 hover:border-copper/40 hover:shadow-md sm:p-4"
-                >
-                  <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-semibold sm:text-base">
-                      {s.applicantFullNameSinhala}
-                    </span>
-                    <span className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
-                      NIC: {s.nic}
-                    </span>
-                    <span className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
-                      A/C: {s.bankAccountNumber}
-                    </span>
-                  </div>
-                  {s.grade && (
-                    <span className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal">
-                      Grade {s.grade}
-                    </span>
-                  )}
-                </button>
-              ))}
+              </div>
             </div>
-          )}
+
+            {/* Search input + field hints */}
+            <div className="px-5 py-5 sm:px-7 sm:py-6">
+              <div className="relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setSelectedStudent(null);
+                  }}
+                  onFocus={() => {
+                    if (results.length > 0 && !selectedStudent) setDropdownOpen(true);
+                  }}
+                  placeholder="Try a name, NIC, grade, account number or regional office..."
+                  autoFocus
+                  className="w-full rounded-lg border border-line bg-page py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
+                />
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {SEARCHABLE_FIELDS.map((field) => (
+                  <span
+                    key={field}
+                    className="rounded-full border border-line bg-page px-2.5 py-1 text-[11px] font-medium text-ink-muted"
+                  >
+                    {field}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Results / empty state — inside the same card */}
+            <div className="border-t border-line px-5 py-5 sm:px-7 sm:py-6">
+              {!search.trim() && (
+                <p className="text-center text-sm text-ink-muted">
+                  Start typing above to find a student.
+                </p>
+              )}
+
+              {dropdownOpen && (
+                <div className="flex flex-col gap-2 sm:gap-3">
+                  {loading && (
+                    <p className="rounded-lg border border-line bg-page p-4 text-center text-sm text-ink-muted">
+                      Searching…
+                    </p>
+                  )}
+
+                  {!loading && error && (
+                    <p className="rounded-lg border border-line bg-page p-4 text-center text-sm text-red-600">
+                      {error}
+                    </p>
+                  )}
+
+                  {!loading && !error && search.trim() && results.length === 0 && (
+                    <p className="rounded-lg border border-line bg-page p-4 text-center text-sm text-ink-muted">
+                      No students found.
+                    </p>
+                  )}
+
+                  {!loading && !error && results.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => handleSelectStudent(s)}
+                      className="group flex items-center justify-between gap-3 rounded-lg border border-line bg-page p-3 text-left transition-all hover:-translate-y-0.5 hover:border-copper/40 hover:shadow-md sm:p-4"
+                    >
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm font-semibold sm:text-base">
+                          {s.applicantFullNameSinhala}
+                        </span>
+                        <span className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
+                          NIC: {s.nic}
+                        </span>
+                        <span className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
+                          A/C: {s.bankAccountNumber}
+                        </span>
+                        {s.licenseRegionalOfficeAndZone && (
+                          <span className="mt-0.5 truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted sm:text-xs">
+                            Office: {s.licenseRegionalOfficeAndZone}
+                          </span>
+                        )}
+                      </div>
+                      {s.grade && (
+                        <span className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal">
+                          Grade {s.grade}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
           {selectedStudent && (
             <>
