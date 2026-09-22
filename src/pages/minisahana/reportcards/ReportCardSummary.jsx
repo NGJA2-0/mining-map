@@ -13,6 +13,16 @@ function formatDate(value) {
   });
 }
 
+function formatDateShort(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
 function formatCurrency(value) {
   const n = Number(value);
   if (Number.isNaN(n)) return value ?? "—";
@@ -85,15 +95,15 @@ export default function ReportCardSummary({ accNumber, token, record: providedRe
 
   const fields = record
     ? [
-        { label: "Full Name", value: record.fullName || "—" },
-        { label: "Account Number", value: record.accNumber || "—" },
-        { label: "NIC", value: record.nic || "—" },
-        { label: "Applied Grade", value: record.appliedGrade || "—" },
-        { label: "Current Grade", value: record.currentGrade || "—" },
-        { label: "Start Date", value: formatDate(record.startDate) },
-        { label: "End Date", value: formatDate(record.endDate) },
-        { label: "Monthly Amount", value: formatCurrency(record.amount) },
-      ]
+      { label: "Full Name", value: record.fullName || "—" },
+      { label: "Account Number", value: record.accNumber || "—" },
+      { label: "NIC", value: record.nic || "—" },
+      { label: "Applied Grade", value: record.appliedGrade || "—" },
+      { label: "Current Grade", value: record.currentGrade || "—" },
+      { label: "Start Date", value: formatDate(record.startDate) },
+      { label: "End Date", value: formatDate(record.endDate) },
+      { label: "Monthly Amount", value: formatCurrency(record.amount) },
+    ]
     : [];
 
   return (
@@ -157,18 +167,49 @@ export default function ReportCardSummary({ accNumber, token, record: providedRe
         {!loading && record && (
           <div className="flex flex-col gap-6">
             {/* Detail fields */}
-            <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-              {fields.map((f) => (
-                <div key={f.label} className="min-w-0">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    {f.label}
-                  </dt>
-                  <dd className="mt-1 truncate text-sm font-medium text-ink sm:text-base">
-                    {f.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <div className="flex flex-col gap-3 text-sm sm:text-base">
+              <div>
+                <span className="font-semibold uppercase tracking-wide text-ink-muted">NIC:</span>{" "}
+                <span className="font-mono font-semibold text-ink">{record.nic || "—"}</span>
+              </div>
+
+              <div>
+                <span className="font-semibold uppercase tracking-wide text-ink-muted">Full Name:</span>{" "}
+                <span className="font-semibold text-ink">{record.fullName || "—"}</span>
+              </div>
+
+              <div>
+                <span className="font-semibold uppercase tracking-wide text-ink-muted">Bank Account Number:</span>{" "}
+                <span className="font-mono font-semibold text-ink">{record.accNumber || "—"}</span>
+              </div>
+
+              <div className="flex flex-wrap gap-x-8 gap-y-1">
+                <span>
+                  <span className="font-semibold uppercase tracking-wide text-copper">Applied Grade:</span>{" "}
+                  <span className="font-bold text-ink">{record.appliedGrade || "—"}</span>
+                </span>
+                <span>
+                  <span className="font-semibold uppercase tracking-wide text-teal">Current Grade:</span>{" "}
+                  <span className="font-bold text-ink">{record.currentGrade || "—"}</span>
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-x-8 gap-y-1">
+                <span>
+                  <span className="font-semibold uppercase tracking-wide text-ink-muted">Report Start Date:</span>{" "}
+                  <span className="font-semibold text-ink">{formatDateShort(record.startDate)}</span>
+                </span>
+                <span>
+                  <span className="font-semibold uppercase tracking-wide text-ink-muted">Report End Date:</span>{" "}
+                  <span className="font-semibold text-ink">{formatDateShort(record.endDate)}</span>
+                </span>
+              </div>
+
+              <div>
+                <span className="font-semibold uppercase tracking-wide text-ink-muted">Monthly Amount:</span>{" "}
+                <span className="font-semibold text-ink">{formatCurrency(record.amount)}</span>
+              </div>
+            </div>
 
             {/* Highlighted totals */}
             <div className="grid grid-cols-1 gap-3 border-t border-line pt-5 sm:grid-cols-2">
