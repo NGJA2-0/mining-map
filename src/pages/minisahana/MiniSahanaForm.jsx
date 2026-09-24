@@ -40,8 +40,8 @@ const CharGrid = ({
     if (readOnly) return Array(totalBoxes).fill("");
     const parsed = splitGraphemes(value || "");
     const arr = Array(totalBoxes).fill("");
-    parsed.forEach((c, i) => { 
-      if (i < totalBoxes) arr[i] = c === " " ? "" : c; 
+    parsed.forEach((c, i) => {
+      if (i < totalBoxes) arr[i] = c === " " ? "" : c;
     });
     return arr;
   }, [value, totalBoxes, readOnly]);
@@ -56,7 +56,7 @@ const CharGrid = ({
     const val = graphemes[graphemes.length - 1] ?? '';
     const newChars = [...chars];
     newChars[index] = val;
-    
+
     const safeChars = newChars.map(c => c || " ");
     onChange?.(safeChars.join("").trimEnd());
 
@@ -98,7 +98,7 @@ const CharGrid = ({
       newChars[targetIndex] = char;
       lastFilledIndex = targetIndex;
     });
-    
+
     const safeChars = newChars.map(c => c || " ");
     onChange?.(safeChars.join("").trimEnd());
 
@@ -188,6 +188,7 @@ const MiniSahanaForm = () => {
   const navigate = useNavigate();
   const yearDigit1Ref = useRef(null);
   const yearDigit2Ref = useRef(null);
+  const [files, setFiles] = useState({ hardCopy: null, passbook: null, birthCert: null });
 
   const [formData, setFormData] = useState({
     yearDigit1: '',
@@ -226,8 +227,6 @@ const MiniSahanaForm = () => {
     licenseNumber: '',
     fileNumber: '',
     regionalOffice: '',
-    attachment1: '',
-    attachment2: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -252,6 +251,11 @@ const MiniSahanaForm = () => {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: false }));
     }
+  };
+
+  const handleFileChange = (key, file) => {
+    setFiles(prev => ({ ...prev, [key]: file }));
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }));
   };
 
   const handlePhoneChange = (e) => {
@@ -296,8 +300,7 @@ const MiniSahanaForm = () => {
       'bankAccountName', 'bankBranch', 'bankAccountNumber',
       'parentName', 'parentAddress', 'parentPhone', 'parentNIC',
       'parentAge', 'parentOccupation', 'parentIncome', 'parentMaritalStatus',
-      'licenseNumber', 'fileNumber', 'regionalOffice',
-      'attachment1', 'attachment2'
+      'licenseNumber', 'fileNumber', 'regionalOffice'
     ]);
 
     if (formData.applicantTitle.length !== 1) newErrors.applicantTitle = true;
@@ -318,12 +321,16 @@ const MiniSahanaForm = () => {
       newErrors.category = true;
     }
 
+    if (!files.hardCopy) newErrors.hardCopy = true;
+    if (!files.passbook) newErrors.passbook = true;
+    if (!files.birthCert) newErrors.birthCert = true;
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       alert('කරුණාකර සියලුම අනිවාර්ය ක්ෂේත්‍ර නිවැරදිව සම්පූර්ණ කරන්න. (Please fill all required fields correctly.)');
-      
+
       if (newErrors.parentPhone) {
-         alert('දුරකථන අංකය නිවැරදි ආකෘතියෙන් ඇතුළත් කරන්න (උදා: 0712345678 හෝ +94712345678).');
+        alert('දුරකථන අංකය නිවැරදි ආකෘතියෙන් ඇතුළත් කරන්න (උදා: 0712345678 හෝ +94712345678).');
       }
       return;
     }
@@ -346,13 +353,13 @@ const MiniSahanaForm = () => {
         school: formData.schoolName,
         grade: formData.grade,
         schoolAddressAndPhone: formData.schoolAddressPhone,
-        
+
         bankAccountName: formData.bankAccountName,
         bankBranch: formData.bankBranch,
         bankAccountNumber: formData.bankAccountNumber,
-        
+
         eligibilityCategory: categories,
-        
+
         parentGuardianRelation: formData.parentType[0],
         parentGuardianName: formData.parentName,
         permanentAddress: formData.parentAddress,
@@ -362,21 +369,18 @@ const MiniSahanaForm = () => {
         occupation: formData.parentOccupation,
         monthlyIncome: Number(formData.parentIncome) || 0,
         maritalStatus: formData.parentMaritalStatus,
-        
+
         spouseRelation: formData.parentMaritalStatus === 'married' && formData.spouseType.length > 0 ? formData.spouseType[0] : 'N/A',
         spouseName: formData.parentMaritalStatus === 'married' ? formData.spouseName : 'N/A',
         spouseOccupation: formData.parentMaritalStatus === 'married' ? formData.spouseOccupation : 'N/A',
         childrenCount: Number(formData.numberOfChildren) || 0,
-        
+
         licenseNumber: formData.licenseNumber,
         fileNumber: formData.fileNumber,
         licenseRegionalOfficeAndZone: formData.regionalOffice,
-        
-        attachments: {
-          bankPassbookCopy: formData.attachment1 === 'has' ? 'Yes' : formData.attachment1 === 'no' ? 'No' : 'Other',
-          birthCertificateCopy: formData.attachment2 === 'has' ? 'Yes' : formData.attachment2 === 'no' ? 'No' : 'Other'
-        },
-        
+
+        attachments: { bankPassbookCopy: 'Yes', birthCertificateCopy: 'Yes' },
+
         declarationSigned: true
       };
 
@@ -452,7 +456,7 @@ const MiniSahanaForm = () => {
 
       {/* Main Form Container */}
       <div className="border-2 border-black flex flex-col text-xs sm:text-sm">
-        
+
         {/* Row 1 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
           <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
@@ -470,8 +474,8 @@ const MiniSahanaForm = () => {
           </div>
           <div className="sm:w-[75%] p-2 flex flex-col gap-2">
             <div>
-                <span className="text-[10px] sm:text-xs text-gray-500 italic block mb-0.5">උදාහරණය / Example:</span>
-                <CharGrid length={32} rows={1} example="GAMAGE ARUNA DE SILVA" fitWidth readOnly />
+              <span className="text-[10px] sm:text-xs text-gray-500 italic block mb-0.5">උදාහරණය / Example:</span>
+              <CharGrid length={32} rows={1} example="GAMAGE ARUNA DE SILVA" fitWidth readOnly />
             </div>
             <CharGrid length={32} rows={2} fitWidth value={formData.nameEnglish} onChange={(val) => handleChange('nameEnglish', val)} error={errors.nameEnglish} />
           </div>
@@ -494,8 +498,8 @@ const MiniSahanaForm = () => {
               4. උපන් දිනය (DD/MM/YYYY) <span className="text-red-500">*</span>
             </div>
             <div className="sm:w-1/2 p-2 flex flex-wrap items-center gap-1 sm:gap-2">
-              <CharGrid length={2} value={formData.dobDay} onChange={(val) => handleChange('dobDay', val)} error={errors.dobDay} /> 
-              <CharGrid length={2} value={formData.dobMonth} onChange={(val) => handleChange('dobMonth', val)} error={errors.dobMonth} /> 
+              <CharGrid length={2} value={formData.dobDay} onChange={(val) => handleChange('dobDay', val)} error={errors.dobDay} />
+              <CharGrid length={2} value={formData.dobMonth} onChange={(val) => handleChange('dobMonth', val)} error={errors.dobMonth} />
               <CharGrid length={4} value={formData.dobYear} onChange={(val) => handleChange('dobYear', val)} error={errors.dobYear} />
             </div>
           </div>
@@ -504,8 +508,8 @@ const MiniSahanaForm = () => {
               5. ස්ත්‍රී/පුරුෂ <span className="text-red-500">*</span>
             </div>
             <div className={`sm:w-[55%] p-2 flex items-center justify-around ${errors.gender ? 'bg-red-50' : ''}`}>
-               <label className="flex items-center gap-1 cursor-pointer"><input type="radio" name="gender" checked={formData.gender === 'female'} onChange={() => handleChange('gender', 'female')} /> ස්ත්‍රී</label>
-               <label className="flex items-center gap-1 cursor-pointer"><input type="radio" name="gender" checked={formData.gender === 'male'} onChange={() => handleChange('gender', 'male')} /> පුරුෂ</label>
+              <label className="flex items-center gap-1 cursor-pointer"><input type="radio" name="gender" checked={formData.gender === 'female'} onChange={() => handleChange('gender', 'female')} /> ස්ත්‍රී</label>
+              <label className="flex items-center gap-1 cursor-pointer"><input type="radio" name="gender" checked={formData.gender === 'male'} onChange={() => handleChange('gender', 'male')} /> පුරුෂ</label>
             </div>
           </div>
         </div>
@@ -549,7 +553,7 @@ const MiniSahanaForm = () => {
 
         {/* Row 9 (Header) */}
         <div className="border-b border-black p-2 font-medium bg-gray-50 text-sm">
-          9. ශිෂ්‍යත්ව මුදල් බැර කිරීම සඳහා ආසන්නතම ලංකා බැංකු ශාඛාවේ අයදුම්කරුගේ නමින් විවෘත කරන ලද ළමා ඉතුරුම් ගිණුම විස්තර 
+          9. ශිෂ්‍යත්ව මුදල් බැර කිරීම සඳහා ආසන්නතම ලංකා බැංකු ශාඛාවේ අයදුම්කරුගේ නමින් විවෘත කරන ලද ළමා ඉතුරුම් ගිණුම විස්තර
           <span className="font-bold"> ( *** වැදගත් - මෙය අනිවාර්යයෙන් සම්පූර්ණ කළ යුතු වන අතර පාස් පොතෙහි පැහැදිලි ඡායා පිටපතක් මේ සමග අමුණා එවිය යුතුය. )</span>
         </div>
 
@@ -559,7 +563,7 @@ const MiniSahanaForm = () => {
             10. ගිණුමේ සඳහන් ආකාරයට නම (පාස් පොතෙහි සඳහන් නම) <span className="text-red-500">*</span>
           </div>
           <div className="sm:w-[75%] p-2">
-             <CharGrid length={32} rows={2} fitWidth value={formData.bankAccountName} onChange={(val) => handleChange('bankAccountName', val)} error={errors.bankAccountName} />
+            <CharGrid length={32} rows={2} fitWidth value={formData.bankAccountName} onChange={(val) => handleChange('bankAccountName', val)} error={errors.bankAccountName} />
           </div>
         </div>
 
@@ -574,7 +578,7 @@ const MiniSahanaForm = () => {
         </div>
 
         {/* Row 12 */}
-         <div className="flex flex-col sm:flex-row border-b border-black">
+        <div className="flex flex-col sm:flex-row border-b border-black">
           <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
             12. ගිණුම් අංකය <span className="text-red-500">*</span>
           </div>
@@ -631,63 +635,63 @@ const MiniSahanaForm = () => {
 
         {/* Row 17 & 18 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
-           <div className="sm:w-1/2 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
-              <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                17. දුරකථන අංකය <span className="text-red-500">*</span>
-              </div>
-              <div className="sm:w-[60%] p-2">
-                 <input type="tel" placeholder="0712345678" value={formData.parentPhone} onChange={handlePhoneChange} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentPhone ? 'bg-red-50' : ''}`} />
-              </div>
-           </div>
-           <div className="sm:w-1/2 flex flex-col sm:flex-row">
-              <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                18. ජාතික හැඳුනුම්පත් අංකය <span className="text-red-500">*</span>
-              </div>
-              <div className="sm:w-[55%] p-2">
-                 <CharGrid length={12} fitWidth value={formData.parentNIC} onChange={(val) => handleChange('parentNIC', val)} error={errors.parentNIC} />
-              </div>
-           </div>
+          <div className="sm:w-1/2 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
+            <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              17. දුරකථන අංකය <span className="text-red-500">*</span>
+            </div>
+            <div className="sm:w-[60%] p-2">
+              <input type="tel" placeholder="0712345678" value={formData.parentPhone} onChange={handlePhoneChange} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentPhone ? 'bg-red-50' : ''}`} />
+            </div>
+          </div>
+          <div className="sm:w-1/2 flex flex-col sm:flex-row">
+            <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              18. ජාතික හැඳුනුම්පත් අංකය <span className="text-red-500">*</span>
+            </div>
+            <div className="sm:w-[55%] p-2">
+              <CharGrid length={12} fitWidth value={formData.parentNIC} onChange={(val) => handleChange('parentNIC', val)} error={errors.parentNIC} />
+            </div>
+          </div>
         </div>
 
         {/* Row 19 & 20 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
-           <div className="sm:w-1/2 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
-              <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                19. වයස <span className="text-red-500">*</span>
-              </div>
-              <div className="sm:w-[60%] p-2">
-                 <input type="text" inputMode="numeric" value={formData.parentAge} onChange={handleAgeChange} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentAge ? 'bg-red-50' : ''}`} />
-              </div>
-           </div>
-           <div className="sm:w-1/2 flex flex-col sm:flex-row">
-              <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                20. රැකියාව <span className="text-red-500">*</span>
-              </div>
-              <div className="sm:w-[55%] p-2">
-                 <input type="text" value={formData.parentOccupation} onChange={(e) => handleChange('parentOccupation', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentOccupation ? 'bg-red-50' : ''}`} />
-              </div>
-           </div>
+          <div className="sm:w-1/2 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
+            <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              19. වයස <span className="text-red-500">*</span>
+            </div>
+            <div className="sm:w-[60%] p-2">
+              <input type="text" inputMode="numeric" value={formData.parentAge} onChange={handleAgeChange} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentAge ? 'bg-red-50' : ''}`} />
+            </div>
+          </div>
+          <div className="sm:w-1/2 flex flex-col sm:flex-row">
+            <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              20. රැකියාව <span className="text-red-500">*</span>
+            </div>
+            <div className="sm:w-[55%] p-2">
+              <input type="text" value={formData.parentOccupation} onChange={(e) => handleChange('parentOccupation', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentOccupation ? 'bg-red-50' : ''}`} />
+            </div>
+          </div>
         </div>
 
         {/* Row 21 & 22 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
-           <div className="sm:w-1/2 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
-              <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                21. මාසික ආදායම <span className="text-red-500">*</span>
-              </div>
-              <div className="sm:w-[60%] p-2">
-                 <input type="text" value={formData.parentIncome} onChange={(e) => handleChange('parentIncome', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentIncome ? 'bg-red-50' : ''}`} />
-              </div>
-           </div>
-           <div className="sm:w-1/2 flex flex-col sm:flex-row">
-              <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                22. විවාහක/අවිවාහක <span className="text-red-500">*</span>
-              </div>
-              <div className={`sm:w-[55%] p-2 flex items-center justify-around ${errors.parentMaritalStatus ? 'bg-red-50' : ''}`}>
-                 <label className="flex items-center gap-1 cursor-pointer"><input type="radio" name="marital" checked={formData.parentMaritalStatus === 'married'} onChange={() => handleChange('parentMaritalStatus', 'married')} /> විවාහක</label>
-                 <label className="flex items-center gap-1 cursor-pointer"><input type="radio" name="marital" checked={formData.parentMaritalStatus === 'unmarried'} onChange={() => handleChange('parentMaritalStatus', 'unmarried')} /> අවිවාහක</label>
-              </div>
-           </div>
+          <div className="sm:w-1/2 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
+            <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              21. මාසික ආදායම <span className="text-red-500">*</span>
+            </div>
+            <div className="sm:w-[60%] p-2">
+              <input type="text" value={formData.parentIncome} onChange={(e) => handleChange('parentIncome', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentIncome ? 'bg-red-50' : ''}`} />
+            </div>
+          </div>
+          <div className="sm:w-1/2 flex flex-col sm:flex-row">
+            <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              22. විවාහක/අවිවාහක <span className="text-red-500">*</span>
+            </div>
+            <div className={`sm:w-[55%] p-2 flex items-center justify-around ${errors.parentMaritalStatus ? 'bg-red-50' : ''}`}>
+              <label className="flex items-center gap-1 cursor-pointer"><input type="radio" name="marital" checked={formData.parentMaritalStatus === 'married'} onChange={() => handleChange('parentMaritalStatus', 'married')} /> විවාහක</label>
+              <label className="flex items-center gap-1 cursor-pointer"><input type="radio" name="marital" checked={formData.parentMaritalStatus === 'unmarried'} onChange={() => handleChange('parentMaritalStatus', 'unmarried')} /> අවිවාහක</label>
+            </div>
+          </div>
         </div>
 
         {/* Row 23 */}
@@ -702,42 +706,42 @@ const MiniSahanaForm = () => {
 
         {/* Row 24 & 25 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
-           <div className="sm:w-2/3 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
-              <div className="sm:w-[40%] sm:w-1/2 p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                24. රැකියාව {formData.parentMaritalStatus === 'married' && <span className="text-red-500">*</span>}
-              </div>
-              <div className="sm:w-[60%] sm:w-1/2 p-2">
-                 <input type="text" value={formData.spouseOccupation} onChange={(e) => handleChange('spouseOccupation', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.spouseOccupation ? 'bg-red-50' : ''}`} />
-              </div>
-           </div>
-           <div className="sm:w-1/3 flex flex-col sm:flex-row">
-              <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                25. දරුවන් ගණන {formData.parentMaritalStatus === 'married' && <span className="text-red-500">*</span>}
-              </div>
-              <div className="sm:w-[55%] p-2">
-                 <input type="text" inputMode="numeric" value={formData.numberOfChildren} onChange={handleNumberChildrenChange} className={`w-full h-full focus:outline-none bg-transparent ${errors.numberOfChildren ? 'bg-red-50' : ''}`} />
-              </div>
-           </div>
+          <div className="sm:w-2/3 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
+            <div className="sm:w-[40%] sm:w-1/2 p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              24. රැකියාව {formData.parentMaritalStatus === 'married' && <span className="text-red-500">*</span>}
+            </div>
+            <div className="sm:w-[60%] sm:w-1/2 p-2">
+              <input type="text" value={formData.spouseOccupation} onChange={(e) => handleChange('spouseOccupation', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.spouseOccupation ? 'bg-red-50' : ''}`} />
+            </div>
+          </div>
+          <div className="sm:w-1/3 flex flex-col sm:flex-row">
+            <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              25. දරුවන් ගණන {formData.parentMaritalStatus === 'married' && <span className="text-red-500">*</span>}
+            </div>
+            <div className="sm:w-[55%] p-2">
+              <input type="text" inputMode="numeric" value={formData.numberOfChildren} onChange={handleNumberChildrenChange} className={`w-full h-full focus:outline-none bg-transparent ${errors.numberOfChildren ? 'bg-red-50' : ''}`} />
+            </div>
+          </div>
         </div>
 
         {/* Row 26 & 27 */}
         <div className="flex flex-col sm:flex-row border-b border-black">
-           <div className="sm:w-1/2 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
-              <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                26. බලපත්‍ර අංකය <span className="text-red-500">*</span>
-              </div>
-              <div className="sm:w-[60%] p-2">
-                 <input type="text" value={formData.licenseNumber} onChange={(e) => handleChange('licenseNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.licenseNumber ? 'bg-red-50' : ''}`} />
-              </div>
-           </div>
-           <div className="sm:w-1/2 flex flex-col sm:flex-row">
-              <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                27. ලිපිගොනු අංකය <span className="text-red-500">*</span>
-              </div>
-              <div className="sm:w-[55%] p-2">
-                 <input type="text" value={formData.fileNumber} onChange={(e) => handleChange('fileNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.fileNumber ? 'bg-red-50' : ''}`} />
-              </div>
-           </div>
+          <div className="sm:w-1/2 flex flex-col sm:flex-row border-b sm:border-b-0 sm:border-r border-black">
+            <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              26. බලපත්‍ර අංකය <span className="text-red-500">*</span>
+            </div>
+            <div className="sm:w-[60%] p-2">
+              <input type="text" value={formData.licenseNumber} onChange={(e) => handleChange('licenseNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.licenseNumber ? 'bg-red-50' : ''}`} />
+            </div>
+          </div>
+          <div className="sm:w-1/2 flex flex-col sm:flex-row">
+            <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+              27. ලිපිගොනු අංකය <span className="text-red-500">*</span>
+            </div>
+            <div className="sm:w-[55%] p-2">
+              <input type="text" value={formData.fileNumber} onChange={(e) => handleChange('fileNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.fileNumber ? 'bg-red-50' : ''}`} />
+            </div>
+          </div>
         </div>
 
         {/* Row 28 */}
@@ -750,47 +754,25 @@ const MiniSahanaForm = () => {
           </div>
         </div>
 
-        {/* Attachments Table */}
-        <div className="flex flex-col text-sm border-b border-black">
-           <div className="flex flex-row border-b border-black font-medium bg-gray-50 text-center text-xs sm:text-sm">
-             <div className="w-[10%] p-2 border-r border-black flex items-center justify-center">අංකය</div>
-             <div className="w-[50%] p-2 border-r border-black text-left flex items-center">ඇමුණුම</div>
-             <div className="w-[13.3%] p-2 border-r border-black flex items-center justify-center">ඇත</div>
-             <div className="w-[13.3%] p-2 border-r border-black flex items-center justify-center">නැත</div>
-             <div className="w-[13.3%] p-2 flex items-center justify-center">වෙනත්</div>
-           </div>
-           
-           <div className={`flex flex-row border-b border-black text-xs sm:text-sm ${errors.attachment1 ? 'bg-red-50' : ''}`}>
-             <div className="w-[10%] p-2 border-r border-black flex items-center justify-center">01 <span className="text-red-500 ml-1">*</span></div>
-             <div className="w-[50%] p-2 border-r border-black">බැංකු පාස් පොතෙහි ගිණුම් අංකය පැහැදිලිව පෙනෙන සේ ගන්නා ලද පිටපතක්.</div>
-             <div className="w-[13.3%] p-2 border-r border-black flex justify-center items-center"><input type="radio" name="attach1" checked={formData.attachment1 === 'has'} onChange={() => handleChange('attachment1', 'has')} className="w-4 h-4 cursor-pointer" /></div>
-             <div className="w-[13.3%] p-2 border-r border-black flex justify-center items-center"><input type="radio" name="attach1" checked={formData.attachment1 === 'no'} onChange={() => handleChange('attachment1', 'no')} className="w-4 h-4 cursor-pointer" /></div>
-             <div className="w-[13.3%] p-2 flex justify-center items-center"><input type="radio" name="attach1" checked={formData.attachment1 === 'other'} onChange={() => handleChange('attachment1', 'other')} className="w-4 h-4 cursor-pointer" /></div>
-           </div>
-
-           <div className={`flex flex-row text-xs sm:text-sm ${errors.attachment2 ? 'bg-red-50' : ''}`}>
-             <div className="w-[10%] p-2 border-r border-black flex items-center justify-center">02 <span className="text-red-500 ml-1">*</span></div>
-             <div className="w-[50%] p-2 border-r border-black">ග්‍රාම නිලධාරී සහතික කරන ලද උප්පැන්න සහතිකයේ පිටපතක්</div>
-             <div className="w-[13.3%] p-2 border-r border-black flex justify-center items-center"><input type="radio" name="attach2" checked={formData.attachment2 === 'has'} onChange={() => handleChange('attachment2', 'has')} className="w-4 h-4 cursor-pointer" /></div>
-             <div className="w-[13.3%] p-2 border-r border-black flex justify-center items-center"><input type="radio" name="attach2" checked={formData.attachment2 === 'no'} onChange={() => handleChange('attachment2', 'no')} className="w-4 h-4 cursor-pointer" /></div>
-             <div className="w-[13.3%] p-2 flex justify-center items-center"><input type="radio" name="attach2" checked={formData.attachment2 === 'other'} onChange={() => handleChange('attachment2', 'other')} className="w-4 h-4 cursor-pointer" /></div>
-           </div>
-        </div>
-
         {/* Declaration */}
         <div className="p-4 sm:p-8 flex flex-col gap-12 bg-white">
           <p className="font-medium">ඉහත දක්වා ඇති තොරතුරු සත්‍ය තොරතුරු බව සනාථ කරමි.</p>
-          
-          <div className="flex flex-row justify-between pt-8 px-4 sm:px-12">
-             <div className="flex flex-col items-center">
-                <div className="border-b-2 border-dotted border-black w-32 sm:w-56 mb-2"></div>
-                <span className="text-sm">අයදුම්කරුගේ අත්සන</span>
-             </div>
-             <div className="flex flex-col items-center">
-                <div className="border-b-2 border-dotted border-black w-24 sm:w-40 mb-2"></div>
-                <span className="text-sm">දිනය</span>
-             </div>
-          </div>
+
+          {[
+            { key: 'hardCopy', label: '1. Submitted Hard Copy' },
+            { key: 'passbook', label: '2. Copy of the Bank Passbook' },
+            { key: 'birthCert', label: '3. Copy of the Birth Certificate' },
+          ].map(({ key, label }) => (
+            <div key={key} className={`flex flex-col sm:flex-row border border-black ${errors[key] ? 'bg-red-50' : ''}`}>
+              <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
+                {label} <span className="text-red-500">*</span>
+              </div>
+              <div className="sm:w-[60%] p-2">
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => handleFileChange(key, e.target.files?.[0] ?? null)} />
+              </div>
+            </div>
+          ))}
 
           <div className="flex justify-end mt-4 border-t pt-4">
             <button type="submit" className="bg-blue-600 text-white px-8 py-3 rounded font-bold hover:bg-blue-700 transition-colors">
