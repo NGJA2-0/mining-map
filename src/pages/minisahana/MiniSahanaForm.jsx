@@ -183,51 +183,55 @@ const ToggleStrikeGroup = ({ options, value, onChange, error }) => {
   );
 };
 
+const initialFormData = {
+  yearDigit1: '',
+  yearDigit2: '',
+  officeUse: '',
+  applicantName: '',
+  applicantTitle: ['ශිෂ්‍ය', 'ශිෂ්‍යාව'],
+  nameEnglish: '',
+  nameInitialsEnglish: '',
+  dobDay: '',
+  dobMonth: '',
+  dobYear: '',
+  gender: '',
+  schoolName: '',
+  grade: '',
+  schoolAddressPhone: '',
+  bankAccountName: '',
+  bankBranch: '',
+  bankAccountNumber: '',
+  categoryA: false,
+  categoryB: false,
+  categoryC: false,
+  parentType: ['මව', 'පියා', 'භාරකරු'],
+  parentName: '',
+  parentAddress: '',
+  parentPhone: '',
+  parentNIC: '',
+  parentAge: '',
+  parentOccupation: '',
+  parentIncome: '',
+  parentMaritalStatus: '',
+  spouseType: ['ස්වාමිපුරුෂයා', 'බිරිඳ'],
+  spouseName: '',
+  spouseOccupation: '',
+  numberOfChildren: '',
+  licenseNumber: '',
+  fileNumber: '',
+  regionalOffice: '',
+};
+
+
 const MiniSahanaForm = () => {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
   const yearDigit1Ref = useRef(null);
   const yearDigit2Ref = useRef(null);
-  const [files, setFiles] = useState({ hardCopy: null, passbook: null, birthCert: null });
+  const fileInputRefs = useRef({ hardCopy: null, passbook: null, birthCert: null });
 
-  const [formData, setFormData] = useState({
-    yearDigit1: '',
-    yearDigit2: '',
-    officeUse: '',
-    applicantName: '',
-    applicantTitle: ['ශිෂ්‍ය', 'ශිෂ්‍යාව'],
-    nameEnglish: '',
-    nameInitialsEnglish: '',
-    dobDay: '',
-    dobMonth: '',
-    dobYear: '',
-    gender: '',
-    schoolName: '',
-    grade: '',
-    schoolAddressPhone: '',
-    bankAccountName: '',
-    bankBranch: '',
-    bankAccountNumber: '',
-    categoryA: false,
-    categoryB: false,
-    categoryC: false,
-    parentType: ['මව', 'පියා', 'භාරකරු'],
-    parentName: '',
-    parentAddress: '',
-    parentPhone: '',
-    parentNIC: '',
-    parentAge: '',
-    parentOccupation: '',
-    parentIncome: '',
-    parentMaritalStatus: '',
-    spouseType: ['ස්වාමිපුරුෂයා', 'බිරිඳ'],
-    spouseName: '',
-    spouseOccupation: '',
-    numberOfChildren: '',
-    licenseNumber: '',
-    fileNumber: '',
-    regionalOffice: '',
-  });
+  const [formData, setFormData] = useState(initialFormData);
+  const [files, setFiles] = useState({ hardCopy: null, passbook: null, birthCert: null });
 
   const [errors, setErrors] = useState({});
 
@@ -351,7 +355,7 @@ const MiniSahanaForm = () => {
         dateOfBirth: `${formData.dobYear}-${formData.dobMonth}-${formData.dobDay}`,
         gender: formData.gender,
         school: formData.schoolName,
-        grade: formData.grade,
+        grade: formData.grade.replace(' වසර', ''),
         schoolAddressAndPhone: formData.schoolAddressPhone,
 
         bankAccountName: formData.bankAccountName,
@@ -395,6 +399,14 @@ const MiniSahanaForm = () => {
       });
       if (response.ok) {
         alert('සාර්ථකව යවන ලදී! (Submitted successfully!)');
+
+        setFormData(initialFormData);
+        setFiles({ hardCopy: null, passbook: null, birthCert: null });
+        setErrors({});
+
+        Object.values(fileInputRefs.current).forEach((input) => {
+          if (input) input.value = "";
+        });
       } else if (response.status === 401) {
         alert('ඔබගේ සැසිය අවසන් වී ඇත. කරුණාකර නැවත පිවිසෙන්න. (Your session has expired. Please log in again.)');
         logout();
@@ -768,8 +780,12 @@ const MiniSahanaForm = () => {
                 {label} <span className="text-red-500">*</span>
               </div>
               <div className="sm:w-[60%] p-2">
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) => handleFileChange(key, e.target.files?.[0] ?? null)} />
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  ref={(el) => { fileInputRefs.current[key] = el; }}
+                  onChange={(e) => handleFileChange(key, e.target.files?.[0] ?? null)}
+                />
               </div>
             </div>
           ))}
