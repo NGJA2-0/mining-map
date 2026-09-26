@@ -11,6 +11,8 @@ export default function ReportCardEntryForm({ student, onBack }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  const [currentGrade, setCurrentGrade] = useState("");
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [monthlyAmount, setMonthlyAmount] = useState("");
@@ -49,7 +51,8 @@ export default function ReportCardEntryForm({ student, onBack }) {
       formData.append("fullName", student?.applicantFullNameSinhala || "");
       formData.append("accNumber", student?.bankAccountNumber || "");
       formData.append("nic", student?.nic || "");
-      formData.append("grade", student?.grade || "");
+      formData.append("appliedGrade", student?.grade || "");
+      formData.append("currentGrade", currentGrade);
       formData.append("startDate", startDate);
       formData.append("endDate", endDate);
       formData.append("amount", monthlyAmount);
@@ -68,6 +71,7 @@ export default function ReportCardEntryForm({ student, onBack }) {
       }
 
       // Success — reset form fields and switch to the summary view.
+      setCurrentGrade("");
       setStartDate("");
       setEndDate("");
       setMonthlyAmount("");
@@ -199,6 +203,19 @@ export default function ReportCardEntryForm({ student, onBack }) {
 
           {/* Fields */}
           <div className="flex flex-1 flex-col">
+
+            <div className="mb-4">
+              <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                Student's Current Grade
+              </label>
+              <input
+                type="text"
+                value={currentGrade}
+                onChange={(e) => setCurrentGrade(e.target.value)}
+                placeholder="e.g. 10 වසර"
+                className="w-full rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
                 <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
@@ -223,28 +240,29 @@ export default function ReportCardEntryForm({ student, onBack }) {
                   className="w-full min-w-[150px] rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20 [&::-webkit-calendar-picker-indicator]:ml-2"
                 />
               </div>
+            </div>
 
-              <div className="col-span-2 sm:col-span-1">
-                <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  Amount
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted">
-                    Rs.
-                  </span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="0.01"
-                    value={monthlyAmount}
-                    onChange={(e) => setMonthlyAmount(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full rounded-lg border border-line bg-page py-2.5 pl-9 pr-3 text-sm text-ink placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
-                  />
-                </div>
+            <div className="mt-4">
+              <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                Amount
+              </label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted">
+                  Rs.
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={monthlyAmount}
+                  onChange={(e) => setMonthlyAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full rounded-lg border border-line bg-page py-2.5 pl-9 pr-3 text-sm text-ink placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
+                />
               </div>
             </div>
+
 
             <div className="mt-6 flex items-center justify-end gap-3 border-t border-line pt-5">
               {submitError && (

@@ -179,6 +179,12 @@ export default function ExistingReportCards({ applicationId, onLoaded, onAddNew,
                     <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
                       A/C: {r.accNumber || "—"}
                     </span>
+                    <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                      Applied Grade: {r.appliedGrade || "—"}
+                    </span>
+                    <span className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                      Current Grade: {r.currentGrade || "—"}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">

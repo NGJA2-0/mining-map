@@ -111,8 +111,7 @@ export default function ReportCardDashboardSearch({ onSelectionChange }) {
 
   return (
     <>
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-sm" ref={wrapperRef}>
+        <div className="relative mb-8 w-full" ref={wrapperRef}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -132,7 +131,7 @@ export default function ReportCardDashboardSearch({ onSelectionChange }) {
             onFocus={() => {
               if (results.length > 0 && !selectedRecord) setDropdownOpen(true);
             }}
-            placeholder="Search by name, account no. or NIC..."
+            placeholder="Search by name, account no., NIC or regional office..."
             className="w-full rounded-lg border border-line bg-surface py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-copper/20"
           />
 
@@ -170,6 +169,11 @@ export default function ReportCardDashboardSearch({ onSelectionChange }) {
                         <span className="truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted">
                           NIC: {item.nic} · A/C: {item.accNumber}
                         </span>
+                        {item.regionalOffice && (
+                          <span className="truncate font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                            Office: {item.regionalOffice}
+                          </span>
+                        )}
                       </button>
                     </li>
                   ))}
@@ -179,15 +183,8 @@ export default function ReportCardDashboardSearch({ onSelectionChange }) {
           )}
         </div>
 
-        <Button
-          variant="primary"
-          size="md"
-          className="w-full sm:w-auto"
-          onClick={() => navigate("/minisahana/report-cards/search")}
-        >
-          + Add New Report Card
-        </Button>
-      </div>
+        
+      
 
       {selectedRecord && (
         <div className="mb-8">

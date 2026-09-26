@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
 import { useAuth } from "../../../context/AuthContext";
 import ReportCardDashboardSearch from "./ReportCardDashboardSearch";
+import ReportCardsGradeTable from "./ReportCardGradeTable";
 
 const GRADE_DATA = [
   { grade: "6", students: 24 },
@@ -22,6 +23,7 @@ export default function ReportCardsDashboardPage() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [showingSummary, setShowingSummary] = useState(false);
   const dropdownRef = useRef(null);
+  const [selectedGrade, setSelectedGrade] = useState("");
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -145,38 +147,58 @@ export default function ReportCardsDashboardPage() {
       <main className="flex-1 px-4 py-8 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-6xl">
           {/* Title */}
-          <div className="mb-6">
-            <h2 className="font-display text-2xl font-bold sm:text-3xl" style={{ letterSpacing: "-0.02em" }}>
-              Report Cards
-            </h2>
-            <p className="mt-1 text-sm text-ink-muted">
-              Browse student report cards by grade, or search for a specific student.
-            </p>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="font-display text-2xl font-bold sm:text-3xl" style={{ letterSpacing: "-0.02em" }}>
+                Report Cards
+              </h2>
+              <p className="mt-1 text-sm text-ink-muted">
+                Browse student report cards by grade, or search for a specific student.
+              </p>
+            </div>
+
+            <Button
+              variant="primary"
+              size="md"
+              className="w-full sm:w-auto"
+              onClick={() => navigate("/minisahana/report-cards/search")}
+            >
+              + Add New Report Card
+            </Button>
           </div>
 
           {/* Search bar + Add button, with the summary card shown on selection */}
           <ReportCardDashboardSearch onSelectionChange={setShowingSummary} />
 
-          {/* Grade cards — hidden while a report card summary is displayed */}
+          {/* Grade filter buttons + submissions table — hidden while a report card summary is displayed */}
           {!showingSummary && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
-            {GRADE_DATA.map((item) => (
-              <button
-                key={item.grade}
-                type="button"
-                onClick={() => {}}
-                className="group flex flex-col items-start gap-2 rounded-xl border border-line bg-surface p-4 text-left transition-all hover:-translate-y-0.5 hover:border-copper/40 hover:shadow-md sm:p-5"
-              >
-                <span className="rounded-md bg-teal/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-teal">
-                  Grade {item.grade}
-                </span>
-                <span className="font-display text-3xl font-bold sm:text-4xl">
-                  {item.students}
-                </span>
-                <span className="text-xs text-ink-muted">Students</span>
-              </button>
-            ))}
-          </div>
+            <>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-3 md:grid-cols-8">
+                {GRADE_DATA.map((item) => {
+                  const isSelected = selectedGrade === item.grade;
+                  return (
+                    <button
+                      key={item.grade}
+                      type="button"
+                      onClick={() => setSelectedGrade((prev) => (prev === item.grade ? "" : item.grade))}
+                      className={`group flex flex-col items-start gap-1 rounded-lg border p-2.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md
+            ${isSelected ? "border-copper bg-copper/5" : "border-line bg-surface hover:border-copper/40"}`}
+                    >
+                      <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide
+            ${isSelected ? "bg-copper/15 text-copper" : "bg-teal/10 text-teal"}`}>
+                        Grade {item.grade}
+                      </span>
+                      <span className="font-display text-xl font-bold sm:text-2xl">
+                        {item.students}
+                      </span>
+                      <span className="text-[11px] text-ink-muted">Students</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <ReportCardsGradeTable grade={selectedGrade} />
+            </>
           )}
         </div>
       </main>
