@@ -168,7 +168,7 @@ const recordToFormData = (record) => {
     dobDay, dobMonth, dobYear,
     gender: record.gender || '',
     schoolName: record.school || '',
-    grade: record.grade ? `${record.grade} වසර` : '',
+    grade: record.grade ? `${String(record.grade).replace(' වසර', '').trim()} වසර` : '',
     schoolAddressPhone: record.schoolAddressAndPhone || '',
     bankAccountName: record.bankAccountName || '',
     bankBranch: record.bankBranch || '',
@@ -389,6 +389,7 @@ const MiniSahanaApplicationPreview = () => {
   const applicantTitle = nameMatch ? nameMatch[2] : '';
   const [dobYear = '', dobMonth = '', dobDay = ''] = (record.dateOfBirth || '').split('-');
   const yearDigits = String(record.year || '').slice(-2);
+  const gradeLabel = record.grade ? `${String(record.grade).replace(' වසර', '').trim()} වසර` : ''
   const attachment1 = record.attachments?.bankPassbookCopy === 'Yes' ? 'has' : record.attachments?.bankPassbookCopy === 'No' ? 'no' : 'other';
   const attachment2 = record.attachments?.birthCertificateCopy === 'Yes' ? 'has' : record.attachments?.birthCertificateCopy === 'No' ? 'no' : 'other';
   const categories = record.eligibilityCategory || [];
@@ -567,7 +568,7 @@ const MiniSahanaApplicationPreview = () => {
               <div key={idx} className={`w-[25%] sm:w-[12.5%] flex flex-col ${idx !== arr.length - 1 ? 'border-r border-black' : ''} ${errors.grade ? 'bg-red-50' : ''}`}>
                 <div className="p-1 text-center text-[10px] sm:text-xs font-medium border-b border-black h-10 flex items-center justify-center whitespace-nowrap">{grade}</div>
                 <div className="p-2 flex-1 flex items-center justify-center">
-                  <input type="radio" checked={(isEditing ? formData.grade : record.grade + ' වසර') === grade} disabled={!isEditing} onChange={() => handleChange('grade', grade)} className="w-4 h-4" />
+                  <input type="radio" checked={(isEditing ? formData.grade : gradeLabel) === grade} disabled={!isEditing} onChange={() => handleChange('grade', grade)} className="w-4 h-4" />
                 </div>
               </div>
             ))}
