@@ -40,7 +40,7 @@ const ReadOnlyGrid = ({ length, rows = 1, value = '' }) => {
 };
 
 // ─────────────────────────── Editable grid (edit mode) ───────────────────────────
-const EditableGrid = ({ length, rows = 1, value = '', onChange, error = false }) => {
+const EditableGrid = ({ length, rows = 1, value = '', onChange, error = false, fitWidth = true }) => {
   const inputRefs = useRef([]);
   const totalBoxes = rows * length;
 
@@ -96,9 +96,13 @@ const EditableGrid = ({ length, rows = 1, value = '', onChange, error = false })
   };
 
   return (
-    <div className={`flex flex-col py-1 ${error ? 'bg-red-50 p-1 rounded border border-red-500' : ''}`}>
+    <div className={`flex flex-col py-1 ${fitWidth ? '' : 'overflow-x-auto'} ${error ? 'bg-red-50 p-1 rounded border border-red-500' : ''}`}>
       {Array.from({ length: rows }).map((_, r) => (
-        <div key={r} className="grid" style={{ gridTemplateColumns: `repeat(${length}, minmax(0, 1fr))` }}>
+        <div
+          key={r}
+          className={fitWidth ? 'grid' : 'flex min-w-max'}
+          style={fitWidth ? { gridTemplateColumns: `repeat(${length}, minmax(0, 1fr))` } : undefined}
+        >
           {Array.from({ length }).map((_, i) => {
             const flatIndex = r * length + i;
             const isFilled = chars[flatIndex] !== '';
@@ -112,7 +116,15 @@ const EditableGrid = ({ length, rows = 1, value = '', onChange, error = false })
                 onKeyDown={(e) => handleKeyDown(flatIndex, e)}
                 onPaste={(e) => handlePaste(flatIndex, e)}
                 onFocus={(e) => e.target.select()}
-                className={`font-sinhala p-0 leading-none w-full min-w-0 aspect-square text-xs sm:text-sm text-center uppercase focus:outline-none font-medium relative z-0 focus:z-10 ${i > 0 ? '-ml-px' : ''} ${r > 0 ? '-mt-px' : ''} ${isFilled ? 'border border-slate-300 bg-slate-50 text-slate-900 font-semibold focus:border-blue-400 focus:bg-blue-50' : 'border border-black bg-white text-black focus:bg-blue-100 focus:border-blue-400'}`}
+                className={`
+                  font-sinhala p-0 leading-none
+                  ${fitWidth ? 'w-full min-w-0 aspect-square text-xs sm:text-sm' : 'w-5 sm:w-6 h-6 sm:h-7 text-xs sm:text-sm'}
+                  text-center uppercase focus:outline-none font-medium relative z-0 focus:z-10
+                  ${i > 0 ? '-ml-px' : ''} ${r > 0 ? '-mt-px' : ''}
+                  ${isFilled
+                    ? 'border border-slate-300 bg-slate-50 text-slate-900 font-semibold focus:border-blue-400 focus:bg-blue-50'
+                    : 'border border-black bg-white text-black focus:bg-blue-100 focus:border-blue-400'}
+                `}
               />
             );
           })}
@@ -121,7 +133,6 @@ const EditableGrid = ({ length, rows = 1, value = '', onChange, error = false })
     </div>
   );
 };
-
 const ReadOnlyField = ({ value, multiline = false }) => (
   <div className={`w-full h-full bg-gray-50 text-gray-700 px-1 ${multiline ? 'whitespace-pre-wrap min-h-[3rem]' : 'truncate'}`}>
     {value || <span className="text-gray-400">—</span>}
@@ -528,9 +539,9 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-1/2 p-2 flex flex-wrap items-center gap-1 sm:gap-2">
               {isEditing ? (
                 <>
-                  <EditableGrid length={2} value={formData.dobDay} onChange={(v) => handleChange('dobDay', v)} error={errors.dobDay} />
-                  <EditableGrid length={2} value={formData.dobMonth} onChange={(v) => handleChange('dobMonth', v)} error={errors.dobMonth} />
-                  <EditableGrid length={4} value={formData.dobYear} onChange={(v) => handleChange('dobYear', v)} error={errors.dobYear} />
+                  <EditableGrid length={2} value={formData.dobDay} onChange={(v) => handleChange('dobDay', v)} error={errors.dobDay} fitWidth={false} />
+                  <EditableGrid length={2} value={formData.dobMonth} onChange={(v) => handleChange('dobMonth', v)} error={errors.dobMonth} fitWidth={false} />
+                  <EditableGrid length={4} value={formData.dobYear} onChange={(v) => handleChange('dobYear', v)} error={errors.dobYear} fitWidth={false} />
                 </>
               ) : (
                 <>
