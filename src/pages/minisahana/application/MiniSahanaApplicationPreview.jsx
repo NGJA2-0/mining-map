@@ -160,6 +160,27 @@ const ToggleStrikeGroup = ({ options, value, onChange, error }) => {
   );
 };
 
+// Reconstructs the document exactly as it was first submitted,
+// by undoing each change entry in reverse chronological order.
+const reconstructOriginalRecord = (record) => {
+  const changes = record.changes ?? [];
+  const original = { ...record };
+
+  for (let i = changes.length - 1; i >= 0; i--) {
+    const entry = changes[i];
+    Object.entries(entry.oldValues || {}).forEach(([field, oldVal]) => {
+      original[field] = oldVal;
+    });
+  }
+
+  // Metadata should reflect the original submission too
+  original.refNumber = (record.refNumber || '').split('.')[0]; // e.g. "A6.2" → "A6"
+  original.updatedBy = '';
+  original.changes = [];
+
+  return original;
+};
+
 // Reverse-maps API record shape → editable form-field shape
 const recordToFormData = (record) => {
   const nameMatch = (record.applicantFullNameSinhala || '').match(/^(.*)\s\((.*)\)\s*$/);
@@ -218,6 +239,9 @@ const MiniSahanaApplicationPreview = () => {
   const [error, setError] = useState('');
 
   const [isEditing, setIsEditing] = useState(false);
+  const [viewingOriginal, setViewingOriginal] = useState(false);
+  const original = useMemo(() => reconstructOriginalRecord(record), [record]);
+  const displayRecord = viewingOriginal ? original : record;
   const [formData, setFormData] = useState(null);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -442,7 +466,7 @@ const MiniSahanaApplicationPreview = () => {
           </span>
 
           <div className="flex gap-2">
-            {!isEditing && (
+            {!isEditing && !viewingOriginal && (
               <>
                 <button type="button" onClick={startEditing} className="text-xs font-medium border border-black px-3 py-1.5 rounded hover:bg-gray-100">
                   සංස්කරණය (Edit)
@@ -452,6 +476,15 @@ const MiniSahanaApplicationPreview = () => {
                 </button>
               </>
             )}
+            {!isEditing && changes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setViewingOriginal(v => !v)}
+                className={`text-xs font-medium border px-3 py-1.5 rounded hover:bg-gray-100 ${viewingOriginal ? 'border-amber-600 text-amber-700 bg-amber-50' : 'border-black'}`}
+              >
+                {viewingOriginal ? 'වර්තමාන අයදුම්පත බලන්න (View Current)' : 'මුල් අයදුම්පත බලන්න (View Original)'}
+              </button>
+            )}
             {isEditing && (
               <button type="button" disabled={submitting} onClick={handleSave} className="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
                 {submitting ? 'සුරකිමින්...' : 'යාවත්කාලීන කරන්න (Save Changes)'}
@@ -460,6 +493,12 @@ const MiniSahanaApplicationPreview = () => {
           </div>
         </div>
       </div>
+
+      {viewingOriginal && (
+        <div className="mb-4 bg-amber-50 border border-amber-300 text-amber-800 text-xs sm:text-sm px-3 py-2 rounded">
+          🕐 මුල් අයදුම්පත් දත්ත පෙන්වයි (Showing the originally submitted data — read only).
+        </div>
+      )}
 
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
