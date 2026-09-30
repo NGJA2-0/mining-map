@@ -465,7 +465,7 @@ const MiniSahanaApplicationPreview = () => {
             {record.updatedBy ? ` · Updated by ${record.updatedBy}` : ''}
           </span>
 
-          <div className="flex gap-2">
+                    <div className="flex gap-2">
             {!isEditing && !viewingOriginal && (
               <>
                 <button type="button" onClick={startEditing} className="text-xs font-medium border border-black px-3 py-1.5 rounded hover:bg-gray-100">
@@ -494,7 +494,7 @@ const MiniSahanaApplicationPreview = () => {
         </div>
       </div>
 
-      {viewingOriginal && (
+            {viewingOriginal && (
         <div className="mb-4 bg-amber-50 border border-amber-300 text-amber-800 text-xs sm:text-sm px-3 py-2 rounded">
           🕐 මුල් අයදුම්පත් දත්ත පෙන්වයි (Showing the originally submitted data — read only).
         </div>
