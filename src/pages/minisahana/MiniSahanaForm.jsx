@@ -227,11 +227,10 @@ const MiniSahanaForm = () => {
   const navigate = useNavigate();
   const yearDigit1Ref = useRef(null);
   const yearDigit2Ref = useRef(null);
-  const fileInputRefs = useRef({ hardCopy: null, passbook: null, birthCert: null });
+  const fileInputRefs = useRef({ hardCopy: null, passbook: null, birthCert: null, additional: null });
 
   const [formData, setFormData] = useState(initialFormData);
-  const [files, setFiles] = useState({ hardCopy: null, passbook: null, birthCert: null });
-
+  const [files, setFiles] = useState({ hardCopy: null, passbook: null, birthCert: null, additional: null });
   const [errors, setErrors] = useState({});
 
   const handleYearDigitChange = (e, nextRef, field) => {
@@ -257,6 +256,11 @@ const MiniSahanaForm = () => {
   };
 
   const handleFileChange = (key, file) => {
+    if (file) {
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      if (!isPdf) { alert('PDF ගොනු පමණි. (PDF files only.)'); fileInputRefs.current[key].value = ''; return; }
+      if (file.size > 10 * 1024 * 1024) { alert('ගොනුව 10MB ට වැඩියි. (File exceeds 10MB.)'); fileInputRefs.current[key].value = ''; return; }
+    }
     setFiles(prev => ({ ...prev, [key]: file }));
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }));
   };
@@ -388,19 +392,22 @@ const MiniSahanaForm = () => {
       };
 
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+      const body = new FormData();
+      body.append('data', JSON.stringify(payload));
+      ['hardCopy', 'passbook', 'birthCert', 'additional'].forEach((k) => {
+        if (files[k]) body.append(k, files[k]);
+      });
+
       const response = await fetch(`${API_BASE_URL}/api/mini-sahana-form`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(payload),
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body,
       });
       if (response.ok) {
         alert('සාර්ථකව යවන ලදී! (Submitted successfully!)');
 
         setFormData(initialFormData);
-        setFiles({ hardCopy: null, passbook: null, birthCert: null });
+        setFiles({ hardCopy: null, passbook: null, birthCert: null, additional: null });
         setErrors({});
 
         Object.values(fileInputRefs.current).forEach((input) => {
@@ -768,20 +775,20 @@ const MiniSahanaForm = () => {
         {/* Declaration */}
         <div className="p-4 sm:p-8 flex flex-col gap-12 bg-white">
           <p className="font-medium">ඉහත දක්වා ඇති තොරතුරු සත්‍ය තොරතුරු බව සනාථ කරමි.</p>
-
           {[
             { key: 'hardCopy', label: '1. Submitted Hard Copy' },
             { key: 'passbook', label: '2. Copy of the Bank Passbook' },
             { key: 'birthCert', label: '3. Copy of the Birth Certificate' },
-          ].map(({ key, label }) => (
+            { key: 'additional', label: '4. Additional Document (optional)', optional: true },
+          ].map(({ key, label, optional }) => (
             <div key={key} className={`flex flex-col sm:flex-row border border-black ${errors[key] ? 'bg-red-50' : ''}`}>
               <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                {label} <span className="text-red-500">*</span>
+                {label} {!optional && <span className="text-red-500">*</span>}
               </div>
               <div className="sm:w-[60%] p-2">
                 <input
                   type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
+                  accept="application/pdf,.pdf"
                   ref={(el) => { fileInputRefs.current[key] = el; }}
                   onChange={(e) => handleFileChange(key, e.target.files?.[0] ?? null)}
                 />

@@ -160,6 +160,84 @@ const ToggleStrikeGroup = ({ options, value, onChange, error }) => {
   );
 };
 
+// ─────────────────────────── Change History panel ───────────────────────────
+const EDIT_TYPE_STYLES = {
+  normal: { label: 'NORMAL EDIT', badge: 'bg-indigo-600 text-white', dot: 'bg-indigo-600' },
+  acc_number: { label: 'ACC NUMBER EDIT', badge: 'bg-amber-500 text-white', dot: 'bg-amber-500' },
+};
+
+const getInitials = (name = '') =>
+  name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
+
+const ChangeHistoryPanel = ({ changes, fieldLabels, formatDiffValue }) => {
+  const ordered = changes.slice().reverse();
+
+  return (
+    <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
+      <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-800">
+          වෙනස්කම් ඉතිහාසය <span className="text-gray-400 font-normal">(Change History)</span>
+        </h3>
+        <span className="text-xs font-medium bg-gray-200 text-gray-600 rounded-full px-2 py-0.5">
+          {changes.length}
+        </span>
+      </div>
+
+      <div className="max-h-[70vh] overflow-y-auto">
+        <div className="relative px-4 py-4">
+          <div className="absolute left-[27px] top-4 bottom-4 w-px bg-gray-200" aria-hidden="true" />
+          <div className="flex flex-col gap-5">
+            {ordered.map((entry, idx) => {
+              const style = EDIT_TYPE_STYLES[entry.editType] || EDIT_TYPE_STYLES.normal;
+              const fields = Object.keys(entry.newValues || {});
+              return (
+                <div key={idx} className="relative pl-8">
+                  <span className={`absolute left-0 top-1.5 w-4 h-4 rounded-full ring-4 ring-white ${style.dot}`} />
+
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className={`text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-full ${style.badge}`}>
+                      {style.label}
+                    </span>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-600 text-[10px] font-semibold flex items-center justify-center">
+                        {getInitials(entry.changedBy)}
+                      </span>
+                      <span className="font-medium text-gray-700">{entry.changedBy || 'Unknown'}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] text-gray-400 mb-2 ml-0.5">
+                    {entry.changedAt ? new Date(entry.changedAt).toLocaleString() : ''}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                    {fields.map((field) => (
+                      <div key={field} className="flex flex-col gap-0.5">
+                        <span className="text-[11px] font-semibold text-gray-600">
+                          {fieldLabels[field] || field}
+                        </span>
+                        <div className="flex items-center flex-wrap gap-1 text-xs">
+                          <span className="line-through text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                            {formatDiffValue(entry.oldValues?.[field])}
+                          </span>
+                          <span className="text-gray-400">→</span>
+                          <span className="text-green-700 bg-green-50 px-1.5 py-0.5 rounded font-medium">
+                            {formatDiffValue(entry.newValues?.[field])}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Reconstructs the document exactly as it was first submitted,
 // by undoing each change entry in reverse chronological order.
 const reconstructOriginalRecord = (record) => {
@@ -224,6 +302,112 @@ const recordToFormData = (record) => {
     fileNumber: record.fileNumber || '',
     regionalOffice: record.licenseRegionalOfficeAndZone || '',
   };
+};
+
+const DOC_SLOTS = [
+  { key: 'hard_copy', label: 'Submitted Hard Copy' },
+  { key: 'bank_passbook', label: 'Copy of the Bank Passbook' },
+  { key: 'birth_certificate', label: 'Copy of the Birth Certificate' },
+  { key: 'additional', label: 'Additional Document' },
+];
+
+const DocumentsPanel = ({ recordId, documents, token, disabled, onRecordUpdated, onUnauthorized }) => {
+  const [busyKey, setBusyKey] = useState(null);
+  const API = import.meta.env.VITE_API_BASE_URL || '';
+
+  const fetchBlob = async (key, version, download) => {
+    const res = await fetch(
+      `${API}/api/mini-sahana-form/${recordId}/documents/${key}/versions/${version}${download ? '?download=1' : ''}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (res.status === 401) { onUnauthorized(); return null; }
+    if (!res.ok) { alert('ගොනුව ලබාගත නොහැක. (Could not load the file.)'); return null; }
+    return res.blob();
+  };
+
+  const view = async (key, version) => {
+    const w = window.open('', '_blank');
+    const blob = await fetchBlob(key, version, false);
+    if (!blob) { w?.close(); return; }
+    const url = URL.createObjectURL(blob);
+    if (w) w.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const download = async (key, version, fileName) => {
+    const blob = await fetchBlob(key, version, true);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName || 'document.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const replace = async (key, file) => {
+    if (!file) return;
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) return alert('PDF ගොනු පමණි. (PDF files only.)');
+    if (file.size > 10 * 1024 * 1024) return alert('ගොනුව 10MB ට වැඩියි. (File exceeds 10MB.)');
+    setBusyKey(key);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const res = await fetch(`${API}/api/mini-sahana-form/${recordId}/documents/${key}`, {
+        method: 'PUT', headers: { Authorization: `Bearer ${token}` }, body,
+      });
+      if (res.status === 401) return onUnauthorized();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return alert('යාවත්කාලීන කිරීමේ දෝෂයක්. (Update error.)\n' + (data.error || ''));
+      onRecordUpdated(data);
+    } finally { setBusyKey(null); }
+  };
+
+  return (
+    <div className="border-b border-black">
+      <div className="p-2 font-medium bg-gray-50 border-b border-black text-sm">
+        ආධාරක ලේඛන (Supporting Documents)
+      </div>
+      {DOC_SLOTS.map(({ key, label }) => {
+        const doc = (documents || []).find(d => d.key === key);
+        const versions = doc?.versions ?? [];
+        if (!doc && key === 'additional' && disabled) return null;
+        return (
+          <div key={key} className="p-3 border-b border-black last:border-b-0 flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-medium">{label}</span>
+              {!disabled && (
+                <label className={`text-xs font-medium border border-black px-3 py-1.5 rounded cursor-pointer hover:bg-gray-100 ${busyKey === key ? 'opacity-50 pointer-events-none' : ''}`}>
+                  {busyKey === key ? 'උඩුගත වෙමින්...' : (doc ? 'ප්‍රතිස්ථාපනය (Replace)' : 'එක් කරන්න (Add)')}
+                  <input type="file" accept="application/pdf,.pdf" className="hidden"
+                    onChange={(e) => { replace(key, e.target.files?.[0]); e.target.value = ''; }} />
+                </label>
+              )}
+            </div>
+            {versions.length === 0 && <span className="text-gray-400 text-xs">— No file uploaded —</span>}
+            {versions.slice().reverse().map(v => {
+              const isCurrent = v.version === doc.currentVersion;
+              return (
+                <div key={v.version} className={`flex flex-wrap items-center gap-2 text-xs rounded px-2 py-1.5 ${isCurrent ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}>
+                  <span className={`px-1.5 py-0.5 rounded text-white text-[10px] font-semibold ${isCurrent ? 'bg-green-600' : 'bg-gray-500'}`}>
+                    {isCurrent ? 'CURRENT' : 'PREVIOUS'} v{v.version}
+                  </span>
+                  <span className="truncate max-w-[16rem]">{v.fileName}</span>
+                  <span className="text-gray-400">
+                    {(v.size / 1024).toFixed(0)} KB · {v.uploadedBy} · {new Date(v.uploadedAt).toLocaleString()}
+                  </span>
+                  <span className="ml-auto flex gap-1.5">
+                    <button type="button" onClick={() => view(key, v.version)} className="border border-black px-2 py-0.5 rounded hover:bg-white">View</button>
+                    <button type="button" onClick={() => download(key, v.version, v.fileName)} className="border border-black px-2 py-0.5 rounded hover:bg-white">Download</button>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 const GRADES = ['6 වසර', '7 වසර', '8 වසර', '9 වසර', '10 වසර', '11 වසර', '12 වසර', '13 වසර'];
@@ -425,8 +609,6 @@ const MiniSahanaApplicationPreview = () => {
   const [dobYear = '', dobMonth = '', dobDay = ''] = (record.dateOfBirth || '').split('-');
   const yearDigits = String(record.year || '').slice(-2);
   const gradeLabel = record.grade ? `${String(record.grade).replace(' වසර', '').trim()} වසර` : ''
-  const attachment1 = record.attachments?.bankPassbookCopy === 'Yes' ? 'has' : record.attachments?.bankPassbookCopy === 'No' ? 'no' : 'other';
-  const attachment2 = record.attachments?.birthCertificateCopy === 'Yes' ? 'has' : record.attachments?.birthCertificateCopy === 'No' ? 'no' : 'other';
   const categories = record.eligibilityCategory || [];
   const changes = record.changes ?? [];
 
@@ -443,6 +625,15 @@ const MiniSahanaApplicationPreview = () => {
     childrenCount: 'දරුවන් ගණන', licenseNumber: 'බලපත්‍ර අංකය', fileNumber: 'ලිපිගොනු අංකය',
     licenseRegionalOfficeAndZone: 'ප්‍රාදේශීය කාර්යාලය/කලාපය',
   };
+
+  const fieldLabel = (field) => {
+    if (field.startsWith('documents.')) {
+      const slot = DOC_SLOTS.find(s => s.key === field.slice('documents.'.length));
+      return `📄 ${slot?.label ?? field}`;
+    }
+    return FIELD_LABELS[field] || field;
+  };
+
   const formatDiffValue = (val) => {
     if (val === null || val === undefined || val === '') return '—';
     if (Array.isArray(val)) return val.length ? val.join(', ') : '—';
@@ -465,7 +656,7 @@ const MiniSahanaApplicationPreview = () => {
             {record.updatedBy ? ` · Updated by ${record.updatedBy}` : ''}
           </span>
 
-                    <div className="flex gap-2">
+          <div className="flex gap-2">
             {!isEditing && !viewingOriginal && (
               <>
                 <button type="button" onClick={startEditing} className="text-xs font-medium border border-black px-3 py-1.5 rounded hover:bg-gray-100">
@@ -494,7 +685,7 @@ const MiniSahanaApplicationPreview = () => {
         </div>
       </div>
 
-            {viewingOriginal && (
+      {viewingOriginal && (
         <div className="mb-4 bg-amber-50 border border-amber-300 text-amber-800 text-xs sm:text-sm px-3 py-2 rounded">
           🕐 මුල් අයදුම්පත් දත්ත පෙන්වයි (Showing the originally submitted data — read only).
         </div>
@@ -842,30 +1033,14 @@ const MiniSahanaApplicationPreview = () => {
           </div>
         </div>
 
-        {/* Attachments Table — view only, never editable here */}
-        <div className="flex flex-col text-sm border-b border-black">
-          <div className="flex flex-row border-b border-black font-medium bg-gray-50 text-center text-xs sm:text-sm">
-            <div className="w-[10%] p-2 border-r border-black flex items-center justify-center">අංකය</div>
-            <div className="w-[50%] p-2 border-r border-black text-left flex items-center">ඇමුණුම</div>
-            <div className="w-[13.3%] p-2 border-r border-black flex items-center justify-center">ඇත</div>
-            <div className="w-[13.3%] p-2 border-r border-black flex items-center justify-center">නැත</div>
-            <div className="w-[13.3%] p-2 flex items-center justify-center">වෙනත්</div>
-          </div>
-          <div className="flex flex-row border-b border-black text-xs sm:text-sm">
-            <div className="w-[10%] p-2 border-r border-black flex items-center justify-center">01</div>
-            <div className="w-[50%] p-2 border-r border-black">බැංකු පාස් පොතෙහි ගිණුම් අංකය පැහැදිලිව පෙනෙන සේ ගන්නා ලද පිටපතක්.</div>
-            <div className="w-[13.3%] p-2 border-r border-black flex justify-center items-center"><input type="radio" checked={attachment1 === 'has'} disabled /></div>
-            <div className="w-[13.3%] p-2 border-r border-black flex justify-center items-center"><input type="radio" checked={attachment1 === 'no'} disabled /></div>
-            <div className="w-[13.3%] p-2 flex justify-center items-center"><input type="radio" checked={attachment1 === 'other'} disabled /></div>
-          </div>
-          <div className="flex flex-row text-xs sm:text-sm">
-            <div className="w-[10%] p-2 border-r border-black flex items-center justify-center">02</div>
-            <div className="w-[50%] p-2 border-r border-black">ග්‍රාම නිලධාරී සහතික කරන ලද උප්පැන්න සහතිකයේ පිටපතක්</div>
-            <div className="w-[13.3%] p-2 border-r border-black flex justify-center items-center"><input type="radio" checked={attachment2 === 'has'} disabled /></div>
-            <div className="w-[13.3%] p-2 border-r border-black flex justify-center items-center"><input type="radio" checked={attachment2 === 'no'} disabled /></div>
-            <div className="w-[13.3%] p-2 flex justify-center items-center"><input type="radio" checked={attachment2 === 'other'} disabled /></div>
-          </div>
-        </div>
+        <DocumentsPanel
+          recordId={id}
+          documents={record.documents}
+          token={token}
+          disabled={isEditing || viewingOriginal}
+          onRecordUpdated={(updated) => setRecord(updated)}
+          onUnauthorized={() => { logout(); navigate('/login'); }}
+        />
 
         {/* Declaration */}
         <div className="p-4 sm:p-8 flex flex-col gap-6 bg-white">
@@ -883,8 +1058,13 @@ const MiniSahanaApplicationPreview = () => {
             {changes.slice().reverse().map((entry, idx) => (
               <div key={idx} className="p-3 sm:p-4 text-xs sm:text-sm flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-gray-500">
-                  <span className={`px-2 py-0.5 rounded text-white text-[10px] font-semibold ${entry.editType === 'acc_number' ? 'bg-amber-600' : 'bg-blue-600'}`}>
-                    {entry.editType === 'acc_number' ? 'ACC NUMBER EDIT' : 'NORMAL EDIT'}
+                  <span className={`px-2 py-0.5 rounded text-white text-[10px] font-semibold ${entry.editType === 'acc_number' ? 'bg-amber-600'
+                      : entry.editType === 'document' ? 'bg-emerald-600'
+                        : 'bg-blue-600'
+                    }`}>
+                    {entry.editType === 'acc_number' ? 'ACC NUMBER EDIT'
+                      : entry.editType === 'document' ? 'DOCUMENT EDIT'
+                        : 'NORMAL EDIT'}
                   </span>
                   <span>{entry.changedBy || 'Unknown'}</span>
                   <span>·</span>
@@ -893,7 +1073,7 @@ const MiniSahanaApplicationPreview = () => {
                 <div className="flex flex-col gap-1.5">
                   {Object.keys(entry.newValues || {}).map((field) => (
                     <div key={field} className="grid grid-cols-1 sm:grid-cols-[minmax(0,180px)_1fr] gap-x-3 gap-y-0.5">
-                      <span className="font-medium text-gray-700">{FIELD_LABELS[field] || field}</span>
+                      <span className="font-medium text-gray-700">{fieldLabel(field)}</span>
                       <span>
                         <span className="line-through text-red-500">{formatDiffValue(entry.oldValues?.[field])}</span>
                         {' → '}
