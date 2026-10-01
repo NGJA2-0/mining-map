@@ -19,6 +19,7 @@ import ReportCardSearchPage from "./pages/minisahana/reportcards/ReportCardSearc
 import SideNav from "./pages/SideNav";
 import "./index.css";
 import MiniSahanaApplicationPreview from './pages/minisahana/application/MiniSahanaApplicationPreview';
+import MiniSahanaAccountNumberEditForm from './pages/minisahana/application/MiniSahanaAccountNumberEditForm';
 
 export default function App() {
   return (
@@ -126,7 +127,18 @@ export default function App() {
             }
           />
           <Route path="*" element={<Navigate to="/login" replace />} />
-          <Route path="/minisahana/applications/:id" element={<MiniSahanaApplicationPreview />} />
+          <Route path="/minisahana/applications/:id" element={<ProtectedRoute>
+            <MiniSahanaApplicationPreview />
+          </ProtectedRoute>} />
+          
+          <Route
+            path="/minisahana/applications/:id/edit-account-number"
+            element={
+              <ProtectedRoute>
+                <MiniSahanaAccountNumberEditForm />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
