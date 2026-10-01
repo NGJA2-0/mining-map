@@ -633,6 +633,16 @@ export default function MiningMapPage() {
   const [activeDistrict, setActiveDistrict] = useState(null);
   const [activeOffice, setActiveOffice] = useState(null);
 
+  // Clear the selected-mine card whenever the map is no longer at the mines level
+  useEffect(() => {
+    if (mapLevel !== "mines") {
+      setSelectedMine(null);
+      setSelectedDetails(null);
+      setDetailError("");
+      setDetailLoading(false);
+    }
+  }, [mapLevel]);
+
   const fetchDistrictClusters = useCallback(async () => {
     const cacheKey = "districts";
     const cached = getCached(cacheKey);
