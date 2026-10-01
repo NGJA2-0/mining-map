@@ -395,7 +395,9 @@ export default function MiniSahanaDashboardPage() {
 
           {/* Per-grade breakdown */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-ink-muted">Applications by grade</h3>
+            <h3 className="mb-3 text-sm font-semibold text-ink-muted">
+              Applications by grade ({new Date().getFullYear()})
+            </h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {(stats?.byGrade ?? []).map((row) => (
                 <div key={row.grade} className="rounded-xl border border-line bg-surface p-4"
