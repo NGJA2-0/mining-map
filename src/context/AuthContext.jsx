@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.message || "Signup failed. Please try again.");
+      throw new Error(data.error || data.message || "Signup failed. Please try again.");
     }
 
     setToken(data.token);
@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.message || "Login failed. Please try again.");
+      throw new Error(data.error || data.message || "Login failed. Please try again.");
     }
 
     setToken(data.token);

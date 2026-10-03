@@ -29,7 +29,7 @@ export default function LoginForm() {
     try {
       setLoading(true);
       await login({ nic: form.nic, password: form.password });
-      navigate("/select-app");
+      navigate("/select-app", { replace: true });
     } catch (err) {
       setApiError(err.message);
     } finally {
