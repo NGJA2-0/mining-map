@@ -435,7 +435,7 @@ const MiniSahanaApplicationPreview = () => {
   const [error, setError] = useState('');
 
   const [isEditing, setIsEditing] = useState(false);
-  const [viewingOriginal, setViewingOriginal] = useState(false);
+  const viewingOriginal = new URLSearchParams(location.search).get('view') === 'original';
   const original = useMemo(
     () => (record ? reconstructOriginalRecord(record) : null),
     [record]
@@ -503,8 +503,19 @@ const MiniSahanaApplicationPreview = () => {
 
   const goBack = () =>
     location.key === 'default'
-      ? navigate('minisahana/applications')   // page was opened directly, nothing to go back to
+      ? navigate('/minisahana/applications')   // page was opened directly, nothing to go back to
       : navigate(-1);                       // otherwise return to the real previous page
+
+  const toggleOriginal = () => {
+    if (viewingOriginal) {
+      // we got here by pushing ?view=original, so just step back one entry
+      if (location.state?.fromToggle) navigate(-1);
+      // page was opened directly with ?view=original, so replace instead of leaving
+      else navigate(location.pathname, { replace: true });
+    } else {
+      navigate({ search: '?view=original' }, { state: { fromToggle: true } });
+    }
+  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -701,7 +712,7 @@ const MiniSahanaApplicationPreview = () => {
             {!isEditing && changes.length > 0 && (
               <button
                 type="button"
-                onClick={() => setViewingOriginal(v => !v)}
+                onClick={toggleOriginal}
                 className={`text-xs font-medium border px-3 py-1.5 rounded hover:bg-gray-100 ${viewingOriginal ? 'border-amber-600 text-amber-700 bg-amber-50' : 'border-black'}`}
               >
                 {viewingOriginal ? 'වර්තමාන අයදුම්පත බලන්න (View Current)' : 'මුල් අයදුම්පත බලන්න (View Original)'}
