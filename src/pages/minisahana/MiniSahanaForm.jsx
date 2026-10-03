@@ -233,6 +233,8 @@ const MiniSahanaForm = () => {
   const [files, setFiles] = useState({ hardCopy: null, passbook: null, birthCert: null, additional: null });
   const [errors, setErrors] = useState({});
 
+  const isGrade12 = formData.grade === '12 වසර';
+
   const handleYearDigitChange = (e, nextRef, field) => {
     const digit = e.target.value.replace(/\D/g, '').slice(-1);
     setFormData(prev => ({ ...prev, [field]: digit }));
@@ -347,6 +349,7 @@ const MiniSahanaForm = () => {
     if (!files.hardCopy) newErrors.hardCopy = true;
     if (!files.passbook) newErrors.passbook = true;
     if (!files.birthCert) newErrors.birthCert = true;
+    if (isGrade12 && !files.additional) newErrors.additional = true;
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -410,7 +413,7 @@ const MiniSahanaForm = () => {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
       const body = new FormData();
       body.append('data', JSON.stringify(payload));
-      ['hardCopy', 'passbook', 'birthCert', 'additional'].forEach((k) => {
+      ['hardCopy', 'passbook', 'birthCert', ...(isGrade12 ? ['additional'] : [])].forEach((k) => {
         if (files[k]) body.append(k, files[k]);
       });
 
@@ -568,7 +571,7 @@ const MiniSahanaForm = () => {
               <div key={idx} className={`w-[25%] sm:w-[12.5%] flex flex-col ${idx !== arr.length - 1 ? 'border-r border-black' : ''} ${errors.grade ? 'bg-red-50' : ''}`}>
                 <div className="p-1 text-center text-[10px] sm:text-xs font-medium border-b border-black h-10 flex items-center justify-center whitespace-nowrap">{grade}</div>
                 <div className="p-2 flex-1 flex items-center justify-center">
-                  <input type="radio" name="grade" checked={formData.grade === grade} onChange={() => handleChange('grade', grade)} className="w-4 h-4 cursor-pointer" />
+                  <input type="radio" name="grade" checked={formData.grade === grade} onChange={() => { handleChange('grade', grade); if (grade !== '12 වසර') setFiles(prev => ({ ...prev, additional: null })); }} className="w-4 h-4 cursor-pointer" />
                 </div>
               </div>
             ))}
@@ -793,11 +796,11 @@ const MiniSahanaForm = () => {
             { key: 'hardCopy', label: '1. Submitted Hard Copy' },
             { key: 'passbook', label: '2. Copy of the Bank Passbook' },
             { key: 'birthCert', label: '3. Copy of the Birth Certificate' },
-            { key: 'additional', label: '4. Additional Document (optional)', optional: true },
-          ].map(({ key, label, optional }) => (
+            ...(isGrade12 ? [{ key: 'additional', label: '4. Enter the O/L Certificate' }] : []),
+          ].map(({ key, label }) => (
             <div key={key} className={`flex flex-col sm:flex-row border border-black ${errors[key] ? 'bg-red-50' : ''}`}>
               <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
-                {label} {!optional && <span className="text-red-500">*</span>}
+                {label} <span className="text-red-500">*</span>
               </div>
               <div className="sm:w-[60%] p-2">
                 <input

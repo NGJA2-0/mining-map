@@ -308,10 +308,10 @@ const DOC_SLOTS = [
   { key: 'hard_copy', label: 'Submitted Hard Copy' },
   { key: 'bank_passbook', label: 'Copy of the Bank Passbook' },
   { key: 'birth_certificate', label: 'Copy of the Birth Certificate' },
-  { key: 'additional', label: 'Additional Document' },
+  { key: 'additional', label: 'O/L Certificate' },
 ];
 
-const DocumentsPanel = ({ recordId, documents, token, disabled, onRecordUpdated, onUnauthorized }) => {
+const DocumentsPanel = ({ recordId, documents, grade, token, disabled, onRecordUpdated, onUnauthorized }) => {
   const [busyKey, setBusyKey] = useState(null);
   const API = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -371,7 +371,7 @@ const DocumentsPanel = ({ recordId, documents, token, disabled, onRecordUpdated,
       {DOC_SLOTS.map(({ key, label }) => {
         const doc = (documents || []).find(d => d.key === key);
         const versions = doc?.versions ?? [];
-        if (!doc && key === 'additional' && disabled) return null;
+        if (!doc && key === 'additional' && (disabled || String(grade).trim() !== '12')) return null;
         return (
           <div key={key} className="p-3 border-b border-black last:border-b-0 flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1046,6 +1046,7 @@ const MiniSahanaApplicationPreview = () => {
         <DocumentsPanel
           recordId={id}
           documents={record.documents}
+          grade={record.grade}
           token={token}
           disabled={isEditing || viewingOriginal}
           onRecordUpdated={(updated) => setRecord(updated)}
