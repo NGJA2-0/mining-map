@@ -137,7 +137,7 @@ export default function AppSelectionPage() {
                 className="w-full"
                 onClick={() => navigate("/dashboard")}
               >
-                Mining
+                Mechanized Mining
               </Button>
               
               <Button

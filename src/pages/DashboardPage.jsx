@@ -241,7 +241,7 @@ export default function DashboardPage() {
                 className="h-9 w-9 rounded-md object-cover sm:h-12 sm:w-12"
               />
               <h1 className="font-display text-lg font-semibold sm:text-2xl">
-                Mining Map
+                Mechanized Mining Map
               </h1>
             </div>
           </div>
