@@ -501,20 +501,20 @@ const MiniSahanaApplicationPreview = () => {
     setErrors({});
   };
 
-  const goBack = () =>
-    location.key === 'default'
-      ? navigate('/minisahana/applications')   // page was opened directly, nothing to go back to
-      : navigate(-1);                       // otherwise return to the real previous page
-
   const toggleOriginal = () => {
-    if (viewingOriginal) {
-      // we got here by pushing ?view=original, so just step back one entry
-      if (location.state?.fromToggle) navigate(-1);
-      // page was opened directly with ?view=original, so replace instead of leaving
-      else navigate(location.pathname, { replace: true });
-    } else {
-      navigate({ search: '?view=original' }, { state: { fromToggle: true } });
-    }
+  if (viewingOriginal) {
+    // we pushed ?view=original ourselves, so step back one entry
+    if (location.state?.fromToggle) navigate(-1);
+    // opened directly with ?view=original, so replace instead of leaving the page
+    else navigate(location.pathname, { replace: true });
+  } else {
+    navigate({ search: '?view=original' }, { state: { fromToggle: true } });
+  }
+};
+
+  const goBack = () => {
+    if (viewingOriginal) { toggleOriginal(); return; }
+    navigate('/minisahana/applications');
   };
 
   const handleChange = (field, value) => {

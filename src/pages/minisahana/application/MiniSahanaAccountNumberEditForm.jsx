@@ -10,6 +10,10 @@ const MiniSahanaAccountNumberEditForm = () => {
 
   const record = location.state?.record;
 
+  const [accountNumber, setAccountNumber] = useState(record.bankAccountNumber || '');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   if (!record) {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
@@ -24,10 +28,6 @@ const MiniSahanaAccountNumberEditForm = () => {
       </div>
     );
   }
-
-  const [accountNumber, setAccountNumber] = useState(record.bankAccountNumber || '');
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,6 +65,7 @@ const MiniSahanaAccountNumberEditForm = () => {
       if (response.ok) {
         alert('ගිණුම් අංකය යාවත්කාලීන කරන ලදී! (Account number updated!)');
         navigate(`/minisahana/applications/${id}`, {
+          replace: true,
           state: { record: { ...record, bankAccountNumber: trimmed } },
         });
       } else if (response.status === 401) {
@@ -87,7 +88,7 @@ const MiniSahanaAccountNumberEditForm = () => {
       <div className="mb-6 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => navigate(`/minisahana/applications/${id}`, { state: { record } })}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-black"
         >
           ← ආපසු (Cancel)
