@@ -58,7 +58,7 @@ export default function ReportCardSearchPage() {
 
         if (res.status === 401) {
           logout();
-          navigate("/login");
+          navigate("/login", { replace: true });
           return;
         }
 

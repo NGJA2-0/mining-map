@@ -35,7 +35,8 @@ const MiniSahanaAccountNumberEditForm = () => {
 
     if (!token) {
       alert('ඔබගේ සැසිය අවසන් වී ඇත. කරුණාකර නැවත පිවිසෙන්න.');
-      navigate('/login');
+      logout();
+      navigate('/login', { replace: true });
       return;
     }
 
@@ -68,7 +69,7 @@ const MiniSahanaAccountNumberEditForm = () => {
         });
       } else if (response.status === 401) {
         logout();
-        navigate('/login');
+        navigate('/login', { replace: true });
       } else {
         const errData = await response.json().catch(() => ({}));
         setError(errData.error || 'යාවත්කාලීන කිරීමේ දෝෂයක්.');

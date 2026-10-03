@@ -299,7 +299,8 @@ const MiniSahanaForm = () => {
 
     if (!token) {
       alert('ඔබගේ සැසිය අවසන් වී ඇත. කරුණාකර නැවත පිවිසෙන්න. (Your session has expired. Please log in again.)');
-      navigate('/login');
+      logout();
+      navigate('/login', { replace: true });
       return;
     }
 
@@ -435,7 +436,7 @@ const MiniSahanaForm = () => {
       } else if (response.status === 401) {
         alert('ඔබගේ සැසිය අවසන් වී ඇත. කරුණාකර නැවත පිවිසෙන්න. (Your session has expired. Please log in again.)');
         logout();
-        navigate('/login');
+        navigate('/login', { replace: true });
       } else {
         const errData = await response.json().catch(() => ({}));
         console.error('Backend validation failed:', errData);

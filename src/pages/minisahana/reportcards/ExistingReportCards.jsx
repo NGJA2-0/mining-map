@@ -57,7 +57,7 @@ export default function ExistingReportCards({ applicationId, onLoaded, onAddNew,
 
         if (res.status === 401) {
           logout();
-          navigate("/login");
+          navigate("/login", { replace: true });
           return;
         }
 

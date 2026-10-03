@@ -449,7 +449,7 @@ const MiniSahanaApplicationPreview = () => {
 
   useEffect(() => {
     if (record) return;
-    if (!token) { navigate('/login'); return; }
+    // ProtectedRoute already handles the no-token case; no need to check here.
     const controller = new AbortController();
     (async () => {
       setLoading(true);
@@ -461,7 +461,7 @@ const MiniSahanaApplicationPreview = () => {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
         });
-        if (res.status === 401) { logout(); navigate('/login'); return; }
+        if (res.status === 401) { logout(); navigate('/login', { replace: true }); return; }
         if (!res.ok) throw new Error('Failed to load application');
         setRecord(await res.json());
       } catch (err) {
@@ -484,7 +484,7 @@ const MiniSahanaApplicationPreview = () => {
     return (
       <div className="max-w-5xl mx-auto p-8 text-center">
         <p className="text-red-600 mb-4">{error || 'Application not found.'}</p>
-        <button type="button" onClick={() => navigate('/minisahana/dashboard')} className="bg-gray-200 px-4 py-2 rounded font-medium hover:bg-gray-300">← Back</button>
+        <button type="button" onClick={() => navigate('/minisahana/applications')} className="bg-gray-200 px-4 py-2 rounded font-medium hover:bg-gray-300">← Back</button>
       </div>
     );
   }
@@ -502,9 +502,9 @@ const MiniSahanaApplicationPreview = () => {
   };
 
   const goBack = () =>
-  location.key === 'default'
-    ? navigate('/minisahana/dashboard')   // page was opened directly, nothing to go back to
-    : navigate(-1);                       // otherwise return to the real previous page
+    location.key === 'default'
+      ? navigate('minisahana/applications')   // page was opened directly, nothing to go back to
+      : navigate(-1);                       // otherwise return to the real previous page
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -533,7 +533,7 @@ const MiniSahanaApplicationPreview = () => {
   const handleNumberChildrenChange = (e) => handleChange('numberOfChildren', e.target.value.replace(/\D/g, ''));
 
   const handleSave = async () => {
-    if (!token) { alert('ඔබගේ සැසිය අවසන් වී ඇත.'); navigate('/login'); return; }
+    if (!token) { alert('ඔබගේ සැසිය අවසන් වී ඇත.'); logout(); navigate('/login', { replace: true }); return; }
 
     const newErrors = {};
     const checkRequired = (fields) => fields.forEach(f => {
@@ -1070,7 +1070,7 @@ const MiniSahanaApplicationPreview = () => {
           token={token}
           disabled={isEditing || viewingOriginal}
           onRecordUpdated={(updated) => setRecord(updated)}
-          onUnauthorized={() => { logout(); navigate('/login'); }}
+          onUnauthorized={() => { logout(); navigate('/login', { replace: true }); }}
         />
 
         {/* Declaration */}

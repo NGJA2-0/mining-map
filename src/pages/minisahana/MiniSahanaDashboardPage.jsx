@@ -38,7 +38,7 @@ export default function MiniSahanaDashboardPage() {
         });
         if (res.status === 401) {
           logout();
-          navigate("/login");
+          navigate("/login", { replace: true });
           return;
         }
         if (!res.ok) throw new Error("Failed to load stats");
@@ -99,7 +99,7 @@ export default function MiniSahanaDashboardPage() {
 
         if (res.status === 401) {
           logout();
-          navigate("/login");
+          navigate("/login", { replace: true });
           return;
         }
 
@@ -156,7 +156,7 @@ export default function MiniSahanaDashboardPage() {
 
       if (res.status === 401) {
         logout();
-        navigate("/login");
+        navigate("/login", { replace: true });
         return;
       }
 
