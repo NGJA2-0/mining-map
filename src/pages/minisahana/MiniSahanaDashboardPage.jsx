@@ -7,16 +7,6 @@ import { useAuth } from "../../context/AuthContext";
 /* ─────────────────────────── hardcoded placeholder data ───────────────────────────
    TODO: replace with real API data once backend endpoints are ready.
 */
-const STATS = {
-  total: 428,
-  byYear: [
-    { year: 2026, count: 62 },
-    { year: 2025, count: 118 },
-    { year: 2024, count: 97 },
-    { year: 2023, count: 84 },
-    { year: 2022, count: 67 },
-  ],
-};
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -33,6 +23,37 @@ export default function MiniSahanaDashboardPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchError, setSearchError] = useState("");
   const searchRef = useRef(null);
+
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/mini-sahana-form/stats`, {
+          headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          signal: controller.signal,
+        });
+        if (res.status === 401) {
+          logout();
+          navigate("/login");
+          return;
+        }
+        if (!res.ok) throw new Error("Failed to load stats");
+        setStats(await res.json());
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error(err);
+          setStatsError("Couldn't load summary data.");
+        }
+      } finally {
+        setStatsLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [token, logout, navigate]);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -342,6 +363,8 @@ export default function MiniSahanaDashboardPage() {
             )}
           </div>
 
+          {statsError && <p className="text-sm text-red-600">{statsError}</p>}
+
           {/* Total applications card */}
           <div
             className="relative overflow-hidden rounded-2xl border border-line bg-surface p-6 sm:p-8"
@@ -351,22 +374,35 @@ export default function MiniSahanaDashboardPage() {
             <div className="relative z-10">
               <p className="text-sm text-ink-muted">Total applications</p>
               <p className="mt-1 font-display text-4xl font-bold sm:text-5xl" style={{ letterSpacing: "-0.02em" }}>
-                {STATS.total.toLocaleString()}
+                {statsLoading ? "—" : (stats?.total ?? 0).toLocaleString()}
               </p>
             </div>
           </div>
 
-          {/* Per-year breakdown cards */}
+          {/* Per-year breakdown */}
           <div>
             <h3 className="mb-3 text-sm font-semibold text-ink-muted">Applications by year</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {STATS.byYear.map((row) => (
-                <div
-                  key={row.year}
-                  className="rounded-xl border border-line bg-surface p-4"
-                  style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}
-                >
+              {(stats?.byYear ?? []).map((row) => (
+                <div key={row.year} className="rounded-xl border border-line bg-surface p-4"
+                  style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
                   <p className="text-xs font-mono uppercase tracking-wide text-ink-muted">{row.year}</p>
+                  <p className="mt-1 font-display text-2xl font-bold">{row.count.toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Per-grade breakdown */}
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-ink-muted">
+              Applications by grade ({new Date().getFullYear()})
+            </h3>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(stats?.byGrade ?? []).map((row) => (
+                <div key={row.grade} className="rounded-xl border border-line bg-surface p-4"
+                  style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
+                  <p className="text-xs font-mono uppercase tracking-wide text-ink-muted">Grade {row.grade}</p>
                   <p className="mt-1 font-display text-2xl font-bold">{row.count.toLocaleString()}</p>
                 </div>
               ))}

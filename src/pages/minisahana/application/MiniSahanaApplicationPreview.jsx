@@ -298,8 +298,8 @@ const recordToFormData = (record) => {
     spouseName: isMarried ? (record.spouseName || '') : '',
     spouseOccupation: isMarried ? (record.spouseOccupation || '') : '',
     numberOfChildren: isMarried ? String(record.childrenCount ?? '') : '',
-    licenseNumber: record.licenseNumber || '',
-    fileNumber: record.fileNumber || '',
+    licenseNumber: record.licenseNumber && record.licenseNumber !== 'N/A' ? record.licenseNumber : '',
+    fileNumber: record.fileNumber && record.fileNumber !== 'N/A' ? record.fileNumber : '',
     regionalOffice: record.licenseRegionalOfficeAndZone || '',
   };
 };
@@ -308,10 +308,10 @@ const DOC_SLOTS = [
   { key: 'hard_copy', label: 'Submitted Hard Copy' },
   { key: 'bank_passbook', label: 'Copy of the Bank Passbook' },
   { key: 'birth_certificate', label: 'Copy of the Birth Certificate' },
-  { key: 'additional', label: 'Additional Document' },
+  { key: 'additional', label: 'O/L Certificate' },
 ];
 
-const DocumentsPanel = ({ recordId, documents, token, disabled, onRecordUpdated, onUnauthorized }) => {
+const DocumentsPanel = ({ recordId, documents, grade, token, disabled, onRecordUpdated, onUnauthorized }) => {
   const [busyKey, setBusyKey] = useState(null);
   const API = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -371,7 +371,7 @@ const DocumentsPanel = ({ recordId, documents, token, disabled, onRecordUpdated,
       {DOC_SLOTS.map(({ key, label }) => {
         const doc = (documents || []).find(d => d.key === key);
         const versions = doc?.versions ?? [];
-        if (!doc && key === 'additional' && disabled) return null;
+        if (!doc && key === 'additional' && (disabled || String(grade).trim() !== '12')) return null;
         return (
           <div key={key} className="p-3 border-b border-black last:border-b-0 flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -490,6 +490,16 @@ const MiniSahanaApplicationPreview = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: false }));
   };
+
+  const handleCategorySelect = (id, checked) => {
+    setFormData(prev => {
+      const next = { ...prev, categoryA: false, categoryB: false, categoryC: false, [id]: checked };
+      if (!next.categoryA) { next.licenseNumber = ''; next.fileNumber = ''; }
+      return next;
+    });
+    setErrors(prev => ({ ...prev, category: false, licenseNumber: false, fileNumber: false }));
+  };
+
   const handleYearDigitChange = (e, nextRef, field) => {
     const digit = e.target.value.replace(/\D/g, '').slice(-1);
     handleChange(field, digit);
@@ -514,8 +524,9 @@ const MiniSahanaApplicationPreview = () => {
       'dobDay', 'dobMonth', 'dobYear', 'gender', 'schoolName', 'grade', 'schoolAddressPhone',
       'bankAccountName', 'bankBranch', 'parentName', 'parentAddress', 'parentPhone', 'parentNIC',
       'parentAge', 'parentOccupation', 'parentIncome', 'parentMaritalStatus',
-      'licenseNumber', 'fileNumber', 'regionalOffice'
+      'regionalOffice'
     ]);
+    if (formData.categoryA) checkRequired(['licenseNumber', 'fileNumber']);
     if (formData.applicantTitle.length !== 1) newErrors.applicantTitle = true;
     if (formData.parentType.length !== 1) newErrors.parentType = true;
     const phoneRegex = /^(?:0|0094|\+94)[0-9]{9}$/;
@@ -568,8 +579,8 @@ const MiniSahanaApplicationPreview = () => {
         spouseName: formData.parentMaritalStatus === 'married' ? formData.spouseName : 'N/A',
         spouseOccupation: formData.parentMaritalStatus === 'married' ? formData.spouseOccupation : 'N/A',
         childrenCount: Number(formData.numberOfChildren) || 0,
-        licenseNumber: formData.licenseNumber,
-        fileNumber: formData.fileNumber,
+        licenseNumber: formData.categoryA ? formData.licenseNumber : 'N/A',
+        fileNumber: formData.categoryA ? formData.fileNumber : 'N/A',
         licenseRegionalOfficeAndZone: formData.regionalOffice,
         attachments: record.attachments || { bankPassbookCopy: 'Yes', birthCertificateCopy: 'Yes' },
         declarationSigned: true,
@@ -877,7 +888,7 @@ const MiniSahanaApplicationPreview = () => {
             <div key={item.editId} className={`flex flex-row ${idx !== arr.length - 1 ? 'border-b border-black' : ''}`}>
               <div className="w-[85%] sm:w-[90%] p-2 border-r border-black">{item.text}</div>
               <div className={`w-[15%] sm:w-[10%] flex items-center justify-center p-2 ${errors.category ? 'bg-red-50' : ''}`}>
-                <input type="checkbox" checked={isEditing ? formData[item.editId] : categories.includes(item.viewId)} disabled={!isEditing} onChange={(e) => handleChange(item.editId, e.target.checked)} className="w-5 h-5" />
+                <input type="checkbox" checked={isEditing ? formData[item.editId] : categories.includes(item.viewId)} disabled={!isEditing} onChange={(e) => handleCategorySelect(item.editId, e.target.checked)} className="w-5 h-5" />
               </div>
             </div>
           ))}
@@ -1009,16 +1020,15 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">26. බලපත්‍ර අංකය</div>
             <div className="sm:w-[60%] p-2">
               {isEditing
-                ? <input type="text" value={formData.licenseNumber} onChange={(e) => handleChange('licenseNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.licenseNumber ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.licenseNumber} />}
-            </div>
+                ? <input type="text" disabled={!formData.categoryA} value={formData.licenseNumber} onChange={(e) => handleChange('licenseNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${errors.licenseNumber ? 'bg-red-50' : ''}`} />
+                : <ReadOnlyField value={record.licenseNumber !== 'N/A' ? record.licenseNumber : ''} />} </div>
           </div>
           <div className="sm:w-1/2 flex flex-col sm:flex-row">
             <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">27. ලිපිගොනු අංකය</div>
             <div className="sm:w-[55%] p-2">
               {isEditing
-                ? <input type="text" value={formData.fileNumber} onChange={(e) => handleChange('fileNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.fileNumber ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.fileNumber} />}
+                ? <input type="text" disabled={!formData.categoryA} value={formData.fileNumber} onChange={(e) => handleChange('fileNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${errors.fileNumber ? 'bg-red-50' : ''}`} />
+                : <ReadOnlyField value={record.fileNumber !== 'N/A' ? record.fileNumber : ''} />}
             </div>
           </div>
         </div>
@@ -1036,6 +1046,7 @@ const MiniSahanaApplicationPreview = () => {
         <DocumentsPanel
           recordId={id}
           documents={record.documents}
+          grade={record.grade}
           token={token}
           disabled={isEditing || viewingOriginal}
           onRecordUpdated={(updated) => setRecord(updated)}
@@ -1059,8 +1070,8 @@ const MiniSahanaApplicationPreview = () => {
               <div key={idx} className="p-3 sm:p-4 text-xs sm:text-sm flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-gray-500">
                   <span className={`px-2 py-0.5 rounded text-white text-[10px] font-semibold ${entry.editType === 'acc_number' ? 'bg-amber-600'
-                      : entry.editType === 'document' ? 'bg-emerald-600'
-                        : 'bg-blue-600'
+                    : entry.editType === 'document' ? 'bg-emerald-600'
+                      : 'bg-blue-600'
                     }`}>
                     {entry.editType === 'acc_number' ? 'ACC NUMBER EDIT'
                       : entry.editType === 'document' ? 'DOCUMENT EDIT'

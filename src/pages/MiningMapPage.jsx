@@ -313,14 +313,9 @@ function MineDetailPanel({ mine, loading, error, onPreview, hideEmptyMessage }) 
 
   const point = mine.gpsPoints?.[0];
   const rows = [
-    { label: "Applicant", value: mine.applicantName },
     { label: "Phone", value: mine.applicantPhone },
     { label: "TIN", value: mine.tin },
     { label: "GML", value: mine.gmlNumber },
-    { label: "GPS", value: point ? `${point.latitude}, ${point.longitude}` : null },
-    { label: "Created by", value: mine.createdBy },
-    { label: "Created at", value: mine.createdAt && new Date(mine.createdAt).toLocaleString() },
-    { label: "Updated at", value: mine.updatedAt && new Date(mine.updatedAt).toLocaleString() },
   ].filter((r) => r.value);
 
   const statusColors = {
@@ -632,6 +627,16 @@ export default function MiningMapPage() {
   const [officeClusters, setOfficeClusters] = useState([]);
   const [activeDistrict, setActiveDistrict] = useState(null);
   const [activeOffice, setActiveOffice] = useState(null);
+
+  // Clear the selected-mine card whenever the map is no longer at the mines level
+  useEffect(() => {
+    if (mapLevel !== "mines") {
+      setSelectedMine(null);
+      setSelectedDetails(null);
+      setDetailError("");
+      setDetailLoading(false);
+    }
+  }, [mapLevel]);
 
   const fetchDistrictClusters = useCallback(async () => {
     const cacheKey = "districts";
