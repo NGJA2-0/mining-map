@@ -990,6 +990,10 @@ export default function MiningMapPage() {
       // the map (e.g. outside the loaded set), flyTo still zooms to the
       // right spot, it just won't show the special highlighted icon.
       setSelectedMine({ id: mine.id, latitude: point.latitude, longitude: point.longitude });
+
+      zoomBusyRef.current = true; // pause auto drill-down during the fly
+      setTimeout(() => { zoomBusyRef.current = false; }, 1200);
+
       mapRef.current?.flyTo([lat, lng], 13, { duration: 0.8 });
 
       setSelectedDetails(null);
@@ -1275,6 +1279,7 @@ export default function MiningMapPage() {
                   </p>
                 </>
               )}
+              
             </div>
           )}
 
@@ -1462,6 +1467,11 @@ export default function MiningMapPage() {
                 })}
               </MarkerClusterGroup>
             )}
+            {selectedMine &&
+              !(mapLevel === "mines" && mines.some((m) => m.id === selectedMine.id)) &&
+              getLatLng(selectedMine) && (
+                <Marker position={getLatLng(selectedMine)} icon={highlightedMarkerIcon} />
+              )}
           </MapContainer>
         </div>
       </div>
