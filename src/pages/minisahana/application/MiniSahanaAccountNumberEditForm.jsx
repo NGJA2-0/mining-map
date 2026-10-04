@@ -10,6 +10,10 @@ const MiniSahanaAccountNumberEditForm = () => {
 
   const record = location.state?.record;
 
+  const [accountNumber, setAccountNumber] = useState(record.bankAccountNumber || '');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   if (!record) {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
@@ -25,17 +29,14 @@ const MiniSahanaAccountNumberEditForm = () => {
     );
   }
 
-  const [accountNumber, setAccountNumber] = useState(record.bankAccountNumber || '');
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!token) {
       alert('ඔබගේ සැසිය අවසන් වී ඇත. කරුණාකර නැවත පිවිසෙන්න.');
-      navigate('/login');
+      logout();
+      navigate('/login', { replace: true });
       return;
     }
 
@@ -64,11 +65,12 @@ const MiniSahanaAccountNumberEditForm = () => {
       if (response.ok) {
         alert('ගිණුම් අංකය යාවත්කාලීන කරන ලදී! (Account number updated!)');
         navigate(`/minisahana/applications/${id}`, {
+          replace: true,
           state: { record: { ...record, bankAccountNumber: trimmed } },
         });
       } else if (response.status === 401) {
         logout();
-        navigate('/login');
+        navigate('/login', { replace: true });
       } else {
         const errData = await response.json().catch(() => ({}));
         setError(errData.error || 'යාවත්කාලීන කිරීමේ දෝෂයක්.');
@@ -86,7 +88,7 @@ const MiniSahanaAccountNumberEditForm = () => {
       <div className="mb-6 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => navigate(`/minisahana/applications/${id}`, { state: { record } })}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-black"
         >
           ← ආපසු (Cancel)

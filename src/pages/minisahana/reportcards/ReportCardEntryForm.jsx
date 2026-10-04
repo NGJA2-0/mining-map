@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import ReportCardSummary from "./ReportCardSummary";
 
@@ -19,6 +19,61 @@ export default function ReportCardEntryForm({ student, onBack }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [savedAccNumber, setSavedAccNumber] = useState(null);
+
+  const olInputRef = useRef(null);
+  const [olFile, setOlFile] = useState(null);
+  const [olStatus, setOlStatus] = useState("idle"); // idle | loading | exists | missing | error
+  const [olInfo, setOlInfo] = useState(null);
+
+  useEffect(() => {
+    if (currentGrade !== "12" || !student?.id) {
+      setOlStatus("idle");
+      setOlFile(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setOlStatus("loading");
+
+    fetch(`${API_BASE_URL}/api/report-cards/ol-certificate/${student.id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("status failed");
+        return res.json();
+      })
+      .then((data) => {
+        setOlInfo(data);
+        setOlStatus(data.exists ? "exists" : "missing");
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") setOlStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [currentGrade, student?.id, token]);
+
+  // Opens the PDF in a new tab. A plain link won't work because the endpoint needs the Bearer token.
+  const viewOlCertificate = async () => {
+    const win = window.open("", "_blank"); // open synchronously so popup blockers allow it
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/report-cards/ol-certificate/${student.id}/file`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      if (!res.ok) throw new Error("fetch failed");
+      const blob = await res.blob();
+      win.location.href = URL.createObjectURL(blob);
+    } catch (err) {
+      win?.close();
+      setSubmitError("Couldn't open the O/L certificate.");
+    }
+  };
+
+  const handleOlFile = (file) => {
+    if (file && file.type === "application/pdf") setOlFile(file);
+  };
 
   const handleFile = (file) => {
     if (!file) return;
@@ -43,6 +98,21 @@ export default function ReportCardEntryForm({ student, onBack }) {
       return;
     }
 
+    if (!currentGrade) {
+      setSubmitError("Please enter the student's current grade.");
+      return;
+    }
+    if (currentGrade === "12") {
+      if (olStatus === "loading" || olStatus === "error") {
+        setSubmitError("Couldn't verify the O/L certificate. Please try again.");
+        return;
+      }
+      if (olStatus === "missing" && !olFile) {
+        setSubmitError("Please attach the O/L certificate PDF.");
+        return;
+      }
+    }
+
     setSubmitting(true);
 
     try {
@@ -57,6 +127,10 @@ export default function ReportCardEntryForm({ student, onBack }) {
       formData.append("endDate", endDate);
       formData.append("amount", monthlyAmount);
       formData.append("pdf", selectedFile);
+
+      if (currentGrade === "12" && olStatus === "missing" && olFile) {
+        formData.append("olCertificate", olFile);
+      }
 
       const res = await fetch(`${API_BASE_URL}/api/report-cards`, {
         method: "POST",
@@ -78,6 +152,8 @@ export default function ReportCardEntryForm({ student, onBack }) {
       setFileName("");
       setSelectedFile(null);
       setSavedAccNumber(student?.bankAccountNumber || "");
+      setOlFile(null);
+      setOlStatus("idle");
     } catch (err) {
       console.error(err);
       setSubmitError("Couldn't submit. Try again.");
@@ -210,12 +286,71 @@ export default function ReportCardEntryForm({ student, onBack }) {
               </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={2}
                 value={currentGrade}
-                onChange={(e) => setCurrentGrade(e.target.value)}
-                placeholder="e.g. 10 වසර"
-                className="w-full rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
+                onChange={(e) => setCurrentGrade(e.target.value.replace(/\D/g, ""))}
+                placeholder="e.g. 10"
+                className="..."  /* keep your existing classes */
               />
             </div>
+            {currentGrade === "12" && (
+              <div className="mb-4">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  O/L Certificate
+                </label>
+
+                {olStatus === "loading" && (
+                  <p className="rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink-muted">
+                    Checking application…
+                  </p>
+                )}
+
+                {olStatus === "error" && (
+                  <p className="rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-red-600">
+                    Couldn't check the application for an O/L certificate. Change the grade and re-enter it to retry.
+                  </p>
+                )}
+
+                {olStatus === "exists" && (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-page px-3 py-2.5">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-ink">{olInfo?.fileName}</p>
+                      <p className="text-[11px] text-ink-muted">Already uploaded with the application</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={viewOlCertificate}
+                      className="shrink-0 rounded-md border border-copper/40 px-3 py-1.5 text-xs font-semibold text-copper transition-colors hover:bg-copper/5"
+                    >
+                      View
+                    </button>
+                  </div>
+                )}
+
+                {olStatus === "missing" && (
+                  <div
+                    onClick={() => olInputRef.current?.click()}
+                    role="button"
+                    tabIndex={0}
+                    className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-line bg-page px-4 py-5 text-center transition-colors hover:border-copper/50 hover:bg-copper/5"
+                  >
+                    <p className="max-w-full truncate text-xs font-semibold text-ink">
+                      {olFile ? olFile.name : "Click to upload O/L certificate"}
+                    </p>
+                    <p className="text-[11px] text-ink-muted">PDF only</p>
+                    <input
+                      ref={olInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => handleOlFile(e.target.files?.[0])}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
                 <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">

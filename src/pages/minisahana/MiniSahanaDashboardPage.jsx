@@ -38,7 +38,7 @@ export default function MiniSahanaDashboardPage() {
         });
         if (res.status === 401) {
           logout();
-          navigate("/login");
+          navigate("/login", { replace: true });
           return;
         }
         if (!res.ok) throw new Error("Failed to load stats");
@@ -99,7 +99,7 @@ export default function MiniSahanaDashboardPage() {
 
         if (res.status === 401) {
           logout();
-          navigate("/login");
+          navigate("/login", { replace: true });
           return;
         }
 
@@ -156,7 +156,7 @@ export default function MiniSahanaDashboardPage() {
 
       if (res.status === 401) {
         logout();
-        navigate("/login");
+        navigate("/login", { replace: true });
         return;
       }
 
@@ -372,7 +372,7 @@ export default function MiniSahanaDashboardPage() {
           >
             <TopoBackground className="text-teal/15" />
             <div className="relative z-10">
-              <p className="text-sm text-ink-muted">Total applications</p>
+              <p className="text-sm text-ink-muted">All Years Total Applications</p>
               <p className="mt-1 font-display text-4xl font-bold sm:text-5xl" style={{ letterSpacing: "-0.02em" }}>
                 {statsLoading ? "—" : (stats?.total ?? 0).toLocaleString()}
               </p>

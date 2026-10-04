@@ -4,13 +4,46 @@ const AuthContext = createContext(null);
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("mm_user");
-    return stored ? JSON.parse(stored) : null;
-  });
+/** Decode the exp claim from a JWT without verifying the signature. */
+function getTokenExpMs(jwt) {
+  try {
+    const payload = JSON.parse(atob(jwt.split(".")[1]));
+    return typeof payload.exp === "number" ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
 
-  const [token, setToken] = useState(() => localStorage.getItem("mm_token"));
+/** Returns null if the JWT is missing, malformed, or already expired. */
+function getValidStoredToken() {
+  const jwt = localStorage.getItem("mm_token");
+  if (!jwt) return null;
+  const expMs = getTokenExpMs(jwt);
+  if (expMs !== null && expMs <= Date.now()) {
+    // Expired — clear storage immediately so the app starts clean.
+    localStorage.removeItem("mm_token");
+    localStorage.removeItem("mm_user");
+    return null;
+  }
+  return jwt;
+}
+
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() => getValidStoredToken());
+
+  const [user, setUser] = useState(() => {
+    // Only parse user if we have a valid token; skip if token was cleared above.
+    if (!localStorage.getItem("mm_token")) return null;
+    const stored = localStorage.getItem("mm_user");
+    if (!stored) return null;
+    try {
+      return JSON.parse(stored);
+    } catch {
+      // Corrupt stored user — discard it.
+      localStorage.removeItem("mm_user");
+      return null;
+    }
+  });
 
   useEffect(() => {
     if (user) localStorage.setItem("mm_user", JSON.stringify(user));
@@ -20,6 +53,25 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (token) localStorage.setItem("mm_token", token);
     else localStorage.removeItem("mm_token");
+  }, [token]);
+
+  // Auto-logout when the current token reaches its expiry while the tab is open.
+  useEffect(() => {
+    if (!token) return;
+    const expMs = getTokenExpMs(token);
+    if (expMs === null) return;
+    const msUntilExpiry = expMs - Date.now();
+    if (msUntilExpiry <= 0) {
+      // Already expired (race condition at mount) — log out immediately.
+      setToken(null);
+      setUser(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setToken(null);
+      setUser(null);
+    }, msUntilExpiry);
+    return () => clearTimeout(timer);
   }, [token]);
 
   /**
@@ -36,7 +88,7 @@ export function AuthProvider({ children }) {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.message || "Signup failed. Please try again.");
+      throw new Error(data.error || data.message || "Signup failed. Please try again.");
     }
 
     setToken(data.token);
@@ -58,7 +110,7 @@ export function AuthProvider({ children }) {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(data.message || "Login failed. Please try again.");
+      throw new Error(data.error || data.message || "Login failed. Please try again.");
     }
 
     setToken(data.token);

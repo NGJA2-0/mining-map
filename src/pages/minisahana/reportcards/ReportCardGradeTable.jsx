@@ -45,7 +45,7 @@ export default function ReportCardsGradeTable({ grade }) {
 
         if (res.status === 401) {
           logout();
-          navigate("/login");
+          navigate("/login", { replace: true });
           return;
         }
 

@@ -243,19 +243,31 @@ const ChangeHistoryPanel = ({ changes, fieldLabels, formatDiffValue }) => {
 const reconstructOriginalRecord = (record) => {
   const changes = record.changes ?? [];
   const original = { ...record };
+  const addedLater = new Set(); // docs that didn't exist at submission
 
   for (let i = changes.length - 1; i >= 0; i--) {
-    const entry = changes[i];
-    Object.entries(entry.oldValues || {}).forEach(([field, oldVal]) => {
+    Object.entries(changes[i].oldValues || {}).forEach(([field, oldVal]) => {
+      if (field.startsWith('documents.')) {
+        if (!oldVal) addedLater.add(field.slice('documents.'.length));
+        return; // documents are rebuilt below, not restored from strings
+      }
       original[field] = oldVal;
     });
   }
 
-  // Metadata should reflect the original submission too
-  original.refNumber = (record.refNumber || '').split('.')[0]; // e.g. "A6.2" → "A6"
+  // Originally submitted files = version 1 of each document that existed then
+  original.documents = (record.documents ?? [])
+    .filter((d) => !addedLater.has(d.key))
+    .map((d) => ({
+      ...d,
+      currentVersion: 1,
+      versions: (d.versions ?? []).filter((v) => v.version === 1),
+    }))
+    .filter((d) => d.versions.length > 0);
+
+  original.refNumber = (record.refNumber || '').split('.')[0];
   original.updatedBy = '';
   original.changes = [];
-
   return original;
 };
 
@@ -423,9 +435,12 @@ const MiniSahanaApplicationPreview = () => {
   const [error, setError] = useState('');
 
   const [isEditing, setIsEditing] = useState(false);
-  const [viewingOriginal, setViewingOriginal] = useState(false);
-  const original = useMemo(() => reconstructOriginalRecord(record), [record]);
-  const displayRecord = viewingOriginal ? original : record;
+  const viewingOriginal = new URLSearchParams(location.search).get('view') === 'original';
+  const original = useMemo(
+    () => (record ? reconstructOriginalRecord(record) : null),
+    [record]
+  );
+  const displayRecord = viewingOriginal && original ? original : record;
   const [formData, setFormData] = useState(null);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -434,7 +449,7 @@ const MiniSahanaApplicationPreview = () => {
 
   useEffect(() => {
     if (record) return;
-    if (!token) { navigate('/login'); return; }
+    // ProtectedRoute already handles the no-token case; no need to check here.
     const controller = new AbortController();
     (async () => {
       setLoading(true);
@@ -446,7 +461,7 @@ const MiniSahanaApplicationPreview = () => {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
         });
-        if (res.status === 401) { logout(); navigate('/login'); return; }
+        if (res.status === 401) { logout(); navigate('/login', { replace: true }); return; }
         if (!res.ok) throw new Error('Failed to load application');
         setRecord(await res.json());
       } catch (err) {
@@ -469,7 +484,7 @@ const MiniSahanaApplicationPreview = () => {
     return (
       <div className="max-w-5xl mx-auto p-8 text-center">
         <p className="text-red-600 mb-4">{error || 'Application not found.'}</p>
-        <button type="button" onClick={() => navigate('/minisahana/dashboard')} className="bg-gray-200 px-4 py-2 rounded font-medium hover:bg-gray-300">← Back</button>
+        <button type="button" onClick={() => navigate('/minisahana/applications')} className="bg-gray-200 px-4 py-2 rounded font-medium hover:bg-gray-300">← Back</button>
       </div>
     );
   }
@@ -484,6 +499,22 @@ const MiniSahanaApplicationPreview = () => {
     setIsEditing(false);
     setFormData(null);
     setErrors({});
+  };
+
+  const toggleOriginal = () => {
+  if (viewingOriginal) {
+    // we pushed ?view=original ourselves, so step back one entry
+    if (location.state?.fromToggle) navigate(-1);
+    // opened directly with ?view=original, so replace instead of leaving the page
+    else navigate(location.pathname, { replace: true });
+  } else {
+    navigate({ search: '?view=original' }, { state: { fromToggle: true } });
+  }
+};
+
+  const goBack = () => {
+    if (viewingOriginal) { toggleOriginal(); return; }
+    navigate('/minisahana/applications');
   };
 
   const handleChange = (field, value) => {
@@ -513,7 +544,7 @@ const MiniSahanaApplicationPreview = () => {
   const handleNumberChildrenChange = (e) => handleChange('numberOfChildren', e.target.value.replace(/\D/g, ''));
 
   const handleSave = async () => {
-    if (!token) { alert('ඔබගේ සැසිය අවසන් වී ඇත.'); navigate('/login'); return; }
+    if (!token) { alert('ඔබගේ සැසිය අවසන් වී ඇත.'); logout(); navigate('/login', { replace: true }); return; }
 
     const newErrors = {};
     const checkRequired = (fields) => fields.forEach(f => {
@@ -614,14 +645,14 @@ const MiniSahanaApplicationPreview = () => {
   };
 
   // ── derive display values ──
-  const nameMatch = (record.applicantFullNameSinhala || '').match(/^(.*)\s\((.*)\)\s*$/);
-  const applicantName = nameMatch ? nameMatch[1] : record.applicantFullNameSinhala;
+  const nameMatch = (displayRecord.applicantFullNameSinhala || '').match(/^(.*)\s\((.*)\)\s*$/);
+  const applicantName = nameMatch ? nameMatch[1] : displayRecord.applicantFullNameSinhala;
   const applicantTitle = nameMatch ? nameMatch[2] : '';
-  const [dobYear = '', dobMonth = '', dobDay = ''] = (record.dateOfBirth || '').split('-');
-  const yearDigits = String(record.year || '').slice(-2);
-  const gradeLabel = record.grade ? `${String(record.grade).replace(' වසර', '').trim()} වසර` : ''
-  const categories = record.eligibilityCategory || [];
-  const changes = record.changes ?? [];
+  const [dobYear = '', dobMonth = '', dobDay = ''] = (displayRecord.dateOfBirth || '').split('-');
+  const yearDigits = String(displayRecord.year || '').slice(-2);
+  const gradeLabel = displayRecord.grade ? `${String(displayRecord.grade).replace(' වසර', '').trim()} වසර` : '';
+  const categories = displayRecord.eligibilityCategory || [];
+  const changes = record.changes ?? []; // keep: history always shows the real log
 
   const FIELD_LABELS = {
     applicantFullNameSinhala: 'අයදුම්කරුගේ නම', applicantFullNameEnglish: 'නම (ඉංග්‍රීසි)',
@@ -655,16 +686,16 @@ const MiniSahanaApplicationPreview = () => {
     <div className="max-w-5xl mx-auto p-4 sm:p-8 bg-white text-black font-sinhala">
       {/* Back bar */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button type="button" onClick={() => (isEditing ? cancelEditing() : navigate('/minisahana/dashboard'))} className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-black">
+        <button type="button" onClick={() => (isEditing ? cancelEditing() : goBack())} className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-black">
           ← {isEditing ? 'ආපසු (Cancel)' : 'ආපසු (Back)'}
         </button>
 
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <span className="text-xs text-gray-400">
-            {record.refNumber ? `${isEditing ? 'Editing ' : ''}Ref: ${record.refNumber}` : ''}
-            {record.createdBy ? ` · Created by ${record.createdBy}` : ''}
-            {record.createdAt ? ` · ${new Date(record.createdAt).toLocaleDateString()}` : ''}
-            {record.updatedBy ? ` · Updated by ${record.updatedBy}` : ''}
+            {displayRecord.refNumber ? `${isEditing ? 'Editing ' : ''}Ref: ${displayRecord.refNumber}` : ''}
+            {displayRecord.createdBy ? ` · Created by ${displayRecord.createdBy}` : ''}
+            {displayRecord.createdAt ? ` · ${new Date(displayRecord.createdAt).toLocaleDateString()}` : ''}
+            {displayRecord.updatedBy ? ` · Updated by ${displayRecord.updatedBy}` : ''}
           </span>
 
           <div className="flex gap-2">
@@ -681,7 +712,7 @@ const MiniSahanaApplicationPreview = () => {
             {!isEditing && changes.length > 0 && (
               <button
                 type="button"
-                onClick={() => setViewingOriginal(v => !v)}
+                onClick={toggleOriginal}
                 className={`text-xs font-medium border px-3 py-1.5 rounded hover:bg-gray-100 ${viewingOriginal ? 'border-amber-600 text-amber-700 bg-amber-50' : 'border-black'}`}
               >
                 {viewingOriginal ? 'වර්තමාන අයදුම්පත බලන්න (View Current)' : 'මුල් අයදුම්පත බලන්න (View Original)'}
@@ -728,7 +759,7 @@ const MiniSahanaApplicationPreview = () => {
           <h2 className="text-base font-semibold">ජාතික මැණික් සහ ස්වර්ණාභරණ අධිකාරිය</h2>
         </div>
         <div className="border border-black p-2 w-full sm:w-48 text-center text-xs bg-gray-50 text-gray-700">
-          {record.refNumber || 'කාර්යාලීය ප්‍රයෝජනය සඳහා'}
+          {displayRecord.refNumber || 'කාර්යාලීය ප්‍රයෝජනය සඳහා'}
         </div>
       </div>
 
@@ -757,7 +788,7 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[75%] p-2">
             {isEditing
               ? <EditableGrid length={32} rows={2} value={formData.nameEnglish} onChange={(v) => handleChange('nameEnglish', v)} error={errors.nameEnglish} />
-              : <ReadOnlyGrid length={32} rows={2} value={record.applicantFullNameEnglish} />}
+              : <ReadOnlyGrid length={32} rows={2} value={displayRecord.applicantFullNameEnglish} />}
           </div>
         </div>
 
@@ -769,7 +800,7 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[75%] p-2">
             {isEditing
               ? <EditableGrid length={32} rows={2} value={formData.nameInitialsEnglish} onChange={(v) => handleChange('nameInitialsEnglish', v)} error={errors.nameInitialsEnglish} />
-              : <ReadOnlyGrid length={32} rows={2} value={record.nameWithInitialsEnglish} />}
+              : <ReadOnlyGrid length={32} rows={2} value={displayRecord.nameWithInitialsEnglish} />}
           </div>
         </div>
 
@@ -796,8 +827,8 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[40%] flex flex-col sm:flex-row">
             <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">5. ස්ත්‍රී/පුරුෂ</div>
             <div className={`sm:w-[55%] p-2 flex items-center justify-around ${errors.gender ? 'bg-red-50' : ''}`}>
-              <label className="flex items-center gap-1"><input type="radio" checked={(isEditing ? formData.gender : record.gender) === 'female'} disabled={!isEditing} onChange={() => handleChange('gender', 'female')} /> ස්ත්‍රී</label>
-              <label className="flex items-center gap-1"><input type="radio" checked={(isEditing ? formData.gender : record.gender) === 'male'} disabled={!isEditing} onChange={() => handleChange('gender', 'male')} /> පුරුෂ</label>
+              <label className="flex items-center gap-1"><input type="radio" checked={(isEditing ? formData.gender : displayRecord.gender) === 'female'} disabled={!isEditing} onChange={() => handleChange('gender', 'female')} /> ස්ත්‍රී</label>
+              <label className="flex items-center gap-1"><input type="radio" checked={(isEditing ? formData.gender : displayRecord.gender) === 'male'} disabled={!isEditing} onChange={() => handleChange('gender', 'male')} /> පුරුෂ</label>
             </div>
           </div>
         </div>
@@ -808,7 +839,7 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[60%] p-2">
             {isEditing
               ? <input type="text" value={formData.schoolName} onChange={(e) => handleChange('schoolName', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.schoolName ? 'bg-red-50' : ''}`} />
-              : <ReadOnlyField value={record.school} />}
+              : <ReadOnlyField value={displayRecord.school} />}
           </div>
         </div>
 
@@ -833,7 +864,7 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[60%] p-2">
             {isEditing
               ? <textarea value={formData.schoolAddressPhone} onChange={(e) => handleChange('schoolAddressPhone', e.target.value)} className={`w-full h-16 focus:outline-none bg-transparent resize-none ${errors.schoolAddressPhone ? 'bg-red-50' : ''}`} />
-              : <ReadOnlyField value={record.schoolAddressAndPhone} multiline />}
+              : <ReadOnlyField value={displayRecord.schoolAddressAndPhone} multiline />}
           </div>
         </div>
 
@@ -848,7 +879,7 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[75%] p-2">
             {isEditing
               ? <EditableGrid length={32} rows={2} value={formData.bankAccountName} onChange={(v) => handleChange('bankAccountName', v)} error={errors.bankAccountName} />
-              : <ReadOnlyGrid length={32} rows={2} value={record.bankAccountName} />}
+              : <ReadOnlyGrid length={32} rows={2} value={displayRecord.bankAccountName} />}
           </div>
         </div>
 
@@ -858,7 +889,7 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[60%] p-2">
             {isEditing
               ? <input type="text" value={formData.bankBranch} onChange={(e) => handleChange('bankBranch', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.bankBranch ? 'bg-red-50' : ''}`} />
-              : <ReadOnlyField value={record.bankBranch} />}
+              : <ReadOnlyField value={displayRecord.bankBranch} />}
           </div>
         </div>
 
@@ -866,7 +897,7 @@ const MiniSahanaApplicationPreview = () => {
         <div className="flex flex-col sm:flex-row border-b border-black">
           <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">12. ගිණුම් අංකය</div>
           <div className="sm:w-[60%] p-2">
-            <ReadOnlyGrid length={20} value={record.bankAccountNumber} />
+            <ReadOnlyGrid length={20} value={displayRecord.bankAccountNumber} />
             {isEditing && (
               <p className="text-xs text-gray-500 mt-1">
                 ගිණුම් අංකය වෙනස් කිරීමට "ගිණුම් අංකය සංස්කරණය" විකල්පය භාවිතා කරන්න. (Use "Edit Account No." to change this.)
@@ -902,12 +933,12 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
             15. {isEditing
               ? <ToggleStrikeGroup options={['මව', 'පියා', 'භාරකරු']} value={formData.parentType} onChange={(v) => handleChange('parentType', v)} error={errors.parentType} />
-              : record.parentGuardianRelation}ගේ නම
+              : displayRecord.parentGuardianRelation}ගේ නම
           </div>
           <div className="sm:w-[60%] p-2">
             {isEditing
               ? <input type="text" value={formData.parentName} onChange={(e) => handleChange('parentName', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentName ? 'bg-red-50' : ''}`} />
-              : <ReadOnlyField value={record.parentGuardianName} />}
+              : <ReadOnlyField value={displayRecord.parentGuardianName} />}
           </div>
         </div>
 
@@ -917,7 +948,7 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[60%] p-2">
             {isEditing
               ? <textarea value={formData.parentAddress} onChange={(e) => handleChange('parentAddress', e.target.value)} className={`w-full h-12 focus:outline-none bg-transparent resize-none ${errors.parentAddress ? 'bg-red-50' : ''}`} />
-              : <ReadOnlyField value={record.permanentAddress} multiline />}
+              : <ReadOnlyField value={displayRecord.permanentAddress} multiline />}
           </div>
         </div>
 
@@ -928,7 +959,7 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-[60%] p-2">
               {isEditing
                 ? <input type="tel" value={formData.parentPhone} onChange={handlePhoneChange} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentPhone ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.phoneNumber} />}
+                : <ReadOnlyField value={displayRecord.phoneNumber} />}
             </div>
           </div>
           <div className="sm:w-1/2 flex flex-col sm:flex-row">
@@ -936,7 +967,7 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-[55%] p-2">
               {isEditing
                 ? <EditableGrid length={12} value={formData.parentNIC} onChange={(v) => handleChange('parentNIC', v)} error={errors.parentNIC} />
-                : <ReadOnlyGrid length={12} value={record.nic} />}
+                : <ReadOnlyGrid length={12} value={displayRecord.nic} />}
             </div>
           </div>
         </div>
@@ -948,7 +979,7 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-[60%] p-2">
               {isEditing
                 ? <input type="text" inputMode="numeric" value={formData.parentAge} onChange={handleAgeChange} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentAge ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.age} />}
+                : <ReadOnlyField value={displayRecord.age} />}
             </div>
           </div>
           <div className="sm:w-1/2 flex flex-col sm:flex-row">
@@ -956,7 +987,7 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-[55%] p-2">
               {isEditing
                 ? <input type="text" value={formData.parentOccupation} onChange={(e) => handleChange('parentOccupation', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentOccupation ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.occupation} />}
+                : <ReadOnlyField value={displayRecord.occupation} />}
             </div>
           </div>
         </div>
@@ -968,14 +999,14 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-[60%] p-2">
               {isEditing
                 ? <input type="text" value={formData.parentIncome} onChange={(e) => handleChange('parentIncome', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.parentIncome ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.monthlyIncome} />}
+                : <ReadOnlyField value={displayRecord.monthlyIncome} />}
             </div>
           </div>
           <div className="sm:w-1/2 flex flex-col sm:flex-row">
             <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">22. විවාහක/අවිවාහක</div>
             <div className={`sm:w-[55%] p-2 flex items-center justify-around ${errors.parentMaritalStatus ? 'bg-red-50' : ''}`}>
-              <label className="flex items-center gap-1"><input type="radio" checked={(isEditing ? formData.parentMaritalStatus : record.maritalStatus) === 'married'} disabled={!isEditing} onChange={() => handleChange('parentMaritalStatus', 'married')} /> විවාහක</label>
-              <label className="flex items-center gap-1"><input type="radio" checked={(isEditing ? formData.parentMaritalStatus : record.maritalStatus) === 'unmarried'} disabled={!isEditing} onChange={() => handleChange('parentMaritalStatus', 'unmarried')} /> අවිවාහක</label>
+              <label className="flex items-center gap-1"><input type="radio" checked={(isEditing ? formData.parentMaritalStatus : displayRecord.maritalStatus) === 'married'} disabled={!isEditing} onChange={() => handleChange('parentMaritalStatus', 'married')} /> විවාහක</label>
+              <label className="flex items-center gap-1"><input type="radio" checked={(isEditing ? formData.parentMaritalStatus : displayRecord.maritalStatus) === 'unmarried'} disabled={!isEditing} onChange={() => handleChange('parentMaritalStatus', 'unmarried')} /> අවිවාහක</label>
             </div>
           </div>
         </div>
@@ -985,12 +1016,12 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-[40%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">
             23. {isEditing
               ? <ToggleStrikeGroup options={['ස්වාමිපුරුෂයා', 'බිරිඳ']} value={formData.spouseType} onChange={(v) => handleChange('spouseType', v)} error={errors.spouseType} />
-              : (record.spouseRelation && record.spouseRelation !== 'N/A' ? record.spouseRelation : 'ස්වාමිපුරුෂයා/බිරිඳ')}ගේ නම
+              : (displayRecord.spouseRelation && displayRecord.spouseRelation !== 'N/A' ? displayRecord.spouseRelation : 'ස්වාමිපුරුෂයා/බිරිඳ')}ගේ නම
           </div>
           <div className="sm:w-[60%] p-2">
             {isEditing
               ? <input type="text" value={formData.spouseName} onChange={(e) => handleChange('spouseName', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.spouseName ? 'bg-red-50' : ''}`} />
-              : <ReadOnlyField value={record.spouseName !== 'N/A' ? record.spouseName : ''} />}
+              : <ReadOnlyField value={displayRecord.spouseName !== 'N/A' ? displayRecord.spouseName : ''} />}
           </div>
         </div>
 
@@ -1001,7 +1032,7 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-1/2 p-2">
               {isEditing
                 ? <input type="text" value={formData.spouseOccupation} onChange={(e) => handleChange('spouseOccupation', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.spouseOccupation ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.spouseOccupation !== 'N/A' ? record.spouseOccupation : ''} />}
+                : <ReadOnlyField value={displayRecord.spouseOccupation !== 'N/A' ? displayRecord.spouseOccupation : ''} />}
             </div>
           </div>
           <div className="sm:w-1/3 flex flex-col sm:flex-row">
@@ -1009,7 +1040,7 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-[55%] p-2">
               {isEditing
                 ? <input type="text" inputMode="numeric" value={formData.numberOfChildren} onChange={handleNumberChildrenChange} className={`w-full h-full focus:outline-none bg-transparent ${errors.numberOfChildren ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.childrenCount} />}
+                : <ReadOnlyField value={displayRecord.childrenCount} />}
             </div>
           </div>
         </div>
@@ -1021,14 +1052,14 @@ const MiniSahanaApplicationPreview = () => {
             <div className="sm:w-[60%] p-2">
               {isEditing
                 ? <input type="text" disabled={!formData.categoryA} value={formData.licenseNumber} onChange={(e) => handleChange('licenseNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${errors.licenseNumber ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.licenseNumber !== 'N/A' ? record.licenseNumber : ''} />} </div>
+                : <ReadOnlyField value={displayRecord.licenseNumber !== 'N/A' ? displayRecord.licenseNumber : ''} />} </div>
           </div>
           <div className="sm:w-1/2 flex flex-col sm:flex-row">
             <div className="sm:w-[45%] p-2 border-b sm:border-b-0 sm:border-r border-black font-medium">27. ලිපිගොනු අංකය</div>
             <div className="sm:w-[55%] p-2">
               {isEditing
                 ? <input type="text" disabled={!formData.categoryA} value={formData.fileNumber} onChange={(e) => handleChange('fileNumber', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${errors.fileNumber ? 'bg-red-50' : ''}`} />
-                : <ReadOnlyField value={record.fileNumber !== 'N/A' ? record.fileNumber : ''} />}
+                : <ReadOnlyField value={displayRecord.fileNumber !== 'N/A' ? displayRecord.fileNumber : ''} />}
             </div>
           </div>
         </div>
@@ -1039,24 +1070,24 @@ const MiniSahanaApplicationPreview = () => {
           <div className="sm:w-1/2 p-2">
             {isEditing
               ? <input type="text" value={formData.regionalOffice} onChange={(e) => handleChange('regionalOffice', e.target.value)} className={`w-full h-full focus:outline-none bg-transparent ${errors.regionalOffice ? 'bg-red-50' : ''}`} />
-              : <ReadOnlyField value={record.licenseRegionalOfficeAndZone} />}
+              : <ReadOnlyField value={displayRecord.licenseRegionalOfficeAndZone} />}
           </div>
         </div>
 
         <DocumentsPanel
           recordId={id}
-          documents={record.documents}
-          grade={record.grade}
+          documents={displayRecord.documents}
+          grade={displayRecord.grade}
           token={token}
           disabled={isEditing || viewingOriginal}
           onRecordUpdated={(updated) => setRecord(updated)}
-          onUnauthorized={() => { logout(); navigate('/login'); }}
+          onUnauthorized={() => { logout(); navigate('/login', { replace: true }); }}
         />
 
         {/* Declaration */}
         <div className="p-4 sm:p-8 flex flex-col gap-6 bg-white">
           <p className="font-medium">
-            {record.declarationSigned ? 'ඉහත දක්වා ඇති තොරතුරු සත්‍ය තොරතුරු බව සනාථ කර ඇත.' : 'ප්‍රකාශය තහවුරු කර නොමැත.'}
+            {displayRecord.declarationSigned ? 'ඉහත දක්වා ඇති තොරතුරු සත්‍ය තොරතුරු බව සනාථ කර ඇත.' : 'ප්‍රකාශය තහවුරු කර නොමැත.'}
           </p>
         </div>
       </div>

@@ -77,7 +77,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/dashboard/map" element={<MiningMapPage />} />
+          <Route path="/dashboard/map" element={<ProtectedRoute><MiningMapPage /></ProtectedRoute>} />
           <Route
             path="/minisahana"
             element={
@@ -126,7 +126,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/login" replace />} />
           <Route path="/minisahana/applications/:id" element={<ProtectedRoute>
             <MiniSahanaApplicationPreview />
           </ProtectedRoute>} />
@@ -139,6 +138,12 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Root redirect */}
+          <Route path="/" element={<Navigate to="/select-app" replace />} />
+
+          {/* Catch-all — must be last */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
