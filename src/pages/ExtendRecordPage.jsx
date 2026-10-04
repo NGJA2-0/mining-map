@@ -113,6 +113,22 @@ const DS_DIVISIONS_BY_DISTRICT = {
 
 const SRI_LANKA_PHONE_REGEX = /^(?:\+94|0)[1-9][0-9]{8}$/;
 
+const COORD_TYPING_REGEX = /^-?\d*\.?\d*$/;
+
+// Sri Lanka's approximate bounding box (with a small margin).
+const LAT_RANGE = [5.5, 10.0];
+const LNG_RANGE = [79.3, 82.2];
+
+function coordError(value, field) {
+  const v = String(value ?? "").trim();
+  if (v === "") return null; // emptiness is handled elsewhere
+  const n = Number(v);
+  if (Number.isNaN(n)) return "වලංගු අගයක් නොවේ";
+  const [min, max] = field === "latitude" ? LAT_RANGE : LNG_RANGE;
+  if (n < min || n > max) return `ශ්‍රී ලංකාව තුළ නොවේ (${min} – ${max})`;
+  return null;
+}
+
 const yesNo = [
   { value: "yes", label: "ඔව්" },
   { value: "no", label: "නැත" },
@@ -172,7 +188,8 @@ export default function ExtendRecordPage() {
   };
 
   const handleGpsChange = (index, field) => (e) => {
-    const { value } = e.target;
+    const value = e.target.value.replace(/,/g, "."); // tolerate comma decimals
+    if (!COORD_TYPING_REGEX.test(value)) return;     // ignore letters/symbols
     setForm((prev) => {
       const gpsPoints = prev.gpsPoints.map((point, i) =>
         i === index ? { ...point, [field]: value } : point
@@ -227,6 +244,8 @@ export default function ExtendRecordPage() {
     return data.url; // adjust if your upload API returns a different field name
   };
 
+  // Allows only an optional minus, digits, and one decimal point while typing.
+
   const validateForm = () => {
     const errors = [];
     const requiredAlways = [
@@ -243,6 +262,19 @@ export default function ExtendRecordPage() {
     if (!form.gpsPoints.some((p) => p.latitude && p.longitude)) {
       errors.push("gpsPoints");
     }
+
+    form.gpsPoints.forEach((p, i) => {
+      const hasLat = String(p.latitude).trim() !== "";
+      const hasLng = String(p.longitude).trim() !== "";
+      if (hasLat !== hasLng) errors.push(`gpsPoints[${i}] incomplete`);
+      if (coordError(p.latitude, "latitude") || coordError(p.longitude, "longitude")) {
+        errors.push(`gpsPoints[${i}] invalid`);
+      }
+    });
+
+    // Point 1 is what the map uses, so it must be complete and valid.
+    const first = form.gpsPoints[0];
+    if (!first?.latitude || !first?.longitude) errors.push("gpsPoints[0] required");
 
     if (form.hasExpenseParty) {
       ["expenseName", "expenseAddress", "expensePhone"].forEach((f) => {
@@ -503,23 +535,33 @@ export default function ExtendRecordPage() {
                             <label className="font-sinhala text-xs text-ink-muted">අක්ෂාංශ</label>
                             <input
                               type="text"
+                              inputMode="decimal"
+                              placeholder="6.665894"
                               disabled={index < lockedGpsCount}
                               className={`${inputClass} ${index < lockedGpsCount ? "cursor-not-allowed opacity-60" : ""}`}
                               required={index === 0}
                               value={point.latitude}
                               onChange={handleGpsChange(index, "latitude")}
                             />
+                            {coordError(point.latitude, "latitude") && (
+                              <p className="font-sinhala text-xs text-red-500">{coordError(point.latitude, "latitude")}</p>
+                            )}
                           </div>
                           <div className="flex flex-col gap-1">
                             <label className="font-sinhala text-xs text-ink-muted">දේශාංෂ</label>
                             <input
                               type="text"
+                              inputMode="decimal"
+                              placeholder="80.691948"
                               disabled={index < lockedGpsCount}
                               className={`${inputClass} ${index < lockedGpsCount ? "cursor-not-allowed opacity-60" : ""}`}
                               required={index === 0}
                               value={point.longitude}
                               onChange={handleGpsChange(index, "longitude")}
                             />
+                            {coordError(point.longitude, "longitude") && (
+                              <p className="font-sinhala text-xs text-red-500">{coordError(point.longitude, "longitude")}</p>
+                            )}
                           </div>
                         </div>
 
