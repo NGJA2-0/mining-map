@@ -317,10 +317,10 @@ export default function SearchResultsModal({
   }, [open, onClose]);
 
   const [downloadRecord, setDownloadRecord] = useState(null);
-
-  if (!open) return null;
+if (!open) return null;
 
   return (
+    <>
     <div
       onClick={onClose}
       style={{
@@ -527,17 +527,20 @@ export default function SearchResultsModal({
               fontSize: "11px", color: "var(--color-ink-muted, #6b7280)",
               fontFamily: "monospace",
             }}>
-              Page {page} of {totalPages} · {total} total record{total !== 1 ? "s" : ""}
+                            Page {page} of {totalPages} · {total} total record{total !== 1 ? "s" : ""}
             </p>
           </div>
         )}
       </div>
-
-      <DownloadRecordModal
-        open={!!downloadRecord}
-        onClose={() => setDownloadRecord(null)}
-        type={downloadRecord?.type}
-      />
     </div>
+
+    <DownloadRecordModal
+      open={!!downloadRecord}
+      onClose={() => setDownloadRecord(null)}
+      type={downloadRecord?.type}
+      record={downloadRecord}
+    />
+    </>
   );
 }
+    
