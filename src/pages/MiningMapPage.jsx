@@ -1049,6 +1049,8 @@ export default function MiningMapPage() {
     setPreviewError("");
   };
 
+  const mapBusy = loading || filteredLoading || searchLoading || detailLoading;   // ← ADD THIS LINE
+
   return (
     <div className="min-h-screen bg-base text-ink">
       <style>{`
@@ -1068,7 +1070,10 @@ export default function MiningMapPage() {
           0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.9; }
           100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
         }
-           @media print {
+        @keyframes mine-spin {              /* ← ADD THESE 3 LINES */
+          to { transform: rotate(360deg); }
+        }
+        @media print {
     .print-hide {
       display: none !important;
     }
@@ -1279,7 +1284,7 @@ export default function MiningMapPage() {
                   </p>
                 </>
               )}
-              
+
             </div>
           )}
 
@@ -1335,6 +1340,7 @@ export default function MiningMapPage() {
         {/* map */}
         <div
           style={{
+            position: "relative",
             flex: "2 1 480px",
             minWidth: "300px",
             height: "calc(100vh - 96px)",
@@ -1473,6 +1479,44 @@ export default function MiningMapPage() {
                 <Marker position={getLatLng(selectedMine)} icon={highlightedMarkerIcon} />
               )}
           </MapContainer>
+          {/* ↓↓↓ ADD FROM HERE ↓↓↓ */}
+          {mapBusy && (
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                position: "absolute",
+                top: 12,
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 1000,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 14px",
+                borderRadius: 999,
+                background: "#fff",
+                border: "1px solid var(--color-line, #e5e7eb)",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--color-ink, #1a1a1a)",
+                pointerEvents: "none",
+              }}
+            >
+              <span
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: "50%",
+                  border: "2px solid #d1d5db",
+                  borderTopColor: "#2563eb",
+                  animation: "mine-spin 0.7s linear infinite",
+                }}
+              />
+              Loading…
+            </div>
+          )}
         </div>
       </div>
 
