@@ -165,6 +165,15 @@ export default function MiniSahanaSelectionPage() {
               >
                 Report Cards
               </Button>
+
+              <Button
+                variant="secondary"
+                size="lg"
+                className="w-full"
+                onClick={() => navigate("/minisahana/payments")}
+              >
+                Payments
+              </Button>
             </div>
           </div>
         </div>

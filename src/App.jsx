@@ -16,6 +16,7 @@ import MiniSahanaFormPage from "./pages/minisahana/application/MiniSahanaFormPag
 import ReportCardsDashboardPage from "./pages/minisahana/reportcards/ReportCardsDashboardPage";
 import ReportCardForm from "./pages/minisahana/reportcards/ReportCardForm";
 import ReportCardSearchPage from "./pages/minisahana/reportcards/ReportCardSearchPage";
+import PaymentsPage from "./pages/minisahana/payments/PaymentsPage";
 import SideNav from "./pages/SideNav";
 import "./index.css";
 import MiniSahanaApplicationPreview from './pages/minisahana/application/MiniSahanaApplicationPreview';
@@ -126,6 +127,15 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/minisahana/payments"
+            element={
+              <ProtectedRoute>
+                <PaymentsPage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="/minisahana/applications/:id" element={<ProtectedRoute>
             <MiniSahanaApplicationPreview />
           </ProtectedRoute>} />
