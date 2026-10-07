@@ -2,13 +2,112 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const PAGE_SIZE = 10;
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+const fieldClass =
+  "w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-sm text-ink placeholder:text-ink-muted transition-colors focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20";
+
+function formatDate(value) {
+  if (!value) return "—";
+  const d = new Date(`${value}T00:00:00`);
+  if (isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 export default function PaymentsPage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [query, setQuery] = useState("");
+  const { user, token, logout } = useAuth();
+
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 8 }, (_, i) => currentYear - 5 + i);
+
+  const [year, setYear] = useState(currentYear);
+  const [fromMonth, setFromMonth] = useState(1);
+  const [toMonth, setToMonth] = useState(new Date().getMonth() + 1);
+  const [grade, setGrade] = useState("");
+
+  const [appliedFilters, setAppliedFilters] = useState(null);
+  const [results, setResults] = useState([]);
+  const [pageInfo, setPageInfo] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function fetchReportCards(filters, page = 1) {
+    setLoading(true);
+    setError("");
+    try {
+      const params = new URLSearchParams({
+        year: String(filters.year),
+        fromMonth: String(filters.fromMonth),
+        toMonth: String(filters.toMonth),
+        page: String(page),
+        limit: String(PAGE_SIZE),
+      });
+      if (filters.grade) params.set("grade", filters.grade);
+
+      const res = await fetch(`${BASE_URL}/api/report-cards/by-month?${params}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || body.message || "Failed to load payments.");
+
+      setResults(body.data || []);
+      setPageInfo({
+        page: body.page || page,
+        totalPages: body.totalPages || 1,
+        total: body.total || 0,
+      });
+    } catch (err) {
+      setResults([]);
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleFilter(e) {
+    e?.preventDefault();
+    if (fromMonth > toMonth) {
+      setError("Start month cannot be after end month.");
+      return;
+    }
+    const filters = { year, fromMonth, toMonth, grade: grade.trim() };
+    setAppliedFilters(filters);
+    fetchReportCards(filters, 1);
+  }
+
+  function goToPage(p) {
+    if (!appliedFilters || p < 1 || p > pageInfo.totalPages || loading) return;
+    fetchReportCards(appliedFilters, p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const [selected, setSelected] = useState(null);
+
+  // Close the popup with Escape and lock page scroll while it is open
+  useEffect(() => {
+    if (!selected) return;
+    function handleEscape(e) {
+      if (e.key === "Escape") setSelected(null);
+    }
+    document.addEventListener("keydown", handleEscape);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [selected]);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -128,37 +227,346 @@ export default function PaymentsPage() {
         </div>
       </header>
 
-      {/* ── main ── */}
+            {/* ── main ── */}
       <main className="flex-1 px-4 py-6 sm:px-10 sm:py-10 lg:px-16">
-        <div className="mx-auto w-full max-w-3xl">
-          {/* Dummy search bar */}
-          <div className="relative w-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search payments..."
-              aria-label="Search payments"
-              className="w-full rounded-xl border border-line bg-surface py-3 pl-11 pr-4 text-sm text-ink placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20 sm:py-3.5 sm:text-base"
-            />
-          </div>
+        <div className="mx-auto w-full max-w-6xl">
+          {/* Filter bar */}
+          <form
+            onSubmit={handleFilter}
+            className="rounded-2xl border border-line bg-surface p-4 sm:p-6"
+            style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
+          >
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-[1fr_1.2fr_1.2fr_1fr_auto] lg:items-end">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Year</span>
+                <select
+                  value={year}
+                  onChange={(e) => setYear(Number(e.target.value))}
+                  className={fieldClass}
+                >
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">From month</span>
+                <select
+                  value={fromMonth}
+                  onChange={(e) => setFromMonth(Number(e.target.value))}
+                  className={fieldClass}
+                >
+                  {MONTHS.map((m, i) => (
+                    <option key={m} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">To month</span>
+                <select
+                  value={toMonth}
+                  onChange={(e) => setToMonth(Number(e.target.value))}
+                  className={fieldClass}
+                >
+                  {MONTHS.map((m, i) => (
+                    <option key={m} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+                  Grade <span className="font-normal normal-case tracking-normal">(optional)</span>
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  inputMode="numeric"
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value)}
+                  placeholder="e.g. 10"
+                  className={fieldClass}
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={loading}
+                aria-label="Filter payments"
+                title="Filter"
+                className="col-span-2 flex h-[46px] items-center justify-center gap-2 rounded-xl bg-copper px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-copper/30 disabled:cursor-not-allowed disabled:opacity-60 lg:col-span-1 lg:w-[46px] lg:px-0"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <span className="lg:hidden">Filter</span>
+              </button>
+            </div>
+          </form>
+
+          {/* Error */}
+          {error && (
+            <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {/* States */}
+          {loading && (
+            <div className="mt-10 flex items-center justify-center gap-3 text-sm text-ink-muted">
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-copper" />
+              Loading payments...
+            </div>
+          )}
+
+          {!loading && !appliedFilters && !error && (
+            <p className="mt-10 text-center text-sm text-ink-muted">
+              Select a year and month range, then press the search icon to view payments.
+            </p>
+          )}
+
+          {!loading && appliedFilters && !error && results.length === 0 && (
+            <p className="mt-10 text-center text-sm text-ink-muted">
+              No report cards found for the selected filters.
+            </p>
+          )}
+
+          {/* Results */}
+          {!loading && results.length > 0 && (
+            <>
+              <p className="mt-6 text-sm text-ink-muted">
+                Showing <span className="font-semibold text-ink">{results.length}</span> of{" "}
+                <span className="font-semibold text-ink">{pageInfo.total}</span> records
+              </p>
+
+              <div
+                className="mt-4 overflow-hidden rounded-2xl border border-line bg-surface"
+                style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 10px 28px -14px rgba(0,0,0,0.12)" }}
+              >
+                <table className="block w-full text-left md:table">
+                  <thead className="hidden md:table-header-group">
+                    <tr className="border-b border-line bg-line/30">
+                      {["Student", "Grade", "Start date", "End date", "Monthly payments"].map((h) => (
+                        <th
+                          key={h}
+                          className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted"
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody className="block md:table-row-group">
+                    {results.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="block border-b border-line px-4 py-4 transition-colors last:border-b-0 hover:bg-line/20 md:table-row md:px-0 md:py-0"
+                      >
+                        {/* Student */}
+                        <td className="block pb-3 md:table-cell md:px-5 md:py-4 md:align-top">
+                          <p className="font-display text-base font-semibold text-ink md:max-w-[220px]">
+                            {item.fullName}
+                          </p>
+                          <p className="mt-0.5 font-mono text-xs uppercase tracking-wider text-ink-muted">
+                            Acc No: {item.accNumber}
+                          </p>
+                        </td>
+
+                        {/* Grade */}
+                        <td className="flex items-center justify-between gap-3 py-1.5 md:table-cell md:px-5 md:py-4 md:align-top">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
+                            Grade
+                          </span>
+                          <span className="inline-block whitespace-nowrap rounded-full bg-copper/10 px-3 py-1 text-xs font-semibold text-copper">
+                            Grade {item.currentGrade}
+                          </span>
+                        </td>
+
+                        {/* Start date */}
+                        <td className="flex items-center justify-between gap-3 py-1.5 md:table-cell md:px-5 md:py-4 md:align-top">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
+                            Start date
+                          </span>
+                          <span className="whitespace-nowrap text-sm font-medium text-ink">
+                            {formatDate(item.startDate)}
+                          </span>
+                        </td>
+
+                        {/* End date */}
+                        <td className="flex items-center justify-between gap-3 py-1.5 md:table-cell md:px-5 md:py-4 md:align-top">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
+                            End date
+                          </span>
+                          <span className="whitespace-nowrap text-sm font-medium text-ink">
+                            {formatDate(item.endDate)}
+                          </span>
+                        </td>
+
+                        {/* Months */}
+                        <td className="flex items-center justify-between gap-3 pt-3 md:table-cell md:px-5 md:py-4 md:align-top">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
+                            Monthly payments
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="whitespace-nowrap text-xs text-ink-muted">
+                              <span className="font-semibold text-emerald-700">
+                                {(item.months || []).filter((m) => m.paid).length}
+                              </span>
+                              {" / "}
+                              {(item.months || []).length} paid
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelected(item)}
+                              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-copper/30 bg-copper/10 px-3.5 py-1.5 text-xs font-semibold text-copper transition-colors hover:bg-copper hover:text-white focus:outline-none focus:ring-2 focus:ring-copper/30"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
+                              View
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {pageInfo.totalPages > 1 && (
+                <nav className="mt-8 flex items-center justify-between gap-3" aria-label="Pagination">
+                  <button
+                    type="button"
+                    onClick={() => goToPage(pageInfo.page - 1)}
+                    disabled={pageInfo.page <= 1}
+                    className="rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line/50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-ink-muted">
+                    Page <span className="font-semibold text-ink">{pageInfo.page}</span> of{" "}
+                    <span className="font-semibold text-ink">{pageInfo.totalPages}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => goToPage(pageInfo.page + 1)}
+                    disabled={pageInfo.page >= pageInfo.totalPages}
+                    className="rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line/50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </nav>
+              )}
+            </>
+          )}
         </div>
       </main>
+
+      {/* ── Months popup ── */}
+      {selected && (
+        <div
+          className="fixed inset-0 z-[110] flex items-end justify-center sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="months-modal-title"
+        >
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setSelected(null)}
+            aria-hidden="true"
+          />
+
+          <div
+            className="relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-3xl border border-line bg-surface sm:max-w-md sm:rounded-2xl"
+            style={{ boxShadow: "0 24px 60px -12px rgba(0,0,0,0.35)" }}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
+              <div className="min-w-0">
+                <h3
+                  id="months-modal-title"
+                  className="font-display text-lg font-semibold text-ink"
+                >
+                  {selected.fullName}
+                </h3>
+                <p className="mt-0.5 font-mono text-xs uppercase tracking-wider text-ink-muted">
+                  Acc No: {selected.accNumber}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                aria-label="Close"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-line/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Summary */}
+            <div className="flex items-center justify-between gap-3 bg-line/30 px-5 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+                Monthly payments
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                  {(selected.months || []).filter((m) => m.paid).length} paid
+                </span>
+                <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-600">
+                  {(selected.months || []).filter((m) => !m.paid).length} unpaid
+                </span>
+              </div>
+            </div>
+
+            {/* Months list */}
+            <ul className="flex flex-col gap-2 overflow-y-auto px-5 py-4 pb-6">
+              {(selected.months || []).map((m) => (
+                <li
+                  key={m.label}
+                  className={`flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 ${
+                    m.paid
+                      ? "border-emerald-200 bg-emerald-50"
+                      : "border-red-200 bg-red-50"
+                  }`}
+                >
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${
+                        m.paid ? "bg-emerald-500" : "bg-red-500"
+                      }`}
+                    />
+                    <span
+                      className={`truncate text-sm font-semibold ${
+                        m.paid ? "text-emerald-700" : "text-red-600"
+                      }`}
+                    >
+                      {m.label}
+                    </span>
+                  </span>
+
+                  {!m.paid && (
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-lg bg-copper px-3.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-copper/30"
+                    >
+                      Pay
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
