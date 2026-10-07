@@ -407,11 +407,11 @@ export default function PaymentsPage() {
                         </td>
 
                         {/* Months */}
-                        <td className="flex items-center justify-between gap-3 pt-3 md:table-cell md:px-5 md:py-4 md:align-top">
+                        <td className="flex flex-wrap items-center justify-between gap-3 pt-3 md:table-cell md:px-5 md:py-4 md:align-top">
                           <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
                             Monthly payments
                           </span>
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
                             <span className="whitespace-nowrap text-xs text-ink-muted">
                               <span className="font-semibold text-emerald-700">
                                 {(item.months || []).filter((m) => m.paid).length}
@@ -430,6 +430,14 @@ export default function PaymentsPage() {
                               </svg>
                               View
                             </button>
+                            {(item.months || []).some((m) => !m.paid) && (
+                              <button
+                                type="button"
+                                className="whitespace-nowrap rounded-lg bg-copper px-3.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-copper/30"
+                              >
+                                Pay
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -552,15 +560,6 @@ export default function PaymentsPage() {
                       {m.label}
                     </span>
                   </span>
-
-                  {!m.paid && (
-                    <button
-                      type="button"
-                      className="shrink-0 rounded-lg bg-copper px-3.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-copper/30"
-                    >
-                      Pay
-                    </button>
-                  )}
                 </li>
               ))}
             </ul>
