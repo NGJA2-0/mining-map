@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import PayConfirmModal from "./PayConfirmModal";
+import GlassSelect from "./GlassSelect";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const PAGE_SIZE = 10;
@@ -10,6 +11,8 @@ const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
+
+const MONTH_OPTIONS = MONTHS.map((m, i) => ({ value: i + 1, label: m }));
 
 const fieldClass =
   "w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-sm text-ink placeholder:text-ink-muted transition-colors focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20";
@@ -27,6 +30,7 @@ export default function PaymentsPage() {
 
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 8 }, (_, i) => currentYear - 5 + i);
+  const yearSelectOptions = yearOptions.map((y) => ({ value: y, label: String(y) }));
 
   const [year, setYear] = useState(currentYear);
   const [fromMonth, setFromMonth] = useState(1);
@@ -239,44 +243,26 @@ export default function PaymentsPage() {
             style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
           >
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-[1fr_1.2fr_1.2fr_1fr_auto] lg:items-end">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Year</span>
-                <select
-                  value={year}
-                  onChange={(e) => setYear(Number(e.target.value))}
-                  className={fieldClass}
-                >
-                  {yearOptions.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </label>
+              <GlassSelect
+                label="Year"
+                value={year}
+                onChange={setYear}
+                options={yearSelectOptions}
+              />
 
-              <label className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">From month</span>
-                <select
-                  value={fromMonth}
-                  onChange={(e) => setFromMonth(Number(e.target.value))}
-                  className={fieldClass}
-                >
-                  {MONTHS.map((m, i) => (
-                    <option key={m} value={i + 1}>{m}</option>
-                  ))}
-                </select>
-              </label>
+              <GlassSelect
+                label="From month"
+                value={fromMonth}
+                onChange={setFromMonth}
+                options={MONTH_OPTIONS}
+              />
 
-              <label className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">To month</span>
-                <select
-                  value={toMonth}
-                  onChange={(e) => setToMonth(Number(e.target.value))}
-                  className={fieldClass}
-                >
-                  {MONTHS.map((m, i) => (
-                    <option key={m} value={i + 1}>{m}</option>
-                  ))}
-                </select>
-              </label>
+              <GlassSelect
+                label="To month"
+                value={toMonth}
+                onChange={setToMonth}
+                options={MONTH_OPTIONS}
+              />
 
               <label className="flex flex-col gap-1.5">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
