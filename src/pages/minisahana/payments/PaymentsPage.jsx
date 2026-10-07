@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import PayConfirmModal from "./PayConfirmModal";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const PAGE_SIZE = 10;
@@ -93,6 +94,7 @@ export default function PaymentsPage() {
   const dropdownRef = useRef(null);
 
   const [selected, setSelected] = useState(null);
+  const [payTarget, setPayTarget] = useState(null);
 
   // Close the popup with Escape and lock page scroll while it is open
   useEffect(() => {
@@ -433,6 +435,7 @@ export default function PaymentsPage() {
                             {(item.months || []).some((m) => !m.paid) && (
                               <button
                                 type="button"
+                                onClick={() => setPayTarget(item)}
                                 className="whitespace-nowrap rounded-lg bg-copper px-3.5 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-copper/30"
                               >
                                 Pay
@@ -565,6 +568,16 @@ export default function PaymentsPage() {
             </ul>
           </div>
         </div>
+      )}
+
+      {/* ── Pay confirm / success popup ── */}
+      {payTarget && appliedFilters && (
+        <PayConfirmModal
+          record={payTarget}
+          filters={appliedFilters}
+          onClose={() => setPayTarget(null)}
+          onPaid={() => fetchReportCards(appliedFilters, pageInfo.page)}
+        />
       )}
     </div>
   );
