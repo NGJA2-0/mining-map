@@ -27,8 +27,8 @@ const initialState = {
   landName: "",
   landNature: "",
   isRatnapuraLand: "",
-  writtenEvidenceAttachment: null,
-  affidavitAttachment: null,
+  writtenEvidenceSubmitted: "",
+  affidavitSubmitted: "",
   hasExpenseParty: false,
   district: "",
   village: "",
@@ -166,10 +166,6 @@ export default function NewRecordPage() {
     setForm((prev) => ({ ...prev, [field]: e.target.checked }));
   };
 
-  const handleFileChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.files?.[0] || null }));
-  };
-
   const handlePhoneChange = (field) => (e) => {
     const value = e.target.value.replace(/[^0-9+]/g, "");
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -273,8 +269,8 @@ export default function NewRecordPage() {
     }
 
     if (form.isRatnapuraLand === "yes") {
-      if (!form.writtenEvidenceAttachment) errors.push("writtenEvidenceAttachment");
-      if (!form.affidavitAttachment) errors.push("affidavitAttachment");
+      if (!form.writtenEvidenceSubmitted) errors.push("writtenEvidenceSubmitted");
+      if (!form.affidavitSubmitted) errors.push("affidavitSubmitted");
     }
 
     if (form.existingPits === "yes") {
@@ -300,28 +296,16 @@ export default function NewRecordPage() {
 
     setSaving(true);
     try {
-      let writtenEvidenceAttachmentUrl;
-      let affidavitAttachmentUrl;
-
-      if (form.isRatnapuraLand === "yes") {
-        [writtenEvidenceAttachmentUrl, affidavitAttachmentUrl] = await Promise.all([
-          uploadFile(form.writtenEvidenceAttachment),
-          uploadFile(form.affidavitAttachment),
-        ]);
-      }
 
       const payload = {
         ...form,
         gpsPoints: form.gpsPoints.filter((p) => p.latitude && p.longitude),
-        writtenEvidenceAttachmentUrl,
-        affidavitAttachmentUrl,
       };
 
       NUMERIC_FIELDS.forEach((field) => {
         payload[field] = toNumberOrUndefined(payload[field]);
       });
-      delete payload.writtenEvidenceAttachment;
-      delete payload.affidavitAttachment;
+      
 
       const res = await fetch(`${BASE_URL}/api/mining-licenses`, {
         method: "POST",
@@ -630,24 +614,33 @@ export default function NewRecordPage() {
 
                     {form.isRatnapuraLand === "yes" && (
                       <div className="mt-3 flex flex-col gap-4">
-                        <p className="font-sinhala text-sm text-ink">
-                          බලපත්‍රය අවුරුදු 03 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
-                        </p>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            ලිඛිත සාක්ෂි ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("writtenEvidenceAttachment")}
-                          />
+                            value={form.writtenEvidenceSubmitted}
+                            onChange={handleChange("writtenEvidenceSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            දිවුරුම් ප්‍රකාශය ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("affidavitAttachment")}
-                          />
+                            value={form.affidavitSubmitted}
+                            onChange={handleChange("affidavitSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
                       </div>
                     )}
@@ -674,24 +667,33 @@ export default function NewRecordPage() {
 
                     {form.isRatnapuraLand === "yes" && (
                       <div className="mt-3 flex flex-col gap-4">
-                        <p className="font-sinhala text-sm text-ink">
-                          බලපත්‍රය අවුරුදු 05 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
-                        </p>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            ලිඛිත සාක්ෂි ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("writtenEvidenceAttachment")}
-                          />
+                            value={form.writtenEvidenceSubmitted}
+                            onChange={handleChange("writtenEvidenceSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            දිවුරුම් ප්‍රකාශය ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("affidavitAttachment")}
-                          />
+                            value={form.affidavitSubmitted}
+                            onChange={handleChange("affidavitSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
                       </div>
                     )}
@@ -1153,7 +1155,7 @@ export default function NewRecordPage() {
               <div className="border-t border-ink" />
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-sinhala text-sm text-ink">
-                  ඉහත නිර්දේශය අනුමත
+                  ඉහත නිර්දේශය
                 </p>
                 <select
                   className={`${inputClass} w-32`}
@@ -1161,8 +1163,8 @@ export default function NewRecordPage() {
                   onChange={handleChange("chairmanApproval")}
                 >
                   <option value="" hidden></option>
-                  <option value="කරමි">කරමි</option>
-                  <option value="නොකරමි">නොකරමි</option>
+                  <option value="කරමි">අනුමත කරමි</option>
+                  <option value="නොකරමි">අනුමත නොකරමි</option>
                 </select>
               </div>
 

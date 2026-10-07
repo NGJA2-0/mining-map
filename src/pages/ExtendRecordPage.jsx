@@ -27,8 +27,8 @@ const initialState = {
   landName: "",
   landNature: "",
   isRatnapuraLand: "",
-  writtenEvidenceAttachment: null,
-  affidavitAttachment: null,
+  writtenEvidenceSubmitted: "",
+  affidavitSubmitted: "",
   hasExpenseParty: false,
   district: "",
   village: "",
@@ -285,8 +285,8 @@ export default function ExtendRecordPage() {
     }
 
     if (form.isRatnapuraLand === "yes") {
-      if (!form.writtenEvidenceAttachment) errors.push("writtenEvidenceAttachment");
-      if (!form.affidavitAttachment) errors.push("affidavitAttachment");
+      if (!form.writtenEvidenceSubmitted) errors.push("writtenEvidenceSubmitted");
+      if (!form.affidavitSubmitted) errors.push("affidavitSubmitted");
     }
 
     if (form.existingPits === "yes") {
@@ -312,28 +312,15 @@ export default function ExtendRecordPage() {
 
     setSaving(true);
     try {
-      let writtenEvidenceAttachmentUrl;
-      let affidavitAttachmentUrl;
-
-      if (form.isRatnapuraLand === "yes") {
-        [writtenEvidenceAttachmentUrl, affidavitAttachmentUrl] = await Promise.all([
-          uploadFile(form.writtenEvidenceAttachment),
-          uploadFile(form.affidavitAttachment),
-        ]);
-      }
 
       const payload = {
         ...form,
         gpsPoints: form.gpsPoints.filter((p) => p.latitude && p.longitude),
-        writtenEvidenceAttachmentUrl,
-        affidavitAttachmentUrl,
       };
 
       NUMERIC_FIELDS.forEach((field) => {
         payload[field] = toNumberOrUndefined(payload[field]);
       });
-      delete payload.writtenEvidenceAttachment;
-      delete payload.affidavitAttachment;
 
       const res = await fetch(`${BASE_URL}/api/extend-mining-licenses`, {
         method: "POST",
@@ -1180,7 +1167,7 @@ export default function ExtendRecordPage() {
               <div className="border-t border-ink" />
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-sinhala text-sm text-ink">
-                  ඉහත නිර්දේශය අනුමත
+                  ඉහත නිර්දේශය
                 </p>
                 <select
                   className={`${inputClass} w-32`}
@@ -1188,8 +1175,8 @@ export default function ExtendRecordPage() {
                   onChange={handleChange("chairmanApproval")}
                 >
                   <option value="" hidden></option>
-                  <option value="කරමි">කරමි</option>
-                  <option value="නොකරමි">නොකරමි</option>
+                  <option value="කරමි">අනුමත කරමි</option>
+                  <option value="නොකරමි">අනුමතනොකරමි</option>
                 </select>
               </div>
 
