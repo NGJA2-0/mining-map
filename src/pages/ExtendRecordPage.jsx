@@ -612,7 +612,7 @@ export default function ExtendRecordPage() {
                   </div>
                 </Field>
 
-                {form.landNature === "goda" && (
+                {(form.landNature === "goda" || form.landNature === "kumbura") && (
                   <Field label="ඉඩම රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත්ද?" full>
                     <div className="flex gap-4 pt-1">
                       {yesNo.map((opt) => (
@@ -633,72 +633,43 @@ export default function ExtendRecordPage() {
                     {form.isRatnapuraLand === "yes" && (
                       <div className="mt-3 flex flex-col gap-4">
                         <p className="font-sinhala text-sm text-ink">
-                          බලපත්‍රය අවුරුදු 03 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
+                          බලපත්‍රය අවුරුදු {form.landNature === "goda" ? "03" : "05"} ක් පැරණි රත්නපුර පිහිටි
+                          ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
                         </p>
+
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            ලිඛිත සාක්ෂි ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("writtenEvidenceAttachment")}
-                          />
+                            value={form.writtenEvidenceSubmitted}
+                            onChange={handleChange("writtenEvidenceSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
+
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            දිවුරුම් ප්‍රකාශය ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("affidavitAttachment")}
-                          />
+                            value={form.affidavitSubmitted}
+                            onChange={handleChange("affidavitSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
                       </div>
                     )}
                   </Field>
-                )}
-
-                {form.landNature === "kumbura" && (
-                  <Field label="ඉඩම රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත්ද?" full>
-                    <div className="flex gap-4 pt-1">
-                      {yesNo.map((opt) => (
-                        <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
-                          <input
-                            type="radio"
-                            name="isRatnapuraLand"
-                            value={opt.value}
-                            checked={form.isRatnapuraLand === opt.value}
-                            onChange={handleChange("isRatnapuraLand")}
-                            className="accent-teal"
-                          />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-
-                    {form.isRatnapuraLand === "yes" && (
-                      <div className="mt-3 flex flex-col gap-4">
-                        <p className="font-sinhala text-sm text-ink">
-                          බලපත්‍රය අවුරුදු 05 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
-                        </p>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
-                          <input
-                            type="file"
-                            className={inputClass}
-                            onChange={handleFileChange("writtenEvidenceAttachment")}
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
-                          <input
-                            type="file"
-                            className={inputClass}
-                            onChange={handleFileChange("affidavitAttachment")}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </Field>
-                )}              </div>
+                )}       </div>
             </section>
 
             {/* Land details */}
