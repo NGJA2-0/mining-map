@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import A4PreviewSheet from "../components/common/A4PreviewSheet";
@@ -157,6 +157,35 @@ export default function NewRecordPage() {
   const [form, setForm] = useState(initialState);
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [gmlTaken, setGmlTaken] = useState(""); // holds the GML value known to be taken
+
+  useEffect(() => {
+    const gml = form.gmlNumber.trim();
+    if (!gml) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/mining-licenses/gml-exists?gml=${encodeURIComponent(gml)}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        setGmlTaken(data.exists ? gml : "");
+      } catch (err) {
+        if (err.name !== "AbortError") console.error(err);
+      }
+    }, 400);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [form.gmlNumber, token]);
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -294,6 +323,11 @@ export default function NewRecordPage() {
       return;
     }
 
+    if (gmlTaken && gmlTaken === form.gmlNumber.trim()) {
+      alert("මෙම GML අංකය දැනටමත් භාවිතයේ ඇත.");
+      return;
+    }
+
     setSaving(true);
     try {
 
@@ -305,7 +339,7 @@ export default function NewRecordPage() {
       NUMERIC_FIELDS.forEach((field) => {
         payload[field] = toNumberOrUndefined(payload[field]);
       });
-      
+
 
       const res = await fetch(`${BASE_URL}/api/mining-licenses`, {
         method: "POST",
@@ -472,6 +506,11 @@ export default function NewRecordPage() {
                   </>
                 )}
                 <Field label="මැණික් ගැරීමේ බලපත්‍ර අංකය (GML)">
+                  {gmlTaken && gmlTaken === form.gmlNumber.trim() && (
+                    <p className="font-sinhala text-xs text-red-500">
+                      මෙම GML අංකය සහිත බලපත්‍රයක් දැනටමත් පවතී. එම GML අංකයම භාවිතයෙන් තවත් බලපත්‍රයක් එක් කළ නොහැක.
+                    </p>
+                  )}
                   <input
                     type="text"
                     className={inputClass}
