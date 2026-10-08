@@ -4,6 +4,7 @@ import TopoBackground from "../../../components/common/TopoBackground";
 import Button from "../../../components/common/Button";
 import { useAuth } from "../../../context/AuthContext";
 import MonthlySummaryPanel from "./MonthlySummaryPanel";
+import PaymentsPage from "./PaymentsPage";
 
 export default function PaymentsDashboardPage() {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ export default function PaymentsDashboardPage() {
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [showSummary, setShowSummary] = useState(false);
+  const [showPay, setShowPay] = useState(false);
+  const split = showSummary || showPay; // true when the screen is split
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -134,10 +137,10 @@ export default function PaymentsDashboardPage() {
       {/* ── main ── */}
       <main
         className={`flex flex-1 flex-col px-4 py-6 sm:px-8 sm:py-8 ${
-          showSummary ? "" : "items-center justify-center sm:px-10 sm:py-10 lg:px-16"
+          split ? "" : "items-center justify-center sm:px-10 sm:py-10 lg:px-16"
         }`}
       >
-        {/* Zoom-out animation for the button card */}
+        {/* Zoom-out + blur for the button card */}
         <style>{`
           @keyframes zoomOutCard {
             from { opacity: 0.6; transform: scale(1.06); }
@@ -164,27 +167,27 @@ export default function PaymentsDashboardPage() {
 
         <div
           className={`w-full ${
-            showSummary
+            split
               ? "grid gap-6 lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)] lg:gap-12"
               : "flex justify-center"
           }`}
         >
-          {/* Left: buttons card (pinned to the left-middle of the screen when the summary is open) */}
+          {/* Left: buttons card */}
           <div
             className={
-              showSummary
+              split
                 ? "lg:sticky lg:top-6 lg:flex lg:h-[calc(100vh-8rem)] lg:min-h-[30rem] lg:items-center"
                 : "flex w-full justify-center"
             }
           >
             <div
               className={`relative w-full max-w-lg overflow-hidden rounded-2xl border text-center ${
-                showSummary
+                split
                   ? "pay-card-zoom mx-auto border-line/70 bg-surface/80 p-6 backdrop-blur-md sm:p-8 lg:mx-0 lg:max-w-none"
                   : "border-line bg-surface p-6 sm:p-12"
               }`}
               style={{
-                boxShadow: showSummary
+                boxShadow: split
                   ? "0 2px 4px rgba(0,0,0,0.05), 0 28px 60px -20px rgba(184,90,41,0.35)"
                   : "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)",
               }}
@@ -192,7 +195,7 @@ export default function PaymentsDashboardPage() {
               <TopoBackground className="text-teal/15" />
 
               {/* Copper accent bar */}
-              {showSummary && (
+              {split && (
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-copper via-copper/70 to-copper/20" />
               )}
 
@@ -208,10 +211,13 @@ export default function PaymentsDashboardPage() {
 
                 <div className="flex w-full flex-col gap-4">
                   <Button
-                    variant="primary"
+                    variant={showSummary ? "secondary" : "primary"}
                     size="lg"
                     className="w-full"
-                    onClick={() => navigate("/minisahana/payments/pay")}
+                    onClick={() => {
+                      setShowPay(true);
+                      setShowSummary(false);
+                    }}
                   >
                     Pay
                   </Button>
@@ -220,12 +226,14 @@ export default function PaymentsDashboardPage() {
                     variant={showSummary ? "primary" : "secondary"}
                     size="lg"
                     className="w-full"
-                    onClick={() => setShowSummary(true)}
+                    onClick={() => {
+                      setShowSummary(true);
+                      setShowPay(false);
+                    }}
                   >
                     Download Monthly Summary
                   </Button>
 
-                  {/* Extra reports (always visible) */}
                   <Button
                     variant="secondary"
                     size="lg"
@@ -244,8 +252,8 @@ export default function PaymentsDashboardPage() {
                     Download Student Report
                   </Button>
 
-                  {/* Divider + Refresh (only after Download Monthly Summary is clicked) */}
-                  {showSummary && (
+                  {/* Divider + Refresh (only once the screen is split) */}
+                  {split && (
                     <>
                       <div className="flex items-center gap-3 py-1">
                         <span className="h-px flex-1 bg-line" />
@@ -285,10 +293,15 @@ export default function PaymentsDashboardPage() {
             </div>
           </div>
 
-          {/* Right: year / month filters + results */}
+          {/* Right: Monthly summary OR the Pay page */}
           {showSummary && (
             <div className="min-w-0">
               <MonthlySummaryPanel />
+            </div>
+          )}
+          {showPay && (
+            <div className="min-w-0">
+              <PaymentsPage embedded />
             </div>
           )}
         </div>

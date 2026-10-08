@@ -24,7 +24,7 @@ function formatDate(value) {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export default function PaymentsPage() {
+export default function PaymentsPage({ embedded = false }) {
   const navigate = useNavigate();
   const { user, token, logout } = useAuth();
 
@@ -126,8 +126,9 @@ export default function PaymentsPage() {
   }, [profileOpen]);
 
   return (
-    <div className="min-h-screen bg-page text-ink flex flex-col">
-      {/* ── header ── */}
+    <div className={embedded ? "min-w-0 text-ink" : "min-h-screen bg-page text-ink flex flex-col"}>
+      {/* ── header (hidden when embedded in the dashboard) ── */}
+      {!embedded && (
       <header className="border-b border-line">
         <div className="flex items-center justify-between px-4 py-5 sm:px-10 lg:px-16">
           <div className="flex items-center gap-2 sm:gap-4">
@@ -232,9 +233,10 @@ export default function PaymentsPage() {
           </div>
         </div>
       </header>
+      )}
 
-            {/* ── main ── */}
-      <main className="flex-1 px-4 py-6 sm:px-10 sm:py-10 lg:px-16">
+      {/* ── main ── */}
+      <main className={embedded ? "flex-1" : "flex-1 px-4 py-6 sm:px-10 sm:py-10 lg:px-16"}>
         <div className="mx-auto w-full max-w-6xl">
           {/* Filter bar */}
           <form
@@ -242,6 +244,15 @@ export default function PaymentsPage() {
             className="rounded-2xl border border-line bg-surface p-4 sm:p-6"
             style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
           >
+            {embedded && (
+              <div className="mb-4">
+                <h3 className="font-display text-lg font-semibold text-ink">Pay monthly fees</h3>
+                <p className="mt-1 text-sm text-ink-muted">
+                  Select a year and month range, then press search to view payments.
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-[1fr_1.2fr_1.2fr_1fr_auto] lg:items-end">
               <GlassSelect
                 label="Year"
@@ -308,12 +319,6 @@ export default function PaymentsPage() {
               <span className="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-copper" />
               Loading payments...
             </div>
-          )}
-
-          {!loading && !appliedFilters && !error && (
-            <p className="mt-10 text-center text-sm text-ink-muted">
-              Select a year and month range, then press the search icon to view payments.
-            </p>
           )}
 
           {!loading && appliedFilters && !error && results.length === 0 && (
