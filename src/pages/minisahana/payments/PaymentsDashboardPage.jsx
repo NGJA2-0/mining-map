@@ -145,14 +145,19 @@ export default function PaymentsDashboardPage() {
           }
           @keyframes zoomOutCardLg {
             from { opacity: 0.6; transform: scale(1.02); }
-            to   { opacity: 1;   transform: scale(0.9); }
+            to   { opacity: 1;   transform: scale(0.75); }
           }
           .pay-card-zoom { animation: zoomOutCard 350ms ease-out; }
           @media (min-width: 1024px) {
             .pay-card-zoom {
-              transform: scale(0.9);
-              transform-origin: left center;
+              transform: scale(0.75);
+              transform-origin: center center;
               animation-name: zoomOutCardLg;
+              filter: blur(1.5px);
+              transition: filter 250ms ease-out;
+            }
+            .pay-card-zoom:hover {
+              filter: none;
             }
           }
         `}</style>
@@ -173,10 +178,10 @@ export default function PaymentsDashboardPage() {
             }
           >
             <div
-              className={`relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface text-center ${
+              className={`relative w-full max-w-lg overflow-hidden rounded-2xl border text-center ${
                 showSummary
-                  ? "pay-card-zoom mx-auto p-6 sm:p-8 lg:mx-0 lg:max-w-none"
-                  : "p-6 sm:p-12"
+                  ? "pay-card-zoom mx-auto border-line/70 bg-surface/80 p-6 backdrop-blur-md sm:p-8 lg:mx-0 lg:max-w-none"
+                  : "border-line bg-surface p-6 sm:p-12"
               }`}
               style={{
                 boxShadow: showSummary
@@ -218,6 +223,25 @@ export default function PaymentsDashboardPage() {
                     onClick={() => setShowSummary(true)}
                   >
                     Download Monthly Summary
+                  </Button>
+
+                  {/* Extra reports (always visible) */}
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    onClick={() => {}}
+                  >
+                    Download Annual Report
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    onClick={() => {}}
+                  >
+                    Download Student Report
                   </Button>
 
                   {/* Divider + Refresh (only after Download Monthly Summary is clicked) */}
