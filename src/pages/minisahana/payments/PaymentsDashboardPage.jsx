@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import TopoBackground from "../../../components/common/TopoBackground";
 import Button from "../../../components/common/Button";
 import { useAuth } from "../../../context/AuthContext";
+import MonthlySummaryPanel from "./MonthlySummaryPanel";
 
 export default function PaymentsDashboardPage() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export default function PaymentsDashboardPage() {
 
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -130,34 +132,61 @@ export default function PaymentsDashboardPage() {
       </header>
 
       {/* ── main ── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+      <main
+        className={`flex flex-1 flex-col items-center px-4 py-6 sm:px-10 sm:py-10 lg:px-16 ${
+          showSummary ? "" : "justify-center"
+        }`}
+      >
         <div
-          className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface p-6 sm:p-12 text-center"
-          style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
+          className={`w-full ${
+            showSummary
+              ? "mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start"
+              : "flex justify-center"
+          }`}
         >
-          <TopoBackground className="text-teal/15" />
+          {/* Left: buttons card */}
+          <div
+            className={`relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface text-center ${
+              showSummary ? "mx-auto p-6 sm:p-8 lg:sticky lg:top-6" : "p-6 sm:p-12"
+            }`}
+            style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
+          >
+            <TopoBackground className="text-teal/15" />
 
-          <div className="relative z-10 flex flex-col items-center gap-8">
-            <div>
-              <h2 className="font-display text-2xl font-bold sm:text-4xl" style={{ letterSpacing: "-0.02em" }}>
-                Payments
-              </h2>
-              <p className="mt-2 text-sm text-ink-muted">
-                Please select an option to continue.
-              </p>
-            </div>
+            <div className="relative z-10 flex flex-col items-center gap-8">
+              <div>
+                <h2 className="font-display text-2xl font-bold sm:text-4xl" style={{ letterSpacing: "-0.02em" }}>
+                  Payments
+                </h2>
+                <p className="mt-2 text-sm text-ink-muted">
+                  Please select an option to continue.
+                </p>
+              </div>
 
-            <div className="flex w-full flex-col gap-4">
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full"
-                onClick={() => navigate("/minisahana/payments/pay")}
-              >
-                Pay
-              </Button>
+              <div className="flex w-full flex-col gap-4">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => navigate("/minisahana/payments/pay")}
+                >
+                  Pay
+                </Button>
+
+                <Button
+                  variant={showSummary ? "primary" : "secondary"}
+                  size="lg"
+                  className="w-full"
+                  onClick={() => setShowSummary(true)}
+                >
+                  Download Monthly Summary
+                </Button>
+              </div>
             </div>
           </div>
+
+          {/* Right: year / month filters + results */}
+          {showSummary && <MonthlySummaryPanel />}
         </div>
       </main>
     </div>
