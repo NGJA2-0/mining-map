@@ -10,6 +10,171 @@ import { useAuth } from "../../context/AuthContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+const CHART_COLORS = ["#0f766e", "#4f46e5", "#0ea5e9", "#ec4899", "#10b981"];
+
+/* Donut chart: per-year split, with the all-years total in the centre */
+function YearDonutChart({ total, byYear, loading }) {
+  const [active, setActive] = useState(null);
+
+  const size = 200;
+  const stroke = 26;
+  const r = (size - stroke - 10) / 2;
+  const C = 2 * Math.PI * r;
+  const gap = 3;
+
+  const rows = (byYear ?? []).map((row, i) => ({
+    label: String(row.year),
+    count: row.count,
+    color: CHART_COLORS[i % CHART_COLORS.length],
+  }));
+  const sum = rows.reduce((a, r2) => a + r2.count, 0);
+  const other = Math.max(0, (total ?? 0) - sum);
+  if (other > 0) rows.push({ label: "Other", count: other, color: "#cbd5e1" });
+  const denom = sum + other;
+
+  let acc = 0;
+  const segs = rows.map((row) => {
+    const frac = denom ? row.count / denom : 0;
+    const len = frac * C;
+    const seg = { ...row, frac, len, offset: acc };
+    acc += len;
+    return seg;
+  });
+
+  const activeRow = active != null ? rows[active] : null;
+
+  return (
+    <div className="flex flex-col items-center gap-6 sm:flex-row sm:gap-8">
+      <div className="relative h-[200px] w-[200px] shrink-0 sm:h-[220px] sm:w-[220px]">
+        <svg viewBox={`0 0 ${size} ${size}`} className="h-full w-full -rotate-90 overflow-visible">
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eceae6" strokeWidth={stroke} />
+          {segs.map((s, i) =>
+            s.count > 0 ? (
+              <circle
+                key={s.label}
+                cx={size / 2}
+                cy={size / 2}
+                r={r}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={active === i ? stroke + 6 : stroke}
+                strokeDashoffset={-s.offset}
+                strokeLinecap="butt"
+                style={{
+                  strokeDasharray: `${Math.max(s.len - gap, 0.5)} ${C}`,
+                  animation: `donut-fill 1800ms cubic-bezier(0.45, 0, 0.2, 1) ${i * 250}ms both`,
+                  transition: "stroke-width 200ms ease, opacity 200ms ease",
+                  cursor: "pointer",
+                  opacity: active == null || active === i ? 1 : 0.45,
+                }}
+                onMouseEnter={() => setActive(i)}
+                onMouseLeave={() => setActive(null)}
+                onClick={() => setActive(active === i ? null : i)}
+              />
+            ) : null
+          )}
+        </svg>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-ink-muted">
+            {activeRow ? activeRow.label : "All years total"}
+          </p>
+          <p className="font-display text-4xl font-bold leading-tight sm:text-5xl" style={{ letterSpacing: "-0.02em" }}>
+            {loading ? "—" : (activeRow ? activeRow.count : total ?? 0).toLocaleString()}
+          </p>
+          <p className="text-[11px] text-ink-muted">applications</p>
+        </div>
+      </div>
+
+      <ul className="grid w-full grid-cols-2 gap-x-4 gap-y-2.5 sm:grid-cols-1">
+        {rows.map((row, i) => (
+          <li
+            key={row.label}
+            onMouseEnter={() => setActive(i)}
+            onMouseLeave={() => setActive(null)}
+            className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-line/50"
+          >
+            <span className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: row.color }} />
+              <span className="font-mono text-xs text-ink-muted">{row.label}</span>
+            </span>
+            <span className="font-semibold">
+              {row.count.toLocaleString()}
+              <span className="ml-1.5 text-xs font-normal text-ink-muted">
+                {denom ? Math.round((row.count / denom) * 100) : 0}%
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/* Bar chart: per-grade counts */
+function GradeBarChart({ byGrade }) {
+  const data = byGrade ?? [];
+  const max = Math.max(1, ...data.map((d) => d.count));
+  const niceMax = max <= 4 ? 4 : Math.ceil(max / 4) * 4;
+  const ticks = [4, 3, 2, 1, 0].map((n) => Math.round((niceMax / 4) * n));
+
+  return (
+    <div className="flex gap-2 sm:gap-3">
+      {/* y-axis labels */}
+      <div className="flex h-[220px] flex-col justify-between pb-0 text-[11px] font-mono text-ink-muted">
+        {ticks.map((t) => (
+          <span key={t} className="leading-none">{t}</span>
+        ))}
+      </div>
+
+      <div className="flex-1">
+        <div className="relative h-[220px]">
+          {/* gridlines */}
+          <div className="absolute inset-0 flex flex-col justify-between">
+            {ticks.map((t) => (
+              <div key={t} className="border-t border-dashed border-line" />
+            ))}
+          </div>
+
+          {/* bars */}
+          <div className="relative flex h-full items-end gap-1.5 sm:gap-3">
+            {data.map((row, i) => {
+                   const pct = (row.count / niceMax) * 100;
+              return (
+                <div key={row.grade} className="group flex h-full flex-1 flex-col items-center justify-end" title={`Grade ${row.grade}: ${row.count}`}>
+                  <span className="mb-1 text-xs font-semibold text-ink opacity-80 group-hover:opacity-100">
+                    {row.count}
+                  </span>
+                  <div
+                    className="w-full max-w-[44px] rounded-t-md group-hover:brightness-110"
+                    style={{
+                      height: `${pct}%`,
+                      animation: `bar-grow 1400ms cubic-bezier(0.45, 0, 0.2, 1) ${i * 120}ms both`,
+                      minHeight: row.count > 0 ? "6px" : "3px",
+                      background: row.count > 0
+                        ? "linear-gradient(180deg, var(--color-copper, #b85a29), #e0a030)"
+                        : "#e5e2dc",
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* x-axis labels */}
+        <div className="mt-2 flex gap-1.5 sm:gap-3">
+          {data.map((row) => (
+            <span key={row.grade} className="flex-1 text-center font-mono text-[11px] text-ink-muted">
+              {row.grade}
+            </span>
+          ))}
+        </div>
+        <p className="mt-1 text-center text-[11px] uppercase tracking-wider text-ink-muted">Grade</p>
+      </div>
+    </div>
+  );
+}
+
 export default function MiniSahanaDashboardPage() {
   const navigate = useNavigate();
   const { user, token, logout } = useAuth();
@@ -365,47 +530,39 @@ export default function MiniSahanaDashboardPage() {
 
           {statsError && <p className="text-sm text-red-600">{statsError}</p>}
 
-          {/* Total applications card */}
-          <div
-            className="relative overflow-hidden rounded-2xl border border-line bg-surface p-6 sm:p-8"
-            style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
-          >
-            <TopoBackground className="text-teal/15" />
-            <div className="relative z-10">
-              <p className="text-sm text-ink-muted">All Years Total Applications</p>
-              <p className="mt-1 font-display text-4xl font-bold sm:text-5xl" style={{ letterSpacing: "-0.02em" }}>
-                {statsLoading ? "—" : (stats?.total ?? 0).toLocaleString()}
-              </p>
+          {/* Charts */}
+          <style>{`
+            @keyframes donut-fill { from { stroke-dasharray: 0 1000; } }
+            @keyframes bar-grow { from { height: 0; min-height: 0; } }
+          `}</style>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+            {/* Year donut (with all-years total in centre) */}
+            <div
+              className="relative overflow-hidden rounded-2xl border border-line bg-surface p-5 sm:p-7"
+              style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
+            >
+              <TopoBackground className="text-teal/15" />
+              <div className="relative z-10">
+                <h3 className="font-display text-lg font-semibold">Applications by year</h3>
+                <p className="mb-5 mt-0.5 text-sm text-ink-muted">All years total shown in the centre</p>
+                <YearDonutChart
+                  total={stats?.total ?? 0}
+                  byYear={stats?.byYear ?? []}
+                  loading={statsLoading}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Per-year breakdown */}
-          <div>
-            <h3 className="mb-3 text-sm font-semibold text-ink-muted">Applications by year</h3>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {(stats?.byYear ?? []).map((row) => (
-                <div key={row.year} className="rounded-xl border border-line bg-surface p-4"
-                  style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
-                  <p className="text-xs font-mono uppercase tracking-wide text-ink-muted">{row.year}</p>
-                  <p className="mt-1 font-display text-2xl font-bold">{row.count.toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Per-grade breakdown */}
-          <div>
-            <h3 className="mb-3 text-sm font-semibold text-ink-muted">
-              Applications by grade ({new Date().getFullYear()})
-            </h3>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {(stats?.byGrade ?? []).map((row) => (
-                <div key={row.grade} className="rounded-xl border border-line bg-surface p-4"
-                  style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
-                  <p className="text-xs font-mono uppercase tracking-wide text-ink-muted">Grade {row.grade}</p>
-                  <p className="mt-1 font-display text-2xl font-bold">{row.count.toLocaleString()}</p>
-                </div>
-              ))}
+            {/* Grade bar chart */}
+            <div
+              className="rounded-2xl border border-line bg-surface p-5 sm:p-7"
+              style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
+            >
+              <h3 className="font-display text-lg font-semibold">
+                Applications by grade ({new Date().getFullYear()})
+              </h3>
+              <p className="mb-5 mt-0.5 text-sm text-ink-muted">Number of applications per grade</p>
+              <GradeBarChart byGrade={stats?.byGrade ?? []} />
             </div>
           </div>
 
