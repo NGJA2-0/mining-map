@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import A4PreviewSheet from "../components/common/A4PreviewSheet";
@@ -27,8 +27,8 @@ const initialState = {
   landName: "",
   landNature: "",
   isRatnapuraLand: "",
-  writtenEvidenceAttachment: null,
-  affidavitAttachment: null,
+  writtenEvidenceSubmitted: "",
+  affidavitSubmitted: "",
   hasExpenseParty: false,
   district: "",
   village: "",
@@ -131,16 +131,52 @@ function coordError(value, field) {
   return null;
 }
 
+const FIELD_LABELS = {
+  applicantName: "ඉල්ලුම්කරුගේ නම",
+  applicantAddress: "ඉල්ලුම්කරුගේ ලිපිනය",
+  applicantPhone: "ඉල්ලුම්කරුගේ දුරකථන අංකය",
+  nic: "ඉල්ලුම්කරුගේ හැඳුනුම්පත් අංකය",
+  gmlNumber: "මැණික් ගැරීමේ බලපත්‍ර අංකය (GML)",
+  landName: "ඉඩමේ නම",
+  landNature: "ඉඩමේ ස්වභාවය",
+  isRatnapuraLand: "ඉඩම රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත්ද?",
+  writtenEvidenceSubmitted: "ලිඛිත සාක්ෂි ඉදිරිපත් කර",
+  affidavitSubmitted: "දිවුරුම් ප්‍රකාශය ඉදිරිපත් කර",
+  district: "දිස්ත්‍රික්කය",
+  regionalOffice: "ප්‍රාදේශීය කාර්යාලය",
+  licenseeType: "බලපත්‍රලාභියා",
+  existingPits: "ඉඩමේ කපන ලද පතල් තිබේද?",
+  expenseName: "වියදම් පාර්ශවයේ නම",
+  expenseAddress: "වියදම් පාර්ශවයේ ලිපිනය",
+  expensePhone: "වියදම් පාර්ශවයේ දුරකථන අංකය",
+  prevLicenseFirstDate: "පළමුව නිකුත් කළ දිනය",
+  extensionCount: "බලපත්‍රය දීර්ඝ කළ වාර ගණන",
+  minedGemValue: "කෑණීම් කරන ලද මැණික්වල වටිනාකම",
+  conditionBreach: "කොන්දේසි කඩකිරීම් සිදුවී ඇත්ද?",
+  conditionBreachDetails: "කොන්දේසි කඩකිරීම් විස්තර",
+  ownershipComplaint: "අයිතිය පිළිබඳ පැමිණිලි ලැබී තිබේද?",
+  complaintDetails: "පැමිණිලි විස්තර",
+};
+
+const labelFor = (key) => {
+  const m = key.match(/^gps_(\d+)_(latitude|longitude)$/);
+  if (m) return `G.P.S. ලක්ෂ්‍ය ${Number(m[1]) + 1} – ${m[2] === "latitude" ? "අක්ෂාංශ" : "දේශාංෂ"}`;
+  return FIELD_LABELS[key] || key;
+};
+
+const REQUIRED_MSG = "මෙම ක්ෂේත්‍රය අනිවාර්යයි, හිස්ව තබා ඉදිරිපත් කළ නොහැක";
+
 const yesNo = [
   { value: "yes", label: "ඔව්" },
   { value: "no", label: "නැත" },
 ];
 
-function Field({ label, children, full = false, className = "" }) {
+function Field({ label, children, full = false, className = "", error }) {
   return (
     <div className={`flex flex-col gap-1.5 ${full ? "sm:col-span-2" : ""} ${className}`}>
       <label className="font-sinhala text-sm text-ink-muted">{label}</label>
       {children}
+      {error && <p className="font-sinhala text-xs text-red-500">{error}</p>}
     </div>
   );
 }
@@ -156,7 +192,38 @@ export default function NewRecordPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState(initialState);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [gmlTaken, setGmlTaken] = useState(""); // holds the GML value known to be taken
+
+  useEffect(() => {
+    const gml = form.gmlNumber.trim();
+    if (!gml) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/mining-licenses/gml-exists?gml=${encodeURIComponent(gml)}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        setGmlTaken(data.exists ? gml : "");
+      } catch (err) {
+        if (err.name !== "AbortError") console.error(err);
+      }
+    }, 400);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [form.gmlNumber, token]);
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -164,10 +231,6 @@ export default function NewRecordPage() {
 
   const handleCheckboxChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.checked }));
-  };
-
-  const handleFileChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.files?.[0] || null }));
   };
 
   const handlePhoneChange = (field) => (e) => {
@@ -235,93 +298,96 @@ export default function NewRecordPage() {
   // Allows only an optional minus, digits, and one decimal point while typing.
 
   const validateForm = () => {
-    const errors = [];
+    const errs = {};
     const requiredAlways = [
       "applicantName", "applicantAddress", "applicantPhone", "nic",
       "gmlNumber", "landName", "landNature", "isRatnapuraLand",
       "district", "regionalOffice", "licenseeType", "existingPits",
     ];
     requiredAlways.forEach((f) => {
-      if (!form[f] || String(form[f]).trim() === "") errors.push(f);
+      if (!form[f] || String(form[f]).trim() === "") errs[f] = REQUIRED_MSG;
     });
 
-    if (form.applicantPhone && !SRI_LANKA_PHONE_REGEX.test(form.applicantPhone)) errors.push("applicantPhone");
-
-    if (!form.gpsPoints.some((p) => p.latitude && p.longitude)) {
-      errors.push("gpsPoints");
+    if (form.applicantPhone && !SRI_LANKA_PHONE_REGEX.test(form.applicantPhone)) {
+      errs.applicantPhone = "වලංගු දුරකථන අංකයක් නොවේ";
     }
 
     form.gpsPoints.forEach((p, i) => {
-      const hasLat = String(p.latitude).trim() !== "";
-      const hasLng = String(p.longitude).trim() !== "";
-      if (hasLat !== hasLng) errors.push(`gpsPoints[${i}] incomplete`);
-      if (coordError(p.latitude, "latitude") || coordError(p.longitude, "longitude")) {
-        errors.push(`gpsPoints[${i}] invalid`);
+      const lat = String(p.latitude).trim();
+      const lng = String(p.longitude).trim();
+      // Point 1 is always required; other points need both values if either is filled.
+      if (i === 0 || lat || lng) {
+        if (!lat) errs[`gps_${i}_latitude`] = REQUIRED_MSG;
+        if (!lng) errs[`gps_${i}_longitude`] = REQUIRED_MSG;
       }
+      const latErr = coordError(p.latitude, "latitude");
+      const lngErr = coordError(p.longitude, "longitude");
+      if (latErr) errs[`gps_${i}_latitude`] = latErr;
+      if (lngErr) errs[`gps_${i}_longitude`] = lngErr;
     });
-
-    // Point 1 is what the map uses, so it must be complete and valid.
-    const first = form.gpsPoints[0];
-    if (!first?.latitude || !first?.longitude) errors.push("gpsPoints[0] required");
 
     if (form.hasExpenseParty) {
       ["expenseName", "expenseAddress", "expensePhone"].forEach((f) => {
-        if (!form[f]) errors.push(f);
+        if (!form[f]) errs[f] = REQUIRED_MSG;
       });
-      if (form.expensePhone && !SRI_LANKA_PHONE_REGEX.test(form.expensePhone)) errors.push("expensePhone");
-
+      if (form.expensePhone && !SRI_LANKA_PHONE_REGEX.test(form.expensePhone)) {
+        errs.expensePhone = "වලංගු දුරකථන අංකයක් නොවේ";
+      }
     }
 
     if (form.isRatnapuraLand === "yes") {
-      if (!form.writtenEvidenceAttachment) errors.push("writtenEvidenceAttachment");
-      if (!form.affidavitAttachment) errors.push("affidavitAttachment");
+      if (!form.writtenEvidenceSubmitted) errs.writtenEvidenceSubmitted = REQUIRED_MSG;
+      if (!form.affidavitSubmitted) errs.affidavitSubmitted = REQUIRED_MSG;
     }
 
     if (form.existingPits === "yes") {
       ["prevLicenseFirstDate", "extensionCount", "minedGemValue", "conditionBreach", "ownershipComplaint"].forEach((f) => {
-        if (!form[f] && form[f] !== 0) errors.push(f);
+        if (!form[f] && form[f] !== 0) errs[f] = REQUIRED_MSG;
       });
-      if (form.conditionBreach === "yes" && !form.conditionBreachDetails) errors.push("conditionBreachDetails");
-      if (form.ownershipComplaint === "yes" && !form.complaintDetails) errors.push("complaintDetails");
+      if (form.conditionBreach === "yes" && !form.conditionBreachDetails) errs.conditionBreachDetails = REQUIRED_MSG;
+      if (form.ownershipComplaint === "yes" && !form.complaintDetails) errs.complaintDetails = REQUIRED_MSG;
     }
 
-    return errors;
+    return errs;
   };
+
+  // After the first submit attempt, re-check live so messages disappear as the user fixes fields.
+  useEffect(() => {
+    if (submitted) setErrors(validateForm());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, submitted]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const errors = validateForm();
-    if (errors.length > 0) {
-      alert("කරුණාකර අවශ්‍ය සියලුම ක්ෂේත්‍ර පුරවන්න.");
-      console.warn("Missing/invalid fields:", errors);
+    const errs = validateForm();
+    setSubmitted(true);
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      setTimeout(() => {
+        document.getElementById("form-error-summary")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 0);
+      return;
+    }
+
+
+    if (gmlTaken && gmlTaken === form.gmlNumber.trim()) {
+      alert("මෙම GML අංකය දැනටමත් භාවිතයේ ඇත.");
       return;
     }
 
     setSaving(true);
     try {
-      let writtenEvidenceAttachmentUrl;
-      let affidavitAttachmentUrl;
-
-      if (form.isRatnapuraLand === "yes") {
-        [writtenEvidenceAttachmentUrl, affidavitAttachmentUrl] = await Promise.all([
-          uploadFile(form.writtenEvidenceAttachment),
-          uploadFile(form.affidavitAttachment),
-        ]);
-      }
 
       const payload = {
         ...form,
         gpsPoints: form.gpsPoints.filter((p) => p.latitude && p.longitude),
-        writtenEvidenceAttachmentUrl,
-        affidavitAttachmentUrl,
       };
 
       NUMERIC_FIELDS.forEach((field) => {
         payload[field] = toNumberOrUndefined(payload[field]);
       });
-      delete payload.writtenEvidenceAttachment;
-      delete payload.affidavitAttachment;
+
 
       const res = await fetch(`${BASE_URL}/api/mining-licenses`, {
         method: "POST",
@@ -368,7 +434,7 @@ export default function NewRecordPage() {
         <div className="relative overflow-hidden rounded-lg border border-line bg-surface p-6 sm:p-10 print:rounded-none print:border-0 print:bg-transparent print:p-0 print:shadow-none">
           <TopoBackground className="text-teal/15 print:hidden" />
 
-          <form onSubmit={handleSubmit} className="print-hide relative z-10 flex flex-col gap-10">
+          <form onSubmit={handleSubmit} noValidate className="print-hide relative z-10 flex flex-col gap-10">
             {/* Header block */}
             <div className="text-center">
               <p className="font-sinhala text-sm text-ink-muted">
@@ -382,13 +448,26 @@ export default function NewRecordPage() {
               </p>
             </div>
 
+            {submitted && Object.keys(errors).length > 0 && (
+              <div id="form-error-summary" role="alert" className="rounded-md border border-red-300 bg-red-50 p-4">
+                <p className="font-sinhala text-sm font-semibold text-red-600">
+                  පහත ක්ෂේත්‍ර නිවැරදිව පුරවන තුරු සුරැකිය නොහැක:
+                </p>
+                <ul className="mt-2 list-disc pl-5 font-sinhala text-sm text-red-600">
+                  {Object.keys(errors).map((k) => (
+                    <li key={k}>{labelFor(k)} – {errors[k]}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* Applicant details */}
             <section className="flex flex-col gap-5">
               <h3 className="font-sinhala text-sm font-semibold uppercase tracking-wide text-teal">
                 අයදුම්කරු පිළිබඳ තොරතුරු
               </h3>
               <div className="flex flex-col gap-5">
-                <Field label="ඉල්ලුම්කරුගේ නම">
+                <Field label="ඉල්ලුම්කරුගේ නම" error={errors.applicantName}>
                   <input
                     type="text"
                     className={inputClass}
@@ -396,7 +475,7 @@ export default function NewRecordPage() {
                     onChange={handleChange("applicantName")}
                   />
                 </Field>
-                <Field label="ඉල්ලුම්කරුගේ ලිපිනය">
+                <Field label="ඉල්ලුම්කරුගේ ලිපිනය" error={errors.applicantAddress}>
                   <input
                     type="text"
                     className={inputClass}
@@ -404,7 +483,7 @@ export default function NewRecordPage() {
                     onChange={handleChange("applicantAddress")}
                   />
                 </Field>
-                <Field label="ඉල්ලුම්කරුගේ දුරකථන අංකය">
+                <Field label="ඉල්ලුම්කරුගේ දුරකථන අංකය" error={!form.applicantPhone ? errors.applicantPhone : undefined}>
                   <input
                     type="tel"
                     pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
@@ -419,7 +498,7 @@ export default function NewRecordPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Field label="ඉල්ලුම්කරුගේ හැඳුනුම්පත් අංකය">
+                <Field label="ඉල්ලුම්කරුගේ හැඳුනුම්පත් අංකය" error={errors.nic}>
                   <input
                     type="text"
                     className={inputClass}
@@ -449,7 +528,7 @@ export default function NewRecordPage() {
 
                 {form.hasExpenseParty && (
                   <>
-                    <Field label="වියදම් පාර්ශවයේ නම" full>
+                    <Field label="වියදම් පාර්ශවයේ නම" full error={errors.expenseName}>
                       <input
                         type="text"
                         className={inputClass}
@@ -457,7 +536,7 @@ export default function NewRecordPage() {
                         onChange={handleChange("expenseName")}
                       />
                     </Field>
-                    <Field label="වියදම් පාර්ශවයේ ලිපිනය" full>
+                    <Field label="වියදම් පාර්ශවයේ ලිපිනය" full error={errors.expenseAddress}>
                       <input
                         type="text"
                         className={inputClass}
@@ -465,7 +544,7 @@ export default function NewRecordPage() {
                         onChange={handleChange("expenseAddress")}
                       />
                     </Field>
-                    <Field label="වියදම් පාර්ශවයේ දුරකථන අංකය" full>
+                    <Field label="වියදම් පාර්ශවයේ දුරකථන අංකය" full error={!form.expensePhone ? errors.expensePhone : undefined}>
                       <input
                         type="tel"
                         pattern="^(?:\\+94|0)[1-9][0-9]{8}$"
@@ -487,7 +566,12 @@ export default function NewRecordPage() {
                     </Field>
                   </>
                 )}
-                <Field label="මැණික් ගැරීමේ බලපත්‍ර අංකය (GML)">
+                <Field label="මැණික් ගැරීමේ බලපත්‍ර අංකය (GML)" error={errors.gmlNumber}>
+                  {gmlTaken && gmlTaken === form.gmlNumber.trim() && (
+                    <p className="font-sinhala text-xs text-red-500">
+                      මෙම GML අංකය සහිත බලපත්‍රයක් දැනටමත් පවතී. එම GML අංකයම භාවිතයෙන් තවත් බලපත්‍රයක් එක් කළ නොහැක.
+                    </p>
+                  )}
                   <input
                     type="text"
                     className={inputClass}
@@ -574,7 +658,7 @@ export default function NewRecordPage() {
                   </div>
                 </Field>
 
-                <Field label="ඉඩමේ නම" full>
+                <Field label="ඉඩමේ නම" full error={errors.landName}>
                   <input
                     type="text"
                     className={inputClass}
@@ -583,7 +667,7 @@ export default function NewRecordPage() {
                   />
                 </Field>
 
-                <Field label="ඉඩමේ ස්වභාවය" full>
+                <Field label="ඉඩමේ ස්වභාවය" full error={errors.landNature}>
                   <div className="flex gap-4 pt-1">
                     <label className="flex items-center gap-2 font-sinhala text-sm">
                       <input
@@ -611,7 +695,7 @@ export default function NewRecordPage() {
                 </Field>
 
                 {form.landNature === "goda" && (
-                  <Field label="ඉඩම රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත්ද?" full>
+                  <Field label="ඉඩම රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත්ද?" full error={errors.isRatnapuraLand}>
                     <div className="flex gap-4 pt-1">
                       {yesNo.map((opt) => (
                         <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
@@ -630,24 +714,33 @@ export default function NewRecordPage() {
 
                     {form.isRatnapuraLand === "yes" && (
                       <div className="mt-3 flex flex-col gap-4">
-                        <p className="font-sinhala text-sm text-ink">
-                          බලපත්‍රය අවුරුදු 03 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
-                        </p>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            ලිඛිත සාක්ෂි ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("writtenEvidenceAttachment")}
-                          />
+                            value={form.writtenEvidenceSubmitted}
+                            onChange={handleChange("writtenEvidenceSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            දිවුරුම් ප්‍රකාශය ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("affidavitAttachment")}
-                          />
+                            value={form.affidavitSubmitted}
+                            onChange={handleChange("affidavitSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
                       </div>
                     )}
@@ -655,7 +748,7 @@ export default function NewRecordPage() {
                 )}
 
                 {form.landNature === "kumbura" && (
-                  <Field label="ඉඩම රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත්ද?" full>
+                  <Field label="ඉඩම රත්නපුර දිස්ත්‍රික්කයේ පිහිටා ඇත්ද?" full error={errors.isRatnapuraLand}>
                     <div className="flex gap-4 pt-1">
                       {yesNo.map((opt) => (
                         <label key={opt.value} className="flex items-center gap-2 font-sinhala text-sm">
@@ -674,24 +767,35 @@ export default function NewRecordPage() {
 
                     {form.isRatnapuraLand === "yes" && (
                       <div className="mt-3 flex flex-col gap-4">
-                        <p className="font-sinhala text-sm text-ink">
-                          බලපත්‍රය අවුරුදු 05 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න.
-                        </p>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            ලිඛිත සාක්ෂි ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("writtenEvidenceAttachment")}
-                          />
+                            value={form.writtenEvidenceSubmitted}
+                            onChange={handleChange("writtenEvidenceSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
+                          {errors.writtenEvidenceSubmitted && <p className="font-sinhala text-xs text-red-500">{errors.writtenEvidenceSubmitted}</p>}
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
-                          <input
-                            type="file"
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            දිවුරුම් ප්‍රකාශය ඉදිරිපත් කර,
+                          </label>
+                          <select
                             className={inputClass}
-                            onChange={handleFileChange("affidavitAttachment")}
-                          />
+                            value={form.affidavitSubmitted}
+                            onChange={handleChange("affidavitSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
+                          {errors.writtenEvidenceSubmitted && <p className="font-sinhala text-xs text-red-500">{errors.writtenEvidenceSubmitted}</p>}
                         </div>
                       </div>
                     )}
@@ -705,7 +809,7 @@ export default function NewRecordPage() {
                 මැණික් ගැරීමේ බලපත්‍රලත් ඉඩම පිහිටි
               </h3>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Field label="දිස්ත්‍රික්කය">
+                <Field label="දිස්ත්‍රික්කය" error={errors.district}>
                   <select
                     className={inputClass}
                     value={form.district}
@@ -719,7 +823,7 @@ export default function NewRecordPage() {
                     ))}
                   </select>
                 </Field>
-                <Field label="ප්‍රාදේශීය කාර්යාලය">
+                <Field label="ප්‍රාදේශීය කාර්යාලය" error={errors.regionalOffice}>
                   <select
                     className={inputClass}
                     value={form.regionalOffice}
@@ -750,7 +854,7 @@ export default function NewRecordPage() {
                     onChange={handleChange("landExtent")}
                   />
                 </Field>
-                <Field label="බලපත්‍රලාභියා" full>
+                <Field label="බලපත්‍රලාභියා" full error={errors.licenseeType}>
                   <select
                     className={inputClass}
                     value={form.licenseeType}
@@ -806,7 +910,7 @@ export default function NewRecordPage() {
                   </div>
                 </Field>
 
-                <Field label="ඉඩමේ කපන ලද පතල් තිබේද?">
+                <Field label="ඉඩමේ කපන ලද පතල් තිබේද?"  error={errors.existingPits}>
                   <div className="flex gap-4 pt-1">
                     {yesNo.map((opt) => (
                       <label
@@ -836,7 +940,7 @@ export default function NewRecordPage() {
                   පෙර බලපත්‍රය පිළිබඳ තොරතුරු
                 </h3>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <Field label="කලින් නිකුත් කර ඇති සාම්ප්‍රදායික පතල් බලපත්‍රය, පළමුව නිකුත් කළ දිනය">
+                  <Field label="කලින් නිකුත් කර ඇති සාම්ප්‍රදායික පතල් බලපත්‍රය, පළමුව නිකුත් කළ දිනය" error={errors.prevLicenseFirstDate}>
                     <input
                       type="date"
                       className={inputClass}
@@ -844,7 +948,7 @@ export default function NewRecordPage() {
                       onChange={handleChange("prevLicenseFirstDate")}
                     />
                   </Field>
-                  <Field label="මෙම බලපත්‍රය කී වතාවක් දීර්ඝ කර තිබේද?">
+                  <Field label="මෙම බලපත්‍රය කී වතාවක් දීර්ඝ කර තිබේද?" error={errors.extensionCount}>
                     <input
                       type="number"
                       min="0"
@@ -853,7 +957,7 @@ export default function NewRecordPage() {
                       onChange={handleChange("extensionCount")}
                     />
                   </Field>
-                  <Field label="එම කාල සීමාව තුළ කෑණීම් කරන ලද මැණික්වල වටිනාකම">
+                  <Field label="එම කාල සීමාව තුළ කෑණීම් කරන ලද මැණික්වල වටිනාකම" error={errors.minedGemValue}>
                     <input
                       type="text"
                       className={inputClass}
@@ -863,7 +967,7 @@ export default function NewRecordPage() {
                   </Field>
 
                   <div className="sm:col-span-2 grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    <Field label="එම කාලය තුළ කොන්දේසි කඩකිරීම් සිදුවී ඇත්ද?">
+                    <Field label="එම කාලය තුළ කොන්දේසි කඩකිරීම් සිදුවී ඇත්ද?" error={errors.conditionBreach}>
                       <div className="flex gap-4 pt-1">
                         {yesNo.map((opt) => (
                           <label
@@ -884,7 +988,7 @@ export default function NewRecordPage() {
                       </div>
                     </Field>
                     {form.conditionBreach === "yes" && (
-                      <Field label="සිදු වී ඇත්නම් ඒ පිළිබඳ විස්තර">
+                      <Field label="සිදු වී ඇත්නම් ඒ පිළිබඳ විස්තර" error={errors.conditionBreachDetails}>
                         <input
                           type="text"
                           className={inputClass}
@@ -895,7 +999,7 @@ export default function NewRecordPage() {
                     )}
                   </div>
 
-                  <Field label="මෙම කාලය තුළ ඉඩමේ අයිතිය පිළිබඳ පැමිණිලි ලැබී තිබේද?">
+                  <Field label="මෙම කාලය තුළ ඉඩමේ අයිතිය පිළිබඳ පැමිණිලි ලැබී තිබේද?" error={errors.ownershipComplaint}>
                     <div className="flex gap-4 pt-1">
                       {yesNo.map((opt) => (
                         <label
@@ -916,7 +1020,7 @@ export default function NewRecordPage() {
                     </div>
                   </Field>
                   {form.ownershipComplaint === "yes" && (
-                    <Field label="ලැබී ඇත්නම් ඒ පිළිබඳ විස්තර">
+                    <Field label="ලැබී ඇත්නම් ඒ පිළිබඳ විස්තර" error={errors.complaintDetails}>
                       <input
                         type="text"
                         className={inputClass}
@@ -1153,7 +1257,7 @@ export default function NewRecordPage() {
               <div className="border-t border-ink" />
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-sinhala text-sm text-ink">
-                  ඉහත නිර්දේශය අනුමත
+                  ඉහත නිර්දේශය
                 </p>
                 <select
                   className={`${inputClass} w-32`}
@@ -1161,8 +1265,8 @@ export default function NewRecordPage() {
                   onChange={handleChange("chairmanApproval")}
                 >
                   <option value="" hidden></option>
-                  <option value="කරමි">කරමි</option>
-                  <option value="නොකරමි">නොකරමි</option>
+                  <option value="කරමි">අනුමත කරමි</option>
+                  <option value="නොකරමි">අනුමත නොකරමි</option>
                 </select>
               </div>
 

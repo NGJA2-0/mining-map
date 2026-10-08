@@ -83,8 +83,8 @@ const mapRecordToForm = (r) => ({
   landName: r.landName || "",
   landNature: r.landNature || "",
   isRatnapuraLand: r.isRatnapuraLand || "",
-  writtenEvidenceAttachment: null,
-  affidavitAttachment: null,
+  writtenEvidenceSubmitted: r.writtenEvidenceSubmitted || "",
+  affidavitSubmitted: r.affidavitSubmitted || "",
   hasExpenseParty: r.hasExpenseParty || false,
   district: r.district || "",
   village: r.village || "",
@@ -162,6 +162,7 @@ export default function SearchResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const record = location.state?.record;
+  const [gmlTaken, setGmlTaken] = useState("");
 
   // Redirect if no record data was passed
   useEffect(() => {
@@ -174,6 +175,35 @@ export default function SearchResultPage() {
   const [saving, setSaving] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  useEffect(() => {
+    const gml = (form.gmlNumber || "").trim();
+    const original = (record?.gmlNumber || "").trim();
+    if (!gml || gml === original) return; // unchanged GML belongs to this record
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/mining-licenses/gml-exists?gml=${encodeURIComponent(gml)}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        setGmlTaken(data.exists ? gml : "");
+      } catch (err) {
+        if (err.name !== "AbortError") console.error(err);
+      }
+    }, 400);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [form.gmlNumber, token, record]);
 
   if (!record) return null; // while redirecting
 
@@ -258,9 +288,9 @@ export default function SearchResultPage() {
         if (!form[f]) errors.push(f);
       });
     }
-    if (form.isRatnapuraLand === "yes") {
-      if (!form.writtenEvidenceAttachment) errors.push("writtenEvidenceAttachment");
-      if (!form.affidavitAttachment) errors.push("affidavitAttachment");
+    if(form.isRatnapuraLand === "yes") {
+      if (!form.writtenEvidenceSubmitted) errors.push("writtenEvidenceSubmitted");
+      if (!form.affidavitSubmitted) errors.push("affidavitSubmitted");
     }
     if (form.existingPits === "yes") {
       ["prevLicenseFirstDate", "extensionCount", "minedGemValue", "conditionBreach", "ownershipComplaint"].forEach((f) => {
@@ -282,32 +312,22 @@ export default function SearchResultPage() {
       return;
     }
 
+    if (gmlTaken && gmlTaken === (form.gmlNumber || "").trim()) {
+      alert("මෙම GML අංකය දැනටමත් භාවිතයේ ඇත.");
+      return;
+    }
+
     setSaving(true);
     try {
-      let writtenEvidenceAttachmentUrl;
-      let affidavitAttachmentUrl;
-
-      if (form.isRatnapuraLand === "yes") {
-        if (form.writtenEvidenceAttachment) {
-          [writtenEvidenceAttachmentUrl, affidavitAttachmentUrl] = await Promise.all([
-            uploadFile(form.writtenEvidenceAttachment),
-            uploadFile(form.affidavitAttachment),
-          ]);
-        }
-      }
 
       const payload = {
         ...form,
         gpsPoints: form.gpsPoints.filter((p) => p.latitude && p.longitude),
-        writtenEvidenceAttachmentUrl,
-        affidavitAttachmentUrl,
       };
 
       NUMERIC_FIELDS.forEach((field) => {
         payload[field] = toNumberOrUndefined(payload[field]);
       });
-      delete payload.writtenEvidenceAttachment;
-      delete payload.affidavitAttachment;
 
       const res = await fetch(`${BASE_URL}/api/mining-licenses/${record.id}/edit`, {
         method: "POST",
@@ -320,7 +340,7 @@ export default function SearchResultPage() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
-        throw new Error(errData?.message || "Failed to resubmit record");
+        throw new Error(errData?.error || errData?.message || "Failed to resubmit record");
       }
 
       setSubmitSuccess(true);
@@ -520,6 +540,11 @@ export default function SearchResultPage() {
                 )}
 
                 <Field label="මැණික් ගැරීමේ බලපත්‍ර අංකය (GML)">
+                  {gmlTaken && gmlTaken === (form.gmlNumber || "").trim() && (
+                    <p className="font-sinhala text-xs text-red-500">
+                      මෙම GML අංකය සහිත බලපත්‍රයක් දැනටමත් පවතී. එම GML අංකයම භාවිතයෙන් තවත් බලපත්‍රයක් එක් කළ නොහැක.
+                    </p>
+                  )}
                   <input type="text" className={inputClass} placeholder="GML" value={form.gmlNumber} onChange={handleChange("gmlNumber")} />
                 </Field>
 
@@ -609,18 +634,33 @@ export default function SearchResultPage() {
                     </div>
                     {form.isRatnapuraLand === "yes" && (
                       <div className="mt-3 flex flex-col gap-4">
-                        <p className="font-sinhala text-sm text-ink">
-                          {form.landNature === "goda"
-                            ? "බලපත්‍රය අවුරුදු 03 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න."
-                            : "බලපත්‍රය අවුරුදු 05 ක් පැරණි රත්නපුර පිහිටි ඉඩමක් නම් ලිඛිත සාක්ෂි ද, නැතිනම් දිවුරුම් ප්‍රකාශයක් ද ඉදිරිපත් කරන්න."}
-                        </p>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">ලිඛිත සාක්ෂි</label>
-                          <input type="file" className={inputClass} onChange={handleFileChange("writtenEvidenceAttachment")} />
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            ලිඛිත සාක්ෂි ඉදිරිපත් කර,
+                          </label>
+                          <select
+                            className={inputClass}
+                            value={form.writtenEvidenceSubmitted}
+                            onChange={handleChange("writtenEvidenceSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-sinhala text-sm text-ink-muted">දිවුරුම් ප්‍රකාශය</label>
-                          <input type="file" className={inputClass} onChange={handleFileChange("affidavitAttachment")} />
+                          <label className="font-sinhala text-sm text-ink-muted">
+                            දිවුරුම් ප්‍රකාශය ඉදිරිපත් කර,
+                          </label>
+                          <select
+                            className={inputClass}
+                            value={form.affidavitSubmitted}
+                            onChange={handleChange("affidavitSubmitted")}
+                          >
+                            <option value="" hidden></option>
+                            <option value="yes">ඇත</option>
+                            <option value="no">නැත</option>
+                          </select>
                         </div>
                       </div>
                     )}
