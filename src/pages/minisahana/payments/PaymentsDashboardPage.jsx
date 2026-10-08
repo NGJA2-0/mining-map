@@ -133,60 +133,140 @@ export default function PaymentsDashboardPage() {
 
       {/* ── main ── */}
       <main
-        className={`flex flex-1 flex-col items-center px-4 py-6 sm:px-10 sm:py-10 lg:px-16 ${
-          showSummary ? "" : "justify-center"
+        className={`flex flex-1 flex-col px-4 py-6 sm:px-8 sm:py-8 ${
+          showSummary ? "" : "items-center justify-center sm:px-10 sm:py-10 lg:px-16"
         }`}
       >
+        {/* Zoom-out animation for the button card */}
+        <style>{`
+          @keyframes zoomOutCard {
+            from { opacity: 0.6; transform: scale(1.06); }
+            to   { opacity: 1;   transform: scale(1); }
+          }
+          @keyframes zoomOutCardLg {
+            from { opacity: 0.6; transform: scale(1.02); }
+            to   { opacity: 1;   transform: scale(0.9); }
+          }
+          .pay-card-zoom { animation: zoomOutCard 350ms ease-out; }
+          @media (min-width: 1024px) {
+            .pay-card-zoom {
+              transform: scale(0.9);
+              transform-origin: left center;
+              animation-name: zoomOutCardLg;
+            }
+          }
+        `}</style>
+
         <div
           className={`w-full ${
             showSummary
-              ? "mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start"
+              ? "grid gap-6 lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)] lg:gap-12"
               : "flex justify-center"
           }`}
         >
-          {/* Left: buttons card */}
+          {/* Left: buttons card (pinned to the left-middle of the screen when the summary is open) */}
           <div
-            className={`relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface text-center ${
-              showSummary ? "mx-auto p-6 sm:p-8 lg:sticky lg:top-6" : "p-6 sm:p-12"
-            }`}
-            style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
+            className={
+              showSummary
+                ? "lg:sticky lg:top-6 lg:flex lg:h-[calc(100vh-8rem)] lg:min-h-[30rem] lg:items-center"
+                : "flex w-full justify-center"
+            }
           >
-            <TopoBackground className="text-teal/15" />
+            <div
+              className={`relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface text-center ${
+                showSummary
+                  ? "pay-card-zoom mx-auto p-6 sm:p-8 lg:mx-0 lg:max-w-none"
+                  : "p-6 sm:p-12"
+              }`}
+              style={{
+                boxShadow: showSummary
+                  ? "0 2px 4px rgba(0,0,0,0.05), 0 28px 60px -20px rgba(184,90,41,0.35)"
+                  : "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)",
+              }}
+            >
+              <TopoBackground className="text-teal/15" />
 
-            <div className="relative z-10 flex flex-col items-center gap-8">
-              <div>
-                <h2 className="font-display text-2xl font-bold sm:text-4xl" style={{ letterSpacing: "-0.02em" }}>
-                  Payments
-                </h2>
-                <p className="mt-2 text-sm text-ink-muted">
-                  Please select an option to continue.
-                </p>
-              </div>
+              {/* Copper accent bar */}
+              {showSummary && (
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-copper via-copper/70 to-copper/20" />
+              )}
 
-              <div className="flex w-full flex-col gap-4">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => navigate("/minisahana/payments/pay")}
-                >
-                  Pay
-                </Button>
+              <div className="relative z-10 flex flex-col items-center gap-8">
+                <div>
+                  <h2 className="font-display text-2xl font-bold sm:text-4xl" style={{ letterSpacing: "-0.02em" }}>
+                    Payments
+                  </h2>
+                  <p className="mt-2 text-sm text-ink-muted">
+                    Please select an option to continue.
+                  </p>
+                </div>
 
-                <Button
-                  variant={showSummary ? "primary" : "secondary"}
-                  size="lg"
-                  className="w-full"
-                  onClick={() => setShowSummary(true)}
-                >
-                  Download Monthly Summary
-                </Button>
+                <div className="flex w-full flex-col gap-4">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                    onClick={() => navigate("/minisahana/payments/pay")}
+                  >
+                    Pay
+                  </Button>
+
+                  <Button
+                    variant={showSummary ? "primary" : "secondary"}
+                    size="lg"
+                    className="w-full"
+                    onClick={() => setShowSummary(true)}
+                  >
+                    Download Monthly Summary
+                  </Button>
+
+                  {/* Divider + Refresh (only after Download Monthly Summary is clicked) */}
+                  {showSummary && (
+                    <>
+                      <div className="flex items-center gap-3 py-1">
+                        <span className="h-px flex-1 bg-line" />
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
+                          or
+                        </span>
+                        <span className="h-px flex-1 bg-line" />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        aria-label="Refresh page"
+                        className="group flex w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-surface/80 px-5 py-3 text-sm font-semibold text-ink backdrop-blur transition-all hover:border-copper/40 hover:bg-copper/10 hover:text-copper focus:outline-none focus:ring-2 focus:ring-copper/30"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="transition-transform duration-500 group-hover:rotate-180"
+                        >
+                          <polyline points="23 4 23 10 17 10" />
+                          <path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10" />
+                        </svg>
+                        Refresh
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right: year / month filters + results */}
-          {showSummary && <MonthlySummaryPanel />}
+          {showSummary && (
+            <div className="min-w-0">
+              <MonthlySummaryPanel />
+            </div>
+          )}
         </div>
       </main>
     </div>
