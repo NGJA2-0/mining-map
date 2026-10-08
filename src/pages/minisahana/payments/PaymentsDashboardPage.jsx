@@ -5,6 +5,7 @@ import Button from "../../../components/common/Button";
 import { useAuth } from "../../../context/AuthContext";
 import MonthlySummaryPanel from "./MonthlySummaryPanel";
 import PaymentsPage from "./PaymentsPage";
+import PaymentsCharts from "./PaymentsCharts";
 
 export default function PaymentsDashboardPage() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function PaymentsDashboardPage() {
   const dropdownRef = useRef(null);
   const [showSummary, setShowSummary] = useState(false);
   const [showPay, setShowPay] = useState(false);
+  const [showMenu, setShowMenu] = useState(false); // button card hidden until "Report and Payments" is clicked
   const split = showSummary || showPay; // true when the screen is split
 
   useEffect(() => {
@@ -135,9 +137,10 @@ export default function PaymentsDashboardPage() {
       </header>
 
       {/* ── main ── */}
+            {/* ── main ── */}
       <main
         className={`flex flex-1 flex-col px-4 py-6 sm:px-8 sm:py-8 ${
-          split ? "" : "items-center justify-center sm:px-10 sm:py-10 lg:px-16"
+          split ? "" : "sm:px-10 sm:py-12 lg:px-16"
         }`}
       >
         {/* Zoom-out + blur for the button card */}
@@ -150,6 +153,16 @@ export default function PaymentsDashboardPage() {
             from { opacity: 0.6; transform: scale(1.02); }
             to   { opacity: 1;   transform: scale(0.75); }
           }
+          @keyframes popupFade {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+          @keyframes popupIn {
+            from { opacity: 0; transform: translateY(14px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          .popup-overlay { animation: popupFade 200ms ease-out; }
+          .popup-in { animation: popupIn 280ms cubic-bezier(.2,.8,.2,1); }
           .pay-card-zoom { animation: zoomOutCard 350ms ease-out; }
           @media (min-width: 1024px) {
             .pay-card-zoom {
@@ -169,22 +182,28 @@ export default function PaymentsDashboardPage() {
           className={`w-full ${
             split
               ? "grid gap-6 lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)] lg:gap-12"
-              : "flex justify-center"
+              : "grid grid-cols-1 items-start gap-8"
           }`}
         >
-          {/* Left: buttons card */}
+          {/* Buttons card (right column on the initial dashboard) */}
           <div
+            onClick={() => {
+              if (!split) setShowMenu(false); // click outside the popup closes it
+            }}
             className={
               split
                 ? "lg:sticky lg:top-6 lg:flex lg:h-[calc(100vh-8rem)] lg:min-h-[30rem] lg:items-center"
-                : "flex w-full justify-center"
+                : showMenu
+                  ? "popup-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md"
+                  : "hidden"
             }
           >
             <div
-              className={`relative w-full max-w-lg overflow-hidden rounded-2xl border text-center ${
+              onClick={(e) => e.stopPropagation()}
+              className={`relative w-full max-w-lg rounded-2xl border text-center ${
                 split
-                  ? "pay-card-zoom mx-auto border-line/70 bg-surface/80 p-6 backdrop-blur-md sm:p-8 lg:mx-0 lg:max-w-none"
-                  : "border-line bg-surface p-6 sm:p-12"
+                  ? "pay-card-zoom mx-auto overflow-hidden border-line/70 bg-surface/80 p-6 backdrop-blur-md sm:p-8 lg:mx-0 lg:max-w-none"
+                  : "popup-in max-h-[90vh] overflow-y-auto border-line bg-surface p-6 sm:p-10"
               }`}
               style={{
                 boxShadow: split
@@ -195,8 +214,21 @@ export default function PaymentsDashboardPage() {
               <TopoBackground className="text-teal/15" />
 
               {/* Copper accent bar */}
-              {split && (
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-copper via-copper/70 to-copper/20" />
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-copper via-copper/70 to-copper/20" />
+
+              {/* Close button (popup only) */}
+              {!split && (
+                <button
+                  type="button"
+                  onClick={() => setShowMenu(false)}
+                  aria-label="Close"
+                  className="absolute right-3 top-4 z-20 rounded-md p-2 text-ink-muted transition-colors hover:bg-line/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
               )}
 
               <div className="relative z-10 flex flex-col items-center gap-8">
@@ -293,7 +325,7 @@ export default function PaymentsDashboardPage() {
             </div>
           </div>
 
-          {/* Right: Monthly summary OR the Pay page */}
+          {/* Right (split mode): Monthly summary OR the Pay page */}
           {showSummary && (
             <div className="min-w-0">
               <MonthlySummaryPanel />
@@ -302,6 +334,22 @@ export default function PaymentsDashboardPage() {
           {showPay && (
             <div className="min-w-0">
               <PaymentsPage embedded />
+            </div>
+          )}
+
+          {/* Charts (initial dashboard only, left column) */}
+          {!split && (
+            <div className="order-2 w-full min-w-0 lg:col-start-1 lg:row-start-1">
+              <div className="mb-5 flex items-center gap-4">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted">
+                  Overview
+                </span>
+                <span className="h-px flex-1 bg-gradient-to-r from-line to-transparent" />
+              </div>
+              <PaymentsCharts
+                onReportClick={() => setShowMenu((prev) => !prev)}
+                menuOpen={showMenu}
+              />
             </div>
           )}
         </div>
