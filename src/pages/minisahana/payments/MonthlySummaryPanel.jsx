@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import GlassSelect from "./GlassSelect";
+import { downloadMonthlyReportPdf } from "./downloadMonthlyReportPdf";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -59,6 +60,21 @@ export default function MonthlySummaryPanel() {
   const [pageInfo, setPageInfo] = useState({ page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
+
+  async function handleDownload() {
+    if (!applied || downloading) return;
+    setDownloading(true);
+    setDownloadError("");
+    try {
+      await downloadMonthlyReportPdf({ year: applied.year, month: applied.month, token });
+    } catch (err) {
+      setDownloadError(err.message || "Failed to download report.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   async function fetchReport(filters, page = 1, pageLimit = limit) {
     setLoading(true);
@@ -94,6 +110,7 @@ export default function MonthlySummaryPanel() {
     if (!month) return;
     const filters = { year, month };
     setApplied(filters);
+    setDownloadError("");
     fetchReport(filters, 1, limit);
   }
 
@@ -168,6 +185,13 @@ export default function MonthlySummaryPanel() {
         </div>
       )}
 
+      {/* ── Download error ── */}
+      {downloadError && (
+        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {downloadError}
+        </div>
+      )}
+
       {/* ── Loading ── */}
       {loading && (
         <div className="flex items-center justify-center gap-3 py-8 text-sm text-ink-muted">
@@ -201,15 +225,16 @@ export default function MonthlySummaryPanel() {
             </div>
             <button
               type="button"
-              onClick={() => {}}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-copper px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-copper/30 sm:w-auto"
+              onClick={handleDownload}
+              disabled={downloading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-copper px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-copper/30 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              Download report
+              {downloading ? "Preparing PDF..." : "Download report"}
             </button>
           </div>
 
