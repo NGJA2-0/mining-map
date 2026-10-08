@@ -16,6 +16,115 @@ const GRADE_DATA = [
   { grade: "13", students: 9 },
 ];
 
+function GradeStudentsChart({ data, selectedGrade, onSelect }) {
+  const total = data.reduce((sum, d) => sum + d.students, 0);
+  const max = Math.max(...data.map((d) => d.students));
+  const axisMax = Math.ceil((max + 1) / 10) * 10;
+  const ticks = [0, 1, 2, 3, 4].map((i) => Math.round((axisMax * i) / 4));
+
+  return (
+    <div
+      className="overflow-hidden rounded-2xl border border-line bg-surface"
+      style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 16px 40px -16px rgba(0,0,0,0.14)" }}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 border-b border-line bg-gradient-to-r from-copper/5 to-transparent px-5 py-4 sm:px-6 sm:py-5">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-copper">
+            Overview · This Year
+          </p>
+          <h3 className="mt-0.5 font-display text-lg font-bold sm:text-xl">
+            Students by Grade
+          </h3>
+        </div>
+        <div className="shrink-0 rounded-xl border border-line bg-page px-3 py-1.5 text-right">
+          <p className="font-display text-xl font-bold leading-none sm:text-2xl">{total}</p>
+          <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-ink-muted">
+            Total
+          </p>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="px-4 pb-4 pt-6 sm:px-6 sm:pb-5">
+        <div className="relative flex h-56 sm:h-64 lg:h-72">
+          {/* Y axis labels */}
+          <div className="flex w-8 flex-col-reverse justify-between pr-2 text-[10px] text-ink-muted">
+            {ticks.map((t) => (
+              <span key={t} className="flex h-0 items-center justify-end">
+                {t}
+              </span>
+            ))}
+          </div>
+
+          {/* Plot area */}
+          <div className="relative flex-1">
+            {/* Grid lines */}
+            <div className="absolute inset-0 flex flex-col justify-between">
+              {ticks.map((t) => (
+                <div key={t} className="border-t border-dashed border-line" />
+              ))}
+            </div>
+
+            {/* Bars */}
+            <div className="relative flex h-full items-end gap-1.5 sm:gap-4 lg:gap-6">
+              {data.map((item) => {
+                const isSelected = selectedGrade === item.grade;
+                const active = !selectedGrade || isSelected;
+                return (
+                  <button
+                    key={item.grade}
+                    type="button"
+                    onClick={() => onSelect(item.grade)}
+                    aria-label={`Grade ${item.grade}: ${item.students} students`}
+                    aria-pressed={isSelected}
+                    className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end focus:outline-none"
+                  >
+                    <span
+                      className={`mb-1 text-[10px] font-semibold transition-colors sm:text-xs
+                        ${active ? "text-ink" : "text-ink-muted"}`}
+                    >
+                      {item.students}
+                    </span>
+                    <div
+                      className={`w-full max-w-[36px] rounded-t-md bg-gradient-to-t transition-all duration-300 group-hover:brightness-110 group-focus-visible:ring-2 group-focus-visible:ring-copper/40 sm:max-w-[56px] lg:max-w-[72px]
+                        ${active ? "from-copper to-copper/60" : "from-copper/25 to-copper/10"}`}
+                      style={{
+                        height: `${(item.students / axisMax) * 100}%`,
+                        boxShadow: isSelected ? "0 6px 16px -4px rgba(184,90,41,0.55)" : "none",
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* X axis labels */}
+        <div className="ml-8 mt-2 flex gap-1.5 border-t border-line pt-2 sm:gap-4 lg:gap-6">
+          {data.map((item) => (
+            <span
+              key={item.grade}
+              className={`min-w-0 flex-1 text-center text-[10px] font-semibold sm:text-xs
+                ${!selectedGrade || selectedGrade === item.grade ? "text-ink" : "text-ink-muted"}`}
+            >
+              {item.grade}
+            </span>
+          ))}
+        </div>
+        <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-ink-muted">
+          Grade
+        </p>
+
+        <p className="mt-3 text-center text-xs text-ink-muted">
+          Select a bar to filter submissions · select again to clear
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function ReportCardsDashboardPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -23,7 +132,19 @@ export default function ReportCardsDashboardPage() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [showingSummary, setShowingSummary] = useState(false);
   const dropdownRef = useRef(null);
+  const tableRef = useRef(null);
   const [selectedGrade, setSelectedGrade] = useState("");
+
+  // Toggle the grade, and scroll down to the table only when selecting (not when clearing)
+  const handleSelectGrade = (grade) => {
+    const isClearing = selectedGrade === grade;
+    setSelectedGrade(isClearing ? "" : grade);
+    if (!isClearing) {
+      requestAnimationFrame(() => {
+        tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -172,33 +293,17 @@ export default function ReportCardsDashboardPage() {
 
           {/* Grade filter buttons + submissions table — hidden while a report card summary is displayed */}
           {!showingSummary && (
-            <>
-              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-3 md:grid-cols-8">
-                {GRADE_DATA.map((item) => {
-                  const isSelected = selectedGrade === item.grade;
-                  return (
-                    <button
-                      key={item.grade}
-                      type="button"
-                      onClick={() => setSelectedGrade((prev) => (prev === item.grade ? "" : item.grade))}
-                      className={`group flex flex-col items-start gap-1 rounded-lg border p-2.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md
-            ${isSelected ? "border-copper bg-copper/5" : "border-line bg-surface hover:border-copper/40"}`}
-                    >
-                      <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide
-            ${isSelected ? "bg-copper/15 text-copper" : "bg-teal/10 text-teal"}`}>
-                        Grade {item.grade}
-                      </span>
-                      <span className="font-display text-xl font-bold sm:text-2xl">
-                        {item.students}
-                      </span>
-                      <span className="text-[11px] text-ink-muted">Students</span>
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="mt-6 flex flex-col gap-6">
+              <GradeStudentsChart
+                data={GRADE_DATA}
+                selectedGrade={selectedGrade}
+                onSelect={handleSelectGrade}
+              />
 
-              <ReportCardsGradeTable grade={selectedGrade} />
-            </>
+              <div ref={tableRef} className="min-w-0 scroll-mt-4">
+                <ReportCardsGradeTable grade={selectedGrade} />
+              </div>
+            </div>
           )}
         </div>
       </main>

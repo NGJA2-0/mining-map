@@ -71,7 +71,7 @@ export default function ReportCardsGradeTable({ grade }) {
 
   return (
     <div
-      className="mt-6 overflow-hidden rounded-2xl border border-line bg-surface"
+      className="overflow-hidden rounded-2xl border border-line bg-surface"
       style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 16px 40px -16px rgba(0,0,0,0.14)" }}
     >
       <div className="border-b border-line bg-gradient-to-r from-copper/5 to-transparent px-5 py-4 sm:px-7 sm:py-5">
@@ -98,8 +98,46 @@ export default function ReportCardsGradeTable({ grade }) {
           </p>
         )}
 
+        {/* Mobile: card list */}
         {!loading && !error && records.length > 0 && (
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <ul className="divide-y divide-line md:hidden">
+            {records.map((r) => (
+              <li key={r.id} className="px-5 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-ink">{r.fullName || "—"}</p>
+                    <p className="mt-0.5 font-mono text-xs text-ink-muted">{r.nic || "—"}</p>
+                  </div>
+                  <span className="shrink-0 rounded-md bg-copper/10 px-2 py-0.5 text-xs font-semibold text-copper">
+                    {r.currentGrade || "—"}
+                  </span>
+                </div>
+                <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                  <div>
+                    <dt className="text-ink-muted">Start Date</dt>
+                    <dd className="font-medium text-ink">{formatDate(r.startDate)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-ink-muted">End Date</dt>
+                    <dd className="font-medium text-ink">{formatDate(r.endDate)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-ink-muted">Duration</dt>
+                    <dd className="font-medium text-ink">{r.totalDuration ?? "—"} mo</dd>
+                  </div>
+                  <div>
+                    <dt className="text-ink-muted">Total Amount</dt>
+                    <dd className="font-semibold text-ink">{formatAmount(r.totalAmount)}</dd>
+                  </div>
+                </dl>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Desktop / tablet: table */}
+        {!loading && !error && records.length > 0 && (
+          <table className="hidden w-full min-w-[720px] text-left text-sm md:table">
             <thead>
               <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-muted">
                 <th className="px-5 py-3 sm:px-7">Full Name</th>
