@@ -17,6 +17,14 @@ const GRADE_DATA = [
 ];
 
 function GradeStudentsChart({ data, selectedGrade, onSelect }) {
+  const [mounted, setMounted] = useState(false);
+
+  // Flip after first paint so the bars animate from 0 to their height
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const total = data.reduce((sum, d) => sum + d.students, 0);
   const max = Math.max(...data.map((d) => d.students));
   const axisMax = Math.ceil((max + 1) / 10) * 10;
@@ -68,7 +76,7 @@ function GradeStudentsChart({ data, selectedGrade, onSelect }) {
 
             {/* Bars */}
             <div className="relative flex h-full items-end gap-1.5 sm:gap-4 lg:gap-6">
-              {data.map((item) => {
+              {data.map((item, index) => {
                 const isSelected = selectedGrade === item.grade;
                 const active = !selectedGrade || isSelected;
                 return (
@@ -90,8 +98,9 @@ function GradeStudentsChart({ data, selectedGrade, onSelect }) {
                       className={`w-full max-w-[36px] rounded-t-md bg-gradient-to-t transition-all duration-300 group-hover:brightness-110 group-focus-visible:ring-2 group-focus-visible:ring-copper/40 sm:max-w-[56px] lg:max-w-[72px]
                         ${active ? "from-copper to-copper/60" : "from-copper/25 to-copper/10"}`}
                       style={{
-                        height: `${(item.students / axisMax) * 100}%`,
+                        height: mounted ? `${(item.students / axisMax) * 100}%` : "0%",
                         boxShadow: isSelected ? "0 6px 16px -4px rgba(184,90,41,0.55)" : "none",
+                        transition: `height 700ms cubic-bezier(0.22, 1, 0.36, 1) ${index * 70}ms, filter 300ms, box-shadow 300ms`,
                       }}
                     />
                   </button>
