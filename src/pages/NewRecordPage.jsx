@@ -400,7 +400,7 @@ export default function NewRecordPage() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
-        throw new Error(errData?.message || "Failed to save record");
+        throw new Error(errData?.error || errData?.message || "Failed to save record");
       }
 
       navigate("/dashboard");

@@ -208,6 +208,34 @@ export default function ExtendRecordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
+  const [gmlTaken, setGmlTaken] = useState("");
+  const originalGml = (location.state?.record?.gmlNumber || "").trim();
+
+  useEffect(() => {
+    const gml = (form.gmlNumber || "").trim();
+    if (!gml || gml === originalGml) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/mining-licenses/gml-exists?gml=${encodeURIComponent(gml)}`,
+          { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        setGmlTaken(data.exists ? gml : "");
+      } catch (err) {
+        if (err.name !== "AbortError") console.error(err);
+      }
+    }, 400);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [form.gmlNumber, token, originalGml]);
+
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
@@ -348,7 +376,13 @@ export default function ExtendRecordPage() {
       }, 0);
       return;
     }
+    if (gmlTaken && gmlTaken === (form.gmlNumber || "").trim()) {
+      alert("මෙම GML අංකය දැනටමත් භාවිතයේ ඇත.");
+      return;
+    }
+
     setSaving(true);
+
     try {
 
       const payload = {
@@ -371,7 +405,7 @@ export default function ExtendRecordPage() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
-        throw new Error(errData?.message || "Failed to save record");
+        throw new Error(errData?.error || errData?.message || "Failed to save record");
       }
 
       navigate("/dashboard");
@@ -392,7 +426,7 @@ export default function ExtendRecordPage() {
               Signed in as {user?.nic}
             </p>
             <h1 className="mt-1 font-display text-xl font-semibold sm:text-2xl">
-              New Site Record
+              Extend Site Record
             </h1>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
@@ -508,7 +542,7 @@ export default function ExtendRecordPage() {
                         onChange={handleChange("expenseName")}
                       />
                     </Field>
-                    <Field label="වියදම් පාර්ශවයේ ලිපිනය" full  error={errors.expenseAddress}>
+                    <Field label="වියදම් පාර්ශවයේ ලිපිනය" full error={errors.expenseAddress}>
                       <input
                         type="text"
                         className={inputClass}
@@ -539,13 +573,13 @@ export default function ExtendRecordPage() {
                   </>
                 )}
                 <Field label="මැණික් ගැරීමේ බලපත්‍ර අංකය (GML)" error={errors.gmlNumber}>
-                  <input
-                    type="text"
-                    className={inputClass}
-                    placeholder="GML"
-                    value={form.gmlNumber}
-                    onChange={handleChange("gmlNumber")}
-                  />
+                  {gmlTaken && gmlTaken === (form.gmlNumber || "").trim() && (
+                    <p className="font-sinhala text-xs text-red-500">
+                      මෙම GML අංකය සහිත බලපත්‍රයක් දැනටමත් පවතී. එම GML අංකයම භාවිතයෙන් තවත් බලපත්‍රයක් එක් කළ නොහැක.
+                    </p>
+                  )}
+                  <input type="text" className={inputClass} placeholder="GML"
+                    value={form.gmlNumber} onChange={handleChange("gmlNumber")} />
                 </Field>
 
                 <Field label="G. P. S." full>
@@ -776,7 +810,7 @@ export default function ExtendRecordPage() {
                     onChange={handleChange("landExtent")}
                   />
                 </Field>
-                <Field label="බලපත්‍රලාභියා" full  error={errors.licenseeType}>
+                <Field label="බලපත්‍රලාභියා" full error={errors.licenseeType}>
                   <select
                     className={inputClass}
                     value={form.licenseeType}
