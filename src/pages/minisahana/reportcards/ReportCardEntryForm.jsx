@@ -12,6 +12,8 @@ export default function ReportCardEntryForm({ student, onBack }) {
   const [isDragging, setIsDragging] = useState(false);
 
   const [currentGrade, setCurrentGrade] = useState("");
+  const [minGrade, setMinGrade] = useState(null);
+  const MAX_GRADE = 13;
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -53,6 +55,33 @@ export default function ReportCardEntryForm({ student, onBack }) {
 
     return () => controller.abort();
   }, [currentGrade, student?.id, token]);
+
+  useEffect(() => {
+    if (!student?.id) return;
+    const controller = new AbortController();
+
+    fetch(`${API_BASE_URL}/api/report-cards/grade-limit/${student.id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`status ${res.status}`))))
+      .then((data) => setMinGrade(data.minGrade))
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Grade limit check failed:", err);
+      });
+
+    return () => controller.abort();
+  }, [student?.id, token]);
+
+  const handleGradeChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, "").replace(/^0+/, "");
+    if (digits === "") {
+      setCurrentGrade("");
+      return;
+    }
+    if (Number(digits) > MAX_GRADE) return; // ignore keystrokes/pastes that go above 13
+    setCurrentGrade(digits);
+  };
 
   // Opens the PDF in a new tab. A plain link won't work because the endpoint needs the Bearer token.
   const viewOlCertificate = async () => {
@@ -113,6 +142,16 @@ export default function ReportCardEntryForm({ student, onBack }) {
       }
     }
 
+    if (Number(currentGrade) > MAX_GRADE) {
+      setSubmitError(`Grade cannot be higher than ${MAX_GRADE}.`);
+      return;
+    }
+
+    if (minGrade !== null && Number(currentGrade) < minGrade) {
+      setSubmitError(`Grade cannot be lower than ${minGrade}.`);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -141,7 +180,8 @@ export default function ReportCardEntryForm({ student, onBack }) {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to submit report card");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to submit report card");
       }
 
       // Success — reset form fields and switch to the summary view.
@@ -156,7 +196,7 @@ export default function ReportCardEntryForm({ student, onBack }) {
       setOlStatus("idle");
     } catch (err) {
       console.error(err);
-      setSubmitError("Couldn't submit. Try again.");
+      setSubmitError(err.message || "Couldn't submit. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -281,19 +321,21 @@ export default function ReportCardEntryForm({ student, onBack }) {
           <div className="flex flex-1 flex-col">
 
             <div className="mb-4">
-              <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                Student's Current Grade
+              <label className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-ink">
+                Student's Current Grade <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
                 inputMode="numeric"
-                pattern="[0-9]*"
                 maxLength={2}
                 value={currentGrade}
-                onChange={(e) => setCurrentGrade(e.target.value.replace(/\D/g, ""))}
+                onChange={handleGradeChange}
                 placeholder="e.g. 10"
-                className="..."  /* keep your existing classes */
+                className="w-full rounded-lg border border-line bg-page px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
               />
+              <p className="mt-1 text-[11px] text-ink-muted">
+                {minGrade !== null ? `Allowed: ${minGrade} to ${MAX_GRADE}` : `Allowed: 1 to ${MAX_GRADE}`}
+              </p>
             </div>
             {currentGrade === "12" && (
               <div className="mb-4">
