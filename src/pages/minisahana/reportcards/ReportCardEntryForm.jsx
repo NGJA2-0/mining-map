@@ -24,9 +24,10 @@ export default function ReportCardEntryForm({ student, onBack }) {
   const [olFile, setOlFile] = useState(null);
   const [olStatus, setOlStatus] = useState("idle"); // idle | loading | exists | missing | error
   const [olInfo, setOlInfo] = useState(null);
+  const OL_REQUIRED_GRADES = ["12", "13"];
 
   useEffect(() => {
-    if (currentGrade !== "12" || !student?.id) {
+    if (!OL_REQUIRED_GRADES.includes(currentGrade) || !student?.id) {
       setOlStatus("idle");
       setOlFile(null);
       return;
@@ -102,7 +103,7 @@ export default function ReportCardEntryForm({ student, onBack }) {
       setSubmitError("Please enter the student's current grade.");
       return;
     }
-    if (currentGrade === "12") {
+    if (OL_REQUIRED_GRADES.includes(currentGrade)) {
       if (olStatus === "loading" || olStatus === "error") {
         setSubmitError("Couldn't verify the O/L certificate. Please try again.");
         return;
@@ -128,7 +129,7 @@ export default function ReportCardEntryForm({ student, onBack }) {
       formData.append("amount", monthlyAmount);
       formData.append("pdf", selectedFile);
 
-      if (currentGrade === "12" && olStatus === "missing" && olFile) {
+      if (OL_REQUIRED_GRADES.includes(currentGrade) && olStatus === "missing" && olFile) {
         formData.append("olCertificate", olFile);
       }
 
@@ -295,7 +296,7 @@ export default function ReportCardEntryForm({ student, onBack }) {
                 className="..."  /* keep your existing classes */
               />
             </div>
-            {currentGrade === "12" && (
+            {OL_REQUIRED_GRADES.includes(currentGrade) && (
               <div className="mb-4">
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">
                   O/L Certificate
