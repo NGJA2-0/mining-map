@@ -280,7 +280,7 @@ export default function PaymentsDashboardPage() {
                     variant="secondary"
                     size="lg"
                     className="w-full"
-                    onClick={() => {}}
+                    onClick={() => navigate("/minisahana/payments/student-report")}
                   >
                     Download Student Report
                   </Button>
@@ -298,7 +298,12 @@ export default function PaymentsDashboardPage() {
 
                       <button
                         type="button"
-                        onClick={() => window.location.reload()}
+                        onClick={() => {
+                          setShowSummary(false);
+                          setShowPay(false);
+                          setShowMenu(false);
+                          navigate("/minisahana/payments", { replace: true, state: null });
+                        }}
                         aria-label="Refresh page"
                         className="group flex w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-surface/80 px-5 py-3 text-sm font-semibold text-ink backdrop-blur transition-all hover:border-copper/40 hover:bg-copper/10 hover:text-copper focus:outline-none focus:ring-2 focus:ring-copper/30"
                       >
