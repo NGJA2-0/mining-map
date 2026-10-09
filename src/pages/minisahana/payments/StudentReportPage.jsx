@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import TopoBackground from "../../../components/common/TopoBackground";
 import Button from "../../../components/common/Button";
+import StudentRecordSearch from "./StudentRecordSearch";
 
 export default function StudentReportPage() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export default function StudentReportPage() {
 
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -228,7 +230,26 @@ export default function StudentReportPage() {
               className="min-h-[20rem] rounded-2xl border border-line bg-surface p-4 sm:p-6"
               style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
             >
-              {/* TODO: student report content */}
+              <div className="mb-5 sm:mb-6">
+                <h2 className="font-display text-base font-bold sm:text-xl" style={{ letterSpacing: "-0.01em" }}>
+                  Get a student record
+                </h2>
+                <p className="mt-1 text-xs text-ink-muted sm:text-[13px]">
+                  Search by name, NIC, bank account number, grade or zone.
+                </p>
+              </div>
+
+              <StudentRecordSearch onSelect={setSelectedStudent} />
+
+              {selectedStudent && (
+                <div className="mt-6 rounded-xl border border-line bg-page p-4 sm:p-5">
+                  <p className="text-sm font-semibold">{selectedStudent.applicantFullNameSinhala}</p>
+                  <p className="mt-1 font-mono text-xs uppercase tracking-wider text-ink-muted">
+                    NIC: {selectedStudent.nic}
+                  </p>
+                  {/* TODO: fetch GET /api/mini-sahana-form/${selectedStudent.id} and render the full record */}
+                </div>
+              )}
             </div>
           </div>
         </div>
