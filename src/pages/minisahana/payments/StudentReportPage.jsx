@@ -4,6 +4,7 @@ import { useAuth } from "../../../context/AuthContext";
 import TopoBackground from "../../../components/common/TopoBackground";
 import Button from "../../../components/common/Button";
 import StudentRecordSearch from "./StudentRecordSearch";
+import ApplicationPayments from "./ApplicationPayments";
 
 export default function StudentReportPage() {
   const navigate = useNavigate();
@@ -242,13 +243,11 @@ export default function StudentReportPage() {
               <StudentRecordSearch onSelect={setSelectedStudent} />
 
               {selectedStudent && (
-                <div className="mt-6 rounded-xl border border-line bg-page p-4 sm:p-5">
-                  <p className="text-sm font-semibold">{selectedStudent.applicantFullNameSinhala}</p>
-                  <p className="mt-1 font-mono text-xs uppercase tracking-wider text-ink-muted">
-                    NIC: {selectedStudent.nic}
-                  </p>
-                  {/* TODO: fetch GET /api/mini-sahana-form/${selectedStudent.id} and render the full record */}
-                </div>
+                <ApplicationPayments
+                  key={selectedStudent.id}
+                  student={selectedStudent}
+                  onClear={() => setSelectedStudent(null)}
+                />
               )}
             </div>
           </div>
