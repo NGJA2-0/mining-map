@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
+import downloadApplicationPaymentsPdf from "./downloadApplicationPaymentsPdf";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const PAGE_SIZES = [10, 15, 20];
@@ -58,6 +59,15 @@ export default function ApplicationPayments({ student, onClear }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [downloading, setDownloading] = useState(false);
+  const [notice, setNotice] = useState(null); // { type: "info" | "error", message }
+
+  // auto-dismiss the notice
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 5000);
+    return () => clearTimeout(t);
+  }, [notice]);
 
   const load = useCallback(
     async (signal) => {
@@ -97,6 +107,27 @@ export default function ApplicationPayments({ student, onClear }) {
     return () => controller.abort();
   }, [load, reloadKey]);
 
+  async function handleDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    setNotice(null);
+    try {
+      await downloadApplicationPaymentsPdf(student.id, token);
+    } catch (err) {
+      if (err.status === 401) {
+        logout();
+        return;
+      }
+      setNotice(
+        err.status === 404
+          ? { type: "info", message: "No payment records to download." }
+          : { type: "error", message: err.message || "Failed to download PDF" }
+      );
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   const summary = result?.summary;
   const groups = result?.data ?? [];
   const totalPages = result?.totalPages ?? 1;
@@ -135,10 +166,44 @@ export default function ApplicationPayments({ student, onClear }) {
         </button>
       </div>
 
-      {/* ── title ── */}
-      <h3 className="font-display text-base font-bold sm:text-xl" style={{ letterSpacing: "-0.01em" }}>
-        Application Payments
-      </h3>
+      {/* ── title + download ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="font-display text-base font-bold sm:text-xl" style={{ letterSpacing: "-0.01em" }}>
+          Application Payments
+        </h3>
+
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={downloading || !summary || summary.totalMonths === 0}
+          aria-busy={downloading}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-copper px-4 py-2.5 text-xs font-semibold text-white transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-copper/30 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:text-sm"
+        >
+          {downloading ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          )}
+          {downloading ? "Generating PDF…" : "Download PDF"}
+        </button>
+      </div>
+
+      {notice && (
+        <div
+          role="alert"
+          className={`rounded-xl border px-4 py-3 text-sm ${
+            notice.type === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-line bg-page text-ink-muted"
+          }`}
+        >
+          {notice.message}
+        </div>
+      )}
 
       {/* ── first load ── */}
       {loading && !result && <Skeleton />}
