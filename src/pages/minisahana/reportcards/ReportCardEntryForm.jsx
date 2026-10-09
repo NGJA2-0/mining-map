@@ -15,6 +15,10 @@ export default function ReportCardEntryForm({ student, onBack }) {
   const [minGrade, setMinGrade] = useState(null);
   const MAX_GRADE = 13;
 
+  const [cardsThisYear, setCardsThisYear] = useState(0);
+  const MAX_PER_YEAR = 2;
+  const limitReached = cardsThisYear >= MAX_PER_YEAR;
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [monthlyAmount, setMonthlyAmount] = useState("");
@@ -65,7 +69,10 @@ export default function ReportCardEntryForm({ student, onBack }) {
       signal: controller.signal,
     })
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`status ${res.status}`))))
-      .then((data) => setMinGrade(data.minGrade))
+      .then((data) => {
+        setMinGrade(data.minGrade);
+        setCardsThisYear(data.cardsThisYear ?? 0);
+      })
       .catch((err) => {
         if (err.name !== "AbortError") console.error("Grade limit check failed:", err);
       });
@@ -121,6 +128,10 @@ export default function ReportCardEntryForm({ student, onBack }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError("");
+    if (limitReached) {
+      setSubmitError(`Only ${MAX_PER_YEAR} report cards can be added per year for this student.`);
+      return;
+    }
 
     if (!selectedFile) {
       setSubmitError("Please attach the report card PDF.");
@@ -255,6 +266,11 @@ export default function ReportCardEntryForm({ student, onBack }) {
 
       {/* Body */}
       <form onSubmit={handleSubmit} className="px-5 py-6 sm:px-7 sm:py-7">
+        {limitReached && (
+          <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+            This student already has {MAX_PER_YEAR} report cards for {new Date().getFullYear()}. No more can be added this year.
+          </p>
+        )}
         <div className="flex flex-col gap-6">
           {/* PDF upload container */}
           <div className="w-full">
@@ -447,7 +463,7 @@ export default function ReportCardEntryForm({ student, onBack }) {
               )}
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || limitReached}
                 className="w-full rounded-lg bg-copper px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-copper/30 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {submitting ? "Submitting…" : "Submit"}
