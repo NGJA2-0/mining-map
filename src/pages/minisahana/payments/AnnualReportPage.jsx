@@ -4,6 +4,7 @@ import { useAuth } from "../../../context/AuthContext";
 import TopoBackground from "../../../components/common/TopoBackground";
 import Button from "../../../components/common/Button";
 import GlassSelect from "./GlassSelect";
+import { downloadAnnualReportPdf, UnauthorizedError } from "./downloadAnnualReportPdf";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const PAGE_SIZES = [10, 15, 20];
@@ -127,6 +128,7 @@ export default function AnnualReportPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null); // { kind: "validation" | "server", message }
   const [expandedId, setExpandedId] = useState(null);
+  const [downloading, setDownloading] = useState(false);
 
   const reqRef = useRef(0);
 
@@ -220,9 +222,30 @@ export default function AnnualReportPage() {
     if (appliedFilters) fetchReport(appliedFilters, 1, next); // resets to page 1
   }
 
-  function handleDownloadPdf() {
-    // TODO: wire to the PDF API (separate spec).
-    // Use appliedFilters (year + grade) when you implement it.
+  async function handleDownloadPdf() {
+    // Uses the last SEARCHED filters, not the unsearched inputs.
+    if (!appliedFilters?.year || downloading) return;
+    setDownloading(true);
+    setError(null);
+    try {
+      await downloadAnnualReportPdf({
+        year: appliedFilters.year,
+        grade: appliedFilters.grade,
+        token,
+      });
+    } catch (err) {
+      if (err instanceof UnauthorizedError) {
+        logout();
+        navigate("/login", { replace: true });
+        return;
+      }
+      setError({
+        kind: "download",
+        message: err.message || "Failed to download the report.",
+      });
+    } finally {
+      setDownloading(false);
+    }
   }
 
   const summary = report?.summary;
@@ -467,15 +490,20 @@ export default function AnnualReportPage() {
                 <button
                   type="button"
                   onClick={handleDownloadPdf}
-                  disabled={!report || loading}
+                  disabled={!report || !appliedFilters?.year || loading || downloading}
+                  aria-busy={downloading}
                   className="col-span-2 flex h-[46px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-copper/30 bg-copper/10 px-5 text-sm font-semibold text-copper transition-colors hover:bg-copper hover:text-white focus:outline-none focus:ring-2 focus:ring-copper/30 disabled:cursor-not-allowed disabled:opacity-50 lg:col-span-1"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  Download PDF
+                  {downloading ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-copper/30 border-t-copper" />
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                  )}
+                  {downloading ? "Generating..." : "Download PDF"}
                 </button>
               </div>
             </form>
