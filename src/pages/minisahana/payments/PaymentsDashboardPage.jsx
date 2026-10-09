@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import TopoBackground from "../../../components/common/TopoBackground";
 import Button from "../../../components/common/Button";
 import { useAuth } from "../../../context/AuthContext";
@@ -9,12 +9,13 @@ import PaymentsCharts from "./PaymentsCharts";
 
 export default function PaymentsDashboardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
 
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const [showSummary, setShowSummary] = useState(false);
-  const [showPay, setShowPay] = useState(false);
+  const [showSummary, setShowSummary] = useState(location.state?.panel === "summary");
+  const [showPay, setShowPay] = useState(location.state?.panel === "pay");
   const [showMenu, setShowMenu] = useState(false); // button card hidden until "Report and Payments" is clicked
   const split = showSummary || showPay; // true when the screen is split
 
@@ -270,7 +271,7 @@ export default function PaymentsDashboardPage() {
                     variant="secondary"
                     size="lg"
                     className="w-full"
-                    onClick={() => {}}
+                    onClick={() => navigate("/minisahana/payments/annual-report")}
                   >
                     Download Annual Report
                   </Button>
