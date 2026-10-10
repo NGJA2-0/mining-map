@@ -51,8 +51,16 @@ export default function PaymentsDashboardPage() {
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               type="button"
-              onClick={() => navigate("/minisahana")}
-              aria-label="Back to Mini Sahana"
+              onClick={() => {
+                if (split) {
+                  setShowSummary(false);
+                  setShowPay(false);
+                  navigate("/minisahana/payments", { replace: true, state: null });
+                } else {
+                  navigate("/minisahana");
+                }
+              }}
+              aria-label={split ? "Back to Payments dashboard" : "Back to Mini Sahana"}
               className="flex items-center gap-1.5 rounded-md p-2 text-ink-muted transition-colors hover:bg-line/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -152,12 +160,7 @@ export default function PaymentsDashboardPage() {
       </header>
 
       {/* ── main ── */}
-            {/* ── main ── */}
-      <main
-        className={`flex flex-1 flex-col px-4 py-6 sm:px-8 sm:py-8 ${
-          split ? "" : "sm:px-10 sm:py-12 lg:px-16"
-        }`}
-      >
+      <main className="flex flex-1 flex-col py-6 pl-12 pr-4 sm:py-10 sm:px-12 lg:py-12 lg:px-16">
         {/* Zoom-out + blur for the button card */}
         <style>{`
           @keyframes zoomOutCard {
@@ -194,11 +197,7 @@ export default function PaymentsDashboardPage() {
         `}</style>
 
         <div
-          className={`w-full ${
-            split
-              ? "grid gap-6 lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)] lg:gap-12"
-              : "grid grid-cols-1 items-start gap-8"
-          }`}
+          className="w-full grid grid-cols-1 items-start gap-8"
         >
           {/* Buttons card (right column on the initial dashboard) */}
           <div
@@ -206,11 +205,9 @@ export default function PaymentsDashboardPage() {
               if (!split) setShowMenu(false); // click outside the popup closes it
             }}
             className={
-              split
-                ? "lg:sticky lg:top-6 lg:flex lg:h-[calc(100vh-8rem)] lg:min-h-[30rem] lg:items-center"
-                : showMenu
-                  ? "popup-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md"
-                  : "hidden"
+              showMenu && !split
+                ? "popup-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md"
+                : "hidden"
             }
           >
             <div
