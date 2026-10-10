@@ -37,9 +37,9 @@ function formatDateTime(iso) {
 
 /* ── small presentational helpers ── */
 const thClass =
-  "px-4 py-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted whitespace-nowrap first:pl-6 last:pr-6 sm:px-5 sm:first:pl-8 sm:last:pr-8";
+  "border-r border-line px-4 py-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted whitespace-nowrap first:pl-6 last:border-r-0 last:pr-6 sm:px-5 sm:first:pl-8 sm:last:pr-8";
 const tdClass =
-  "px-4 py-4 text-sm text-ink whitespace-nowrap first:pl-6 last:pr-6 sm:px-5 sm:py-5 sm:first:pl-8 sm:last:pr-8";
+  "border-r border-line px-4 py-4 text-sm text-ink whitespace-nowrap first:pl-6 last:border-r-0 last:pr-6 sm:px-5 sm:py-5 sm:first:pl-8 sm:last:pr-8";
 const thNumClass = `${thClass} text-right`;
 const tdNumClass = `${tdClass} text-right tabular-nums`;
 const cardShadow = { boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 10px 28px -14px rgba(0,0,0,0.12)" };
@@ -516,7 +516,7 @@ export default function AnnualReportPage() {
                             return (
                               <Fragment key={c.id}>
                                 <tr className="border-b border-line hover:bg-line/20">
-                                  <td className="py-4 pl-5 pr-1 sm:pl-8">
+                                  <td className="border-r border-line py-4 pl-5 pr-1 sm:pl-8">
                                     <button
                                       type="button"
                                       onClick={() => setExpandedId(open ? null : c.id)}
