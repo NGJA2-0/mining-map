@@ -37,13 +37,16 @@ function formatDateTime(iso) {
 
 /* ── small presentational helpers ── */
 const thClass =
-  "px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted whitespace-nowrap";
-const tdClass = "px-4 py-3 text-sm text-ink whitespace-nowrap";
+  "px-4 py-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted whitespace-nowrap first:pl-6 last:pr-6 sm:px-5 sm:first:pl-8 sm:last:pr-8";
+const tdClass =
+  "px-4 py-4 text-sm text-ink whitespace-nowrap first:pl-6 last:pr-6 sm:px-5 sm:py-5 sm:first:pl-8 sm:last:pr-8";
+const thNumClass = `${thClass} text-right`;
+const tdNumClass = `${tdClass} text-right tabular-nums`;
 const cardShadow = { boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 10px 28px -14px rgba(0,0,0,0.12)" };
 
 function SectionTitle({ children }) {
   return (
-    <div className="mb-3 mt-8 flex items-center gap-4">
+    <div className="mb-4 mt-10 flex items-center gap-4 sm:mt-14">
       <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted">
         {children}
       </span>
@@ -56,12 +59,44 @@ function StatCard({ label, value, tone }) {
   const toneClass =
     tone === "good" ? "text-emerald-700" : tone === "bad" ? "text-red-600" : "text-ink";
   return (
-    <div className="rounded-2xl border border-line bg-surface p-4" style={cardShadow}>
+    <div className="rounded-3xl border border-line bg-surface p-5 sm:p-6" style={cardShadow}>
       <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{label}</p>
-      <p className={`mt-1.5 break-words font-display text-lg font-semibold sm:text-xl ${toneClass}`}>
+      <p className={`mt-2 break-words font-display text-lg font-semibold sm:text-xl ${toneClass}`}>
         {value}
       </p>
     </div>
+  );
+}
+
+function MonthsList({ months }) {
+  return (
+    <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {(months || []).map((m) => (
+        <li
+          key={m.label}
+          className={`rounded-2xl border px-4 py-3 ${
+            m.paid ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-ink">{m.label}</span>
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                m.paid ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"
+              }`}
+            >
+              {m.paid ? "Paid" : "Unpaid"}
+            </span>
+          </div>
+          {m.paid && (
+            <p className="mt-1.5 text-xs text-ink-muted">
+              {formatDateTime(m.paidAt)}
+              {m.paidBy ? ` · by ${m.paidBy}` : ""}
+            </p>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -77,13 +112,13 @@ function TotalsTable({ rows, firstKey, firstLabel, showCards }) {
     "Unpaid amount",
   ];
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-surface" style={cardShadow}>
+    <div className="overflow-hidden rounded-3xl border border-line bg-surface" style={cardShadow}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-left">
           <thead>
             <tr className="border-b border-line bg-line/30">
-              {headers.map((h) => (
-                <th key={h} className={thClass}>{h}</th>
+              {headers.map((h, i) => (
+                <th key={h} className={i === 0 ? thClass : thNumClass}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -93,13 +128,13 @@ function TotalsTable({ rows, firstKey, firstLabel, showCards }) {
                 <td className={`${tdClass} font-semibold`}>
                   {firstKey === "grade" ? `Grade ${r.grade}` : r.monthLabel}
                 </td>
-                {showCards && <td className={tdClass}>{r.cards}</td>}
-                <td className={tdClass}>{r.count}</td>
-                <td className={`${tdClass} text-emerald-700`}>{r.paidCount}</td>
-                <td className={`${tdClass} text-red-600`}>{r.unpaidCount}</td>
-                <td className={tdClass}>{money(r.totalAmount)}</td>
-                <td className={`${tdClass} text-emerald-700`}>{money(r.paidAmount)}</td>
-                <td className={`${tdClass} text-red-600`}>{money(r.unpaidAmount)}</td>
+                {showCards && <td className={tdNumClass}>{r.cards}</td>}
+                <td className={tdNumClass}>{r.count}</td>
+                <td className={`${tdNumClass} text-emerald-700`}>{r.paidCount}</td>
+                <td className={`${tdNumClass} text-red-600`}>{r.unpaidCount}</td>
+                <td className={tdNumClass}>{money(r.totalAmount)}</td>
+                <td className={`${tdNumClass} text-emerald-700`}>{money(r.paidAmount)}</td>
+                <td className={`${tdNumClass} text-red-600`}>{money(r.unpaidAmount)}</td>
               </tr>
             ))}
           </tbody>
@@ -338,17 +373,17 @@ export default function AnnualReportPage() {
       </header>
 
       {/* ── main (split layout, same look as the dashboard) ── */}
-      <main className="flex flex-1 flex-col py-6 pl-12 pr-4 sm:py-10 sm:px-12 lg:py-12 lg:px-16">
-        <div className="w-full">
+      <main className="flex flex-1 flex-col pb-16 pl-12 pr-4 pt-6 sm:px-12 sm:pb-20 sm:pt-10 lg:px-16 lg:pt-12">
+        <div className="w-full" style={{ maxWidth: 1200, marginLeft: "auto", marginRight: "auto" }}>
           {/* Right: filters + results */}
           <div className="min-w-0">
             {/* Filter bar */}
             <form
               onSubmit={handleSearch}
-              className="rounded-2xl border border-line bg-surface p-4 sm:p-6"
+              className="rounded-3xl border border-line bg-surface p-5 sm:p-8"
               style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
             >
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-[1fr_1fr_auto_auto] lg:items-end">
+              <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-[1fr_1fr_auto_auto] lg:items-end">
                 <GlassSelect label="Year" value={year} onChange={setYear} options={yearOptions} />
 
                 <GlassSelect
@@ -395,7 +430,7 @@ export default function AnnualReportPage() {
 
             {/* Error */}
             {error && (
-              <div role="alert" className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div role="alert" className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
                 <span>{error.message}</span>
                 {error.kind === "server" && appliedFilters && (
                   <button
@@ -411,7 +446,7 @@ export default function AnnualReportPage() {
 
             {/* Loading */}
             {loading && (
-              <div className="mt-10 flex items-center justify-center gap-3 text-sm text-ink-muted">
+              <div className="mt-14 flex items-center justify-center gap-3 text-sm text-ink-muted">
                 <span className="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-copper" />
                 Loading annual report...
               </div>
@@ -419,7 +454,7 @@ export default function AnnualReportPage() {
 
             {/* Idle hint */}
             {!loading && !report && !error && (
-              <p className="mt-10 text-center text-sm text-ink-muted">
+              <p className="mt-14 text-center text-sm text-ink-muted">
                 Select a year and press search to view the annual report.
               </p>
             )}
@@ -429,7 +464,7 @@ export default function AnnualReportPage() {
               <>
                 {/* Summary cards (grand totals, straight from the API) */}
                 <SectionTitle>Summary — {report.year}{report.grade ? ` · Grade ${report.grade}` : ""}</SectionTitle>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-4">
                   <StatCard label="Report cards" value={summary?.totalCards ?? 0} />
                   <StatCard label="Payments" value={summary?.count ?? 0} />
                   <StatCard label="Paid payments" value={summary?.paidCount ?? 0} tone="good" />
@@ -446,7 +481,7 @@ export default function AnnualReportPage() {
                 {/* Grade-wise totals */}
                 <SectionTitle>Grade-wise totals</SectionTitle>
                 {(report.byGrade || []).length === 0 ? (
-                  <p className="rounded-2xl border border-line bg-surface px-4 py-6 text-center text-sm text-ink-muted">
+                  <p className="rounded-3xl border border-line bg-surface px-5 py-10 text-center text-sm text-ink-muted">
                     No grade data for this year.
                   </p>
                 ) : (
@@ -456,11 +491,12 @@ export default function AnnualReportPage() {
                 {/* Report cards */}
                 <SectionTitle>Report cards</SectionTitle>
                 {isEmpty ? (
-                  <p className="rounded-2xl border border-line bg-surface px-4 py-8 text-center text-sm text-ink-muted">
+                  <p className="rounded-3xl border border-line bg-surface px-5 py-12 text-center text-sm text-ink-muted">
                     No report cards found for this year
                   </p>
                 ) : (
-                  <div className="overflow-hidden rounded-2xl border border-line bg-surface" style={cardShadow}>
+                  <>
+                  <div className="hidden overflow-hidden rounded-3xl border border-line bg-surface md:block" style={cardShadow}>
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[1000px] text-left">
                         <thead>
@@ -469,8 +505,8 @@ export default function AnnualReportPage() {
                             {[
                               "Ref No", "Full name", "NIC", "Grade", "Months", "Paid months",
                               "Unpaid months", "Monthly amount", "Year total", "Paid amount", "Unpaid amount",
-                            ].map((h) => (
-                              <th key={h} className={thClass}>{h}</th>
+                            ].map((h, i) => (
+                              <th key={h} className={i >= 4 ? thNumClass : thClass}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -480,7 +516,7 @@ export default function AnnualReportPage() {
                             return (
                               <Fragment key={c.id}>
                                 <tr className="border-b border-line hover:bg-line/20">
-                                  <td className="px-3 py-3">
+                                  <td className="py-4 pl-5 pr-1 sm:pl-8">
                                     <button
                                       type="button"
                                       onClick={() => setExpandedId(open ? null : c.id)}
@@ -505,23 +541,23 @@ export default function AnnualReportPage() {
                                       Grade {c.currentGrade}
                                     </span>
                                   </td>
-                                  <td className={tdClass}>{c.monthsInYear}</td>
-                                  <td className={`${tdClass} text-emerald-700`}>{c.paidMonths}</td>
-                                  <td className={`${tdClass} text-red-600`}>{c.unpaidMonths}</td>
-                                  <td className={tdClass}>{money(c.amount)}</td>
-                                  <td className={tdClass}>{money(c.yearAmount)}</td>
-                                  <td className={`${tdClass} text-emerald-700`}>{money(c.paidAmount)}</td>
-                                  <td className={`${tdClass} text-red-600`}>{money(c.unpaidAmount)}</td>
+                                  <td className={tdNumClass}>{c.monthsInYear}</td>
+                                  <td className={`${tdNumClass} text-emerald-700`}>{c.paidMonths}</td>
+                                  <td className={`${tdNumClass} text-red-600`}>{c.unpaidMonths}</td>
+                                  <td className={tdNumClass}>{money(c.amount)}</td>
+                                  <td className={tdNumClass}>{money(c.yearAmount)}</td>
+                                  <td className={`${tdNumClass} text-emerald-700`}>{money(c.paidAmount)}</td>
+                                  <td className={`${tdNumClass} text-red-600`}>{money(c.unpaidAmount)}</td>
                                 </tr>
 
                                 {open && (
                                   <tr className="border-b border-line bg-line/20">
-                                    <td colSpan={12} className="px-4 py-4">
-                                      <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                                    <td colSpan={12} className="px-5 py-5 sm:px-8 sm:py-6">
+                                      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                                         {(c.months || []).map((m) => (
                                           <li
                                             key={m.label}
-                                            className={`rounded-xl border px-3.5 py-2.5 ${
+                                            className={`rounded-2xl border px-4 py-3 ${
                                               m.paid ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
                                             }`}
                                           >
@@ -554,11 +590,86 @@ export default function AnnualReportPage() {
                       </table>
                     </div>
                   </div>
+
+                  {/* Mobile cards (below md) */}
+                  <ul className="flex flex-col gap-4 md:hidden">
+                    {data.map((c) => {
+                      const open = expandedId === c.id;
+                      return (
+                        <li
+                          key={c.id}
+                          className="overflow-hidden rounded-3xl border border-line bg-surface"
+                          style={cardShadow}
+                        >
+                          <div className="p-5">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="break-words font-display text-base font-semibold text-ink">
+                                  {c.fullName}
+                                </p>
+                                <p className="mt-1 font-mono text-xs uppercase tracking-wider text-ink-muted">
+                                  {c.refNumber}
+                                </p>
+                              </div>
+                              <span className="shrink-0 rounded-full bg-copper/10 px-3 py-1 text-xs font-semibold text-copper">
+                                Grade {c.currentGrade}
+                              </span>
+                            </div>
+
+                            <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4">
+                              {[
+                                { label: "NIC", value: c.nic, cls: "font-mono text-xs" },
+                                { label: "Months", value: c.monthsInYear },
+                                { label: "Paid months", value: c.paidMonths, cls: "text-emerald-700" },
+                                { label: "Unpaid months", value: c.unpaidMonths, cls: "text-red-600" },
+                                { label: "Monthly amount", value: money(c.amount) },
+                                { label: "Year total", value: money(c.yearAmount) },
+                                { label: "Paid amount", value: money(c.paidAmount), cls: "text-emerald-700" },
+                                { label: "Unpaid amount", value: money(c.unpaidAmount), cls: "text-red-600" },
+                              ].map((f) => (
+                                <div key={f.label} className="min-w-0">
+                                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+                                    {f.label}
+                                  </dt>
+                                  <dd className={`mt-1 break-words text-sm font-medium text-ink ${f.cls || ""}`}>
+                                    {f.value}
+                                  </dd>
+                                </div>
+                              ))}
+                            </dl>
+
+                            <button
+                              type="button"
+                              onClick={() => setExpandedId(open ? null : c.id)}
+                              aria-expanded={open}
+                              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line/50 focus:outline-none focus:ring-2 focus:ring-copper/20"
+                            >
+                              {open ? "Hide months" : "Show months"}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                className={`transition-transform ${open ? "rotate-90" : ""}`}
+                              >
+                                <polyline points="9 18 15 12 9 6" />
+                              </svg>
+                            </button>
+                          </div>
+
+                          {open && (
+                            <div className="border-t border-line bg-line/20 p-5">
+                              <MonthsList months={c.months} />
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  </>
                 )}
 
                 {/* Pagination + page size */}
                 <nav
-                  className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="mt-8 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between"
                   aria-label="Pagination"
                 >
                   <label className="flex items-center justify-between gap-2 text-sm text-ink-muted sm:justify-start">
