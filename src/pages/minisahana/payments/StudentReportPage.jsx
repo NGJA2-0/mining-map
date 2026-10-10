@@ -108,19 +108,19 @@ export default function StudentReportPage() {
       </header>
 
       {/* ── main (split layout, same look as the dashboard) ── */}
-      <main className="flex flex-1 flex-col py-6 pl-12 pr-4 sm:py-10 sm:px-12 lg:py-12 lg:px-16">
-        <div className="w-full">
+      <main className="flex flex-1 flex-col pb-16 pl-12 pr-4 pt-6 sm:px-12 sm:pb-20 sm:pt-10 lg:px-16 lg:pt-12">
+        <div className="w-full" style={{ maxWidth: 1200, marginLeft: "auto", marginRight: "auto" }}>
           {/* Right: empty container (build the student report here later) */}
           <div className="min-w-0">
             <div
-              className="min-h-[20rem] rounded-2xl border border-line bg-surface p-4 sm:p-6"
+              className="min-h-[20rem] rounded-3xl border border-line bg-surface p-5 sm:p-8"
               style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
             >
-              <div className="mb-5 sm:mb-6">
-                <h2 className="font-display text-base font-bold sm:text-xl" style={{ letterSpacing: "-0.01em" }}>
+              <div className="mb-6 sm:mb-8">
+                <h2 className="font-display text-lg font-bold sm:text-xl" style={{ letterSpacing: "-0.01em" }}>
                   Get a student record
                 </h2>
-                <p className="mt-1 text-xs text-ink-muted sm:text-[13px]">
+                <p className="mt-2 text-xs text-ink-muted sm:text-sm">
                   Search by name, NIC, bank account number, grade or zone.
                 </p>
               </div>
