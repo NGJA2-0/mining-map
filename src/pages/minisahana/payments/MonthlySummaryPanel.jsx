@@ -128,18 +128,21 @@ export default function MonthlySummaryPanel() {
   const summary = report?.summary;
 
   return (
-    <section className="flex min-w-0 flex-col gap-5">
+<section
+  className="flex min-w-0 flex-col gap-6 px-0 pb-16 pt-4 sm:px-6 sm:pt-8 lg:gap-8 lg:pb-20"
+  style={{ width: "100%", maxWidth: 1200, marginLeft: "auto", marginRight: "auto" }}
+>
       {/* ── Filters ── */}
       <div
-        className="rounded-2xl border border-line bg-surface p-4 sm:p-6"
+        className="rounded-3xl border border-line bg-surface p-5 sm:p-8"
         style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 32px -12px rgba(0,0,0,0.10)" }}
       >
-        <h3 className="font-display text-lg font-semibold text-ink">Monthly summary</h3>
-        <p className="mt-1 text-sm text-ink-muted">
+        <h3 className="font-display text-xl font-semibold text-ink">Monthly summary</h3>
+        <p className="mt-2 text-sm text-ink-muted">
           Select a year and month, then press search.
         </p>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end sm:gap-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end sm:gap-5">
           <GlassSelect
             label="Year"
             value={year}
@@ -194,7 +197,7 @@ export default function MonthlySummaryPanel() {
 
       {/* ── Loading ── */}
       {loading && (
-        <div className="flex items-center justify-center gap-3 py-8 text-sm text-ink-muted">
+        <div className="flex items-center justify-center gap-3 py-12 text-sm text-ink-muted">
           <span className="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-copper" />
           Loading monthly summary...
         </div>
@@ -202,7 +205,7 @@ export default function MonthlySummaryPanel() {
 
       {/* ── Empty ── */}
       {!loading && applied && !error && report && rows.length === 0 && (
-        <p className="py-6 text-center text-sm text-ink-muted">
+        <p className="py-10 text-center text-sm text-ink-muted">
           No report cards found for {report.monthLabel || "the selected month"}.
         </p>
       )}
@@ -210,11 +213,11 @@ export default function MonthlySummaryPanel() {
       {/* ── Results ── */}
       {!loading && report && rows.length > 0 && (
         <div
-          className="overflow-hidden rounded-2xl border border-line bg-surface"
+          className="overflow-hidden rounded-3xl border border-line bg-surface"
           style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 16px 40px -16px rgba(0,0,0,0.16)" }}
         >
           {/* Table header: month label + download */}
-          <div className="flex flex-col gap-3 border-b border-line bg-gradient-to-r from-copper/10 via-copper/5 to-transparent px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 border-b border-line bg-gradient-to-r from-copper/10 via-copper/5 to-transparent px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-7">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
                 Monthly report
@@ -246,7 +249,7 @@ export default function MonthlySummaryPanel() {
                 { label: "Paid amount", value: summary.paidAmount },
                 { label: "Unpaid amount", value: summary.unpaidAmount },
               ].map((s) => (
-                <div key={s.label} className="flex items-center justify-between px-5 py-4 sm:block">
+                <div key={s.label} className="flex items-center justify-between px-5 py-5 sm:block sm:px-6 sm:py-6 lg:px-8">
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
                     {s.label}
                   </p>
@@ -259,13 +262,14 @@ export default function MonthlySummaryPanel() {
           )}
 
           {/* Table */}
+          <div className="overflow-x-auto">
           <table className="block w-full text-left md:table">
             <thead className="hidden md:table-header-group">
               <tr className="border-b border-line bg-line/30">
                 {["Full name", "Acc number", "Current grade", "Start date", "End date", "Paid at (GMT+5:30)"].map((h) => (
                   <th
                     key={h}
-                    className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted"
+                    className="px-3 py-4 text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:first:pl-8 md:last:pr-8 lg:px-4 lg:first:pl-8 lg:last:pr-8"
                   >
                     {h}
                   </th>
@@ -277,15 +281,15 @@ export default function MonthlySummaryPanel() {
               {rows.map((item) => (
                 <tr
                   key={item.id}
-                  className="block border-b border-line px-4 py-4 transition-colors last:border-b-0 hover:bg-line/20 md:table-row md:px-0 md:py-0"
+                  className="block border-b border-line px-5 py-5 transition-colors last:border-b-0 hover:bg-line/20 md:table-row md:px-0 md:py-0"
                 >
-                  <td className="block pb-3 md:table-cell md:px-5 md:py-4 md:align-middle md:pb-4">
-                    <p className="font-display text-base font-semibold text-ink md:max-w-[220px]">
+                  <td className="block pb-3 md:table-cell md:py-6 md:pb-6 md:pl-8 md:pr-4 md:align-middle">
+                    <p className="font-display text-base font-semibold text-ink md:max-w-[200px]">
                       {item.fullName}
                     </p>
                   </td>
 
-                  <td className="flex items-center justify-between gap-3 py-1.5 md:table-cell md:px-5 md:py-4 md:align-middle">
+                  <td className="flex items-center justify-between gap-3 py-2 md:table-cell md:px-3 md:py-6 md:align-middle lg:px-4">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
                       Acc number
                     </span>
@@ -294,7 +298,7 @@ export default function MonthlySummaryPanel() {
                     </span>
                   </td>
 
-                  <td className="flex items-center justify-between gap-3 py-1.5 md:table-cell md:px-5 md:py-4 md:align-middle">
+                  <td className="flex items-center justify-between gap-3 py-2 md:table-cell md:px-5 md:py-6 md:align-middle">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
                       Current grade
                     </span>
@@ -303,7 +307,7 @@ export default function MonthlySummaryPanel() {
                     </span>
                   </td>
 
-                  <td className="flex items-center justify-between gap-3 py-1.5 md:table-cell md:px-5 md:py-4 md:align-middle">
+                  <td className="flex items-center justify-between gap-3 py-2 md:table-cell md:px-5 md:py-6 md:align-middle">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
                       Start date
                     </span>
@@ -312,7 +316,7 @@ export default function MonthlySummaryPanel() {
                     </span>
                   </td>
 
-                  <td className="flex items-center justify-between gap-3 py-1.5 md:table-cell md:px-5 md:py-4 md:align-middle">
+                  <td className="flex items-center justify-between gap-3 py-2 md:table-cell md:px-5 md:py-6 md:align-middle">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
                       End date
                     </span>
@@ -321,7 +325,7 @@ export default function MonthlySummaryPanel() {
                     </span>
                   </td>
 
-                  <td className="flex items-center justify-between gap-3 pt-1.5 md:table-cell md:px-5 md:py-4 md:align-middle">
+                  <td className="flex items-center justify-between gap-3 pt-2 md:table-cell md:py-6 md:pl-4 md:pr-8 md:align-middle">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted md:hidden">
                       Paid at (GMT+5:30)
                     </span>
@@ -333,9 +337,10 @@ export default function MonthlySummaryPanel() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {/* Footer: rows per page + pagination */}
-          <div className="flex flex-col gap-4 border-t border-line bg-line/20 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 border-t border-line bg-line/20 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
             <div className="w-full sm:w-40">
               <GlassSelect
                 label="Rows per page"
