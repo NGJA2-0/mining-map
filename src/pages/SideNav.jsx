@@ -70,6 +70,7 @@ export default function SideNav() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [miniSahanaExpanded, setMiniSahanaExpanded] = useState(false);
+  const [paymentsExpanded, setPaymentsExpanded] = useState(false);
 
   // Close the drawer automatically whenever the route changes
   useEffect(() => {
@@ -85,8 +86,8 @@ export default function SideNav() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
-  const go = (path) => {
-    navigate(path);
+  const go = (path, options) => {
+    navigate(path, options);
     setOpen(false);
   };
 
@@ -204,12 +205,62 @@ export default function SideNav() {
                     <li>
                       <button
                         type="button"
-                        onClick={() => go("/minisahana/payments")}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink-muted transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+                        onClick={() => setPaymentsExpanded((prev) => !prev)}
+                        aria-expanded={paymentsExpanded}
+                        className="flex w-full items-center justify-between gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink-muted transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
                       >
-                        <PaymentIcon />
-                        Payments
+                        <span className="flex items-center gap-2.5">
+                          <PaymentIcon />
+                          Payments
+                        </span>
+                        <ChevronIcon open={paymentsExpanded} />
                       </button>
+
+                      <div
+                        className={`grid overflow-hidden transition-all duration-200 ease-out
+                          ${paymentsExpanded ? "grid-rows-[1fr] opacity-100 mt-1" : "grid-rows-[0fr] opacity-0"}`}
+                      >
+                        <div className="min-h-0 overflow-hidden">
+                          <ul className="ml-4 flex flex-col gap-1 border-l border-line pl-4">
+                            <li>
+                              <button
+                                type="button"
+                                onClick={() => go("/minisahana/payments", { state: { panel: "pay" } })}
+                                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-ink-muted transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+                              >
+                                Pay
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                type="button"
+                                onClick={() => go("/minisahana/payments", { state: { panel: "summary" } })}
+                                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-ink-muted transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+                              >
+                                Download Monthly Summary
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                type="button"
+                                onClick={() => go("/minisahana/payments/annual-report")}
+                                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-ink-muted transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+                              >
+                                Download Annual Report
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                type="button"
+                                onClick={() => go("/minisahana/payments/student-report")}
+                                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-ink-muted transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+                              >
+                                Download Student Report
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
                     </li>
                   </ul>
                 </div>

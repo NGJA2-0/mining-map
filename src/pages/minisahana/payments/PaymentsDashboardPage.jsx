@@ -19,6 +19,20 @@ export default function PaymentsDashboardPage() {
   const [showMenu, setShowMenu] = useState(false); // button card hidden until "Report and Payments" is clicked
   const split = showSummary || showPay; // true when the screen is split
 
+  // Sync state when navigating to the same route with different state parameters
+  useEffect(() => {
+    if (location.state?.panel === "summary") {
+      setShowSummary(true);
+      setShowPay(false);
+    } else if (location.state?.panel === "pay") {
+      setShowPay(true);
+      setShowSummary(false);
+    } else if (!location.state) {
+      setShowSummary(false);
+      setShowPay(false);
+    }
+  }, [location.state]);
+
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
