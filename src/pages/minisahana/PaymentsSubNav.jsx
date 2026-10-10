@@ -1,12 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-const BackIcon = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-);
-
 const CloseIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
     <line x1="18" y1="6" x2="6" y2="18" />
@@ -48,18 +42,27 @@ const ITEMS = [
  * - sm and up: a compact floating card beside the main drawer (height fits content)
  * - below sm: a bottom sheet that slides up over the main drawer
  */
-export default function PaymentsSubNav({ open, anchor, onBack, onClose, onNavigate }) {
+export default function PaymentsSubNav({ open, anchor, onClose, onNavigate }) {
   const location = useLocation();
   const panelRef = useRef(null);
-  const [top, setTop] = useState(anchor?.top ?? 96);
+  const [tops, setTops] = useState({
+    desktop: anchor?.top ?? 96,
+    mobile: (anchor?.bottom ?? 140) + 8,
+  });
 
-  // Line the card's top edge up with the Payments row, but keep it fully on screen
+  // desktop: card top lines up with the Payments row (beside the drawer)
+  // mobile:  card drops in right under the Payments row (inside the drawer)
+  // both are kept fully on screen
   useLayoutEffect(() => {
     if (!open || !panelRef.current) return;
     const height = panelRef.current.offsetHeight;
     const maxTop = window.innerHeight - height - 12;
-    setTop(Math.max(12, Math.min(anchor?.top ?? 96, maxTop)));
-  }, [open, anchor?.top]);
+    const fit = (value) => Math.max(12, Math.min(value, maxTop));
+    setTops({
+      desktop: fit(anchor?.top ?? 96),
+      mobile: fit((anchor?.bottom ?? 140) + 8),
+    });
+  }, [open, anchor?.top, anchor?.bottom]);
 
   const isActive = (item) => {
     if (location.pathname !== item.path) return false;
@@ -73,30 +76,23 @@ export default function PaymentsSubNav({ open, anchor, onBack, onClose, onNaviga
       aria-hidden={!open}
       aria-label="Payments menu"
       style={{
-        "--sub-top": `${top}px`,
+        "--sub-top": `${tops.desktop}px`,
+        "--sub-top-m": `${tops.mobile}px`,
         "--sub-left": `${anchor?.left ?? 312}px`,
       }}
-      className={`fixed z-[60] flex flex-col overflow-hidden border border-line bg-surface
-        transition-[transform,opacity] duration-300 ease-out
-        inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] max-h-[85vh] rounded-2xl shadow-[0_-8px_40px_rgba(0,0,0,0.22)]
-        sm:inset-x-auto sm:bottom-auto sm:top-[var(--sub-top)] sm:left-[var(--sub-left)] sm:w-[260px] sm:max-h-[calc(100vh-24px)] sm:shadow-[0_12px_40px_rgba(0,0,0,0.18)]
+      className={`fixed z-[60] flex flex-col overflow-hidden border border-line bg-surface rounded-2xl
+        transition-[transform,opacity] duration-300 ease-out max-h-[calc(100vh-24px)]
+        top-[var(--sub-top-m)] left-3 w-[calc(min(82vw,300px)-1.5rem)] shadow-[0_12px_32px_rgba(0,0,0,0.2)]
+        sm:top-[var(--sub-top)] sm:left-[var(--sub-left)] sm:w-[260px] sm:shadow-[0_12px_40px_rgba(0,0,0,0.18)]
         ${open
           ? "translate-y-0 opacity-100 pointer-events-auto sm:translate-x-0"
-          : "translate-y-8 opacity-0 pointer-events-none sm:translate-y-0 sm:-translate-x-4"}`}
+          : "-translate-y-2 opacity-0 pointer-events-none sm:translate-y-0 sm:-translate-x-4"}`}
     >
       {/* Accent line */}
       <div className="h-[3px] w-full bg-gradient-to-r from-copper via-copper/60 to-teal" />
 
       {/* Header */}
       <div className="flex items-center gap-2 px-4 pb-3 pt-4">
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label="Back"
-          className="-ml-1 flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-line/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20 sm:hidden"
-        >
-          <BackIcon />
-        </button>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Mini Sahana</p>
           <h3 className="font-display text-lg font-semibold leading-tight text-ink">Payments</h3>

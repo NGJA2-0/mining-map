@@ -76,7 +76,7 @@ export default function SideNav() {
   // Used to line the payments panel up with the Payments row
   const drawerRef = useRef(null);
   const paymentsBtnRef = useRef(null);
-  const [anchor, setAnchor] = useState({ top: 96, left: 312 });
+  const [anchor, setAnchor] = useState({ top: 96, bottom: 140, left: 312 });
 
   const updateAnchor = useCallback(() => {
     const drawer = drawerRef.current;
@@ -84,7 +84,7 @@ export default function SideNav() {
     if (!drawer || !btn) return;
     const d = drawer.getBoundingClientRect();
     const b = btn.getBoundingClientRect();
-    setAnchor({ top: b.top, left: d.right + 12 });
+    setAnchor({ top: b.top, bottom: b.bottom, left: d.right + 12 });
   }, []);
 
   useLayoutEffect(() => {
@@ -269,7 +269,6 @@ export default function SideNav() {
       <PaymentsSubNav
         open={open && paymentsExpanded}
         anchor={anchor}
-        onBack={() => setPaymentsExpanded(false)}
         onClose={() => setPaymentsExpanded(false)}
         onNavigate={go}
       />
