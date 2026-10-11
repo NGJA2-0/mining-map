@@ -18,6 +18,8 @@ import ReportCardForm from "./pages/minisahana/reportcards/ReportCardForm";
 import ReportCardSearchPage from "./pages/minisahana/reportcards/ReportCardSearchPage";
 import PaymentsPage from "./pages/minisahana/payments/PaymentsPage";
 import PaymentsDashboardPage from "./pages/minisahana/payments/PaymentsDashboardPage";
+import AnnualReportPage from "./pages/minisahana/payments/AnnualReportPage";
+import StudentReportPage from "./pages/minisahana/payments/StudentReportPage";
 import SideNav from "./pages/SideNav";
 import "./index.css";
 import MiniSahanaApplicationPreview from './pages/minisahana/application/MiniSahanaApplicationPreview';
@@ -141,6 +143,24 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <PaymentsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/minisahana/payments/annual-report"
+            element={
+              <ProtectedRoute>
+                <AnnualReportPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/minisahana/payments/student-report"
+            element={
+              <ProtectedRoute>
+                <StudentReportPage />
               </ProtectedRoute>
             }
           />

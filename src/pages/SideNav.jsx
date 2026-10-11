@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import PaymentsSubNav from "./minisahana/PaymentsSubNav";
 
 const MenuIcon = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -70,24 +71,62 @@ export default function SideNav() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [miniSahanaExpanded, setMiniSahanaExpanded] = useState(false);
+  const [paymentsExpanded, setPaymentsExpanded] = useState(false);
+
+  // Used to line the payments panel up with the Payments row
+  const drawerRef = useRef(null);
+  const paymentsBtnRef = useRef(null);
+  const [anchor, setAnchor] = useState({ top: 96, bottom: 140, left: 312 });
+
+  const updateAnchor = useCallback(() => {
+    const drawer = drawerRef.current;
+    const btn = paymentsBtnRef.current;
+    if (!drawer || !btn) return;
+    const d = drawer.getBoundingClientRect();
+    const b = btn.getBoundingClientRect();
+    setAnchor({ top: b.top, bottom: b.bottom, left: d.right + 12 });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!paymentsExpanded) return;
+    updateAnchor();
+    const t = setTimeout(updateAnchor, 250); // after the Mini Sahana menu finishes animating
+    window.addEventListener("resize", updateAnchor);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", updateAnchor);
+    };
+  }, [paymentsExpanded, miniSahanaExpanded, updateAnchor]);
 
   // Close the drawer automatically whenever the route changes
   useEffect(() => {
     setOpen(false);
+    setPaymentsExpanded(false);
   }, [location.pathname]);
 
-  // Allow closing with the Escape key
+  // Allow closing with the Escape key (closes the payments panel first)
   useEffect(() => {
     function handleEscape(e) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key !== "Escape") return;
+      setPaymentsExpanded((expanded) => {
+        if (expanded) return false;
+        setOpen(false);
+        return expanded;
+      });
     }
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
-  const go = (path) => {
-    navigate(path);
+  const go = (path, options) => {
+    navigate(path, options);
     setOpen(false);
+    setPaymentsExpanded(false);
+  };
+
+  const closeAll = () => {
+    setOpen(false);
+    setPaymentsExpanded(false);
   };
 
   const isAuthRoute =
@@ -115,7 +154,7 @@ export default function SideNav() {
 
       {/* Backdrop */}
       <div
-        onClick={() => setOpen(false)}
+        onClick={closeAll}
         aria-hidden="true"
         className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300
           ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
@@ -123,6 +162,7 @@ export default function SideNav() {
 
       {/* Drawer */}
       <aside
+        ref={drawerRef}
         className={`fixed inset-y-0 left-0 z-50 flex w-[82vw] max-w-[300px] flex-col
           bg-surface border-r border-line shadow-2xl transition-transform duration-300 ease-out
           ${open ? "translate-x-0" : "-translate-x-full"}`}
@@ -135,7 +175,7 @@ export default function SideNav() {
           </div>
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={closeAll}
             aria-label="Close navigation menu"
             className="flex h-8 w-8 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-line/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
           >
@@ -144,7 +184,7 @@ export default function SideNav() {
         </div>
 
         {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <nav onScroll={updateAnchor} className="flex-1 overflow-y-auto px-3 py-4">
           <ul className="flex flex-col gap-1">
             <li>
               <button
@@ -203,12 +243,18 @@ export default function SideNav() {
                     </li>
                     <li>
                       <button
+                        ref={paymentsBtnRef}
                         type="button"
-                        onClick={() => go("/minisahana/payments")}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink-muted transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+                        onClick={() => setPaymentsExpanded((prev) => !prev)}
+                        aria-expanded={paymentsExpanded}
+                        className={`flex w-full items-center justify-between gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20
+                          ${paymentsExpanded ? "bg-line/50 text-ink" : "text-ink-muted"}`}
                       >
-                        <PaymentIcon />
-                        Payments
+                        <span className="flex items-center gap-2.5">
+                          <PaymentIcon />
+                          Payments
+                        </span>
+                        <ChevronIcon open={paymentsExpanded} />
                       </button>
                     </li>
                   </ul>
@@ -218,6 +264,14 @@ export default function SideNav() {
           </ul>
         </nav>
       </aside>
+
+      {/* Payments sub-drawer — sits right next to the main drawer */}
+      <PaymentsSubNav
+        open={open && paymentsExpanded}
+        anchor={anchor}
+        onClose={() => setPaymentsExpanded(false)}
+        onNavigate={go}
+      />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import TopoBackground from "../../../components/common/TopoBackground";
 import Button from "../../../components/common/Button";
 import { useAuth } from "../../../context/AuthContext";
@@ -9,14 +9,29 @@ import PaymentsCharts from "./PaymentsCharts";
 
 export default function PaymentsDashboardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
 
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const [showSummary, setShowSummary] = useState(false);
-  const [showPay, setShowPay] = useState(false);
+  const [showSummary, setShowSummary] = useState(location.state?.panel === "summary");
+  const [showPay, setShowPay] = useState(location.state?.panel === "pay");
   const [showMenu, setShowMenu] = useState(false); // button card hidden until "Report and Payments" is clicked
   const split = showSummary || showPay; // true when the screen is split
+
+  // Sync state when navigating to the same route with different state parameters
+  useEffect(() => {
+    if (location.state?.panel === "summary") {
+      setShowSummary(true);
+      setShowPay(false);
+    } else if (location.state?.panel === "pay") {
+      setShowPay(true);
+      setShowSummary(false);
+    } else if (!location.state) {
+      setShowSummary(false);
+      setShowPay(false);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -36,8 +51,16 @@ export default function PaymentsDashboardPage() {
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               type="button"
-              onClick={() => navigate("/minisahana")}
-              aria-label="Back to Mini Sahana"
+              onClick={() => {
+                if (split) {
+                  setShowSummary(false);
+                  setShowPay(false);
+                  navigate("/minisahana/payments", { replace: true, state: null });
+                } else {
+                  navigate("/minisahana");
+                }
+              }}
+              aria-label={split ? "Back to Payments dashboard" : "Back to Mini Sahana"}
               className="flex items-center gap-1.5 rounded-md p-2 text-ink-muted transition-colors hover:bg-line/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -137,12 +160,7 @@ export default function PaymentsDashboardPage() {
       </header>
 
       {/* ── main ── */}
-            {/* ── main ── */}
-      <main
-        className={`flex flex-1 flex-col px-4 py-6 sm:px-8 sm:py-8 ${
-          split ? "" : "sm:px-10 sm:py-12 lg:px-16"
-        }`}
-      >
+      <main className="flex flex-1 flex-col py-6 pl-12 pr-4 sm:py-10 sm:px-12 lg:py-12 lg:px-16">
         {/* Zoom-out + blur for the button card */}
         <style>{`
           @keyframes zoomOutCard {
@@ -179,11 +197,7 @@ export default function PaymentsDashboardPage() {
         `}</style>
 
         <div
-          className={`w-full ${
-            split
-              ? "grid gap-6 lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)] lg:gap-12"
-              : "grid grid-cols-1 items-start gap-8"
-          }`}
+          className="w-full grid grid-cols-1 items-start gap-8"
         >
           {/* Buttons card (right column on the initial dashboard) */}
           <div
@@ -191,11 +205,9 @@ export default function PaymentsDashboardPage() {
               if (!split) setShowMenu(false); // click outside the popup closes it
             }}
             className={
-              split
-                ? "lg:sticky lg:top-6 lg:flex lg:h-[calc(100vh-8rem)] lg:min-h-[30rem] lg:items-center"
-                : showMenu
-                  ? "popup-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md"
-                  : "hidden"
+              showMenu && !split
+                ? "popup-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md"
+                : "hidden"
             }
           >
             <div
@@ -270,7 +282,7 @@ export default function PaymentsDashboardPage() {
                     variant="secondary"
                     size="lg"
                     className="w-full"
-                    onClick={() => {}}
+                    onClick={() => navigate("/minisahana/payments/annual-report")}
                   >
                     Download Annual Report
                   </Button>
@@ -279,7 +291,7 @@ export default function PaymentsDashboardPage() {
                     variant="secondary"
                     size="lg"
                     className="w-full"
-                    onClick={() => {}}
+                    onClick={() => navigate("/minisahana/payments/student-report")}
                   >
                     Download Student Report
                   </Button>
@@ -297,7 +309,12 @@ export default function PaymentsDashboardPage() {
 
                       <button
                         type="button"
-                        onClick={() => window.location.reload()}
+                        onClick={() => {
+                          setShowSummary(false);
+                          setShowPay(false);
+                          setShowMenu(false);
+                          navigate("/minisahana/payments", { replace: true, state: null });
+                        }}
                         aria-label="Refresh page"
                         className="group flex w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-surface/80 px-5 py-3 text-sm font-semibold text-ink backdrop-blur transition-all hover:border-copper/40 hover:bg-copper/10 hover:text-copper focus:outline-none focus:ring-2 focus:ring-copper/30"
                       >
