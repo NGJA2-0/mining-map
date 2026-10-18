@@ -5,7 +5,7 @@ import PayConfirmModal from "./PayConfirmModal";
 import GlassSelect from "./GlassSelect";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 15, 20];
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -23,7 +23,18 @@ function formatDate(value) {
   if (isNaN(d.getTime())) return value;
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
-
+// Builds [1, "...", 4, 5, 6, "...", 12] style page lists
+function getPageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = new Set([1, total, current - 1, current, current + 1]);
+  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out = [];
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push("...");
+    out.push(p);
+  });
+  return out;
+}
 export default function PaymentsPage({ embedded = false }) {
   const navigate = useNavigate();
   const { user, token, logout } = useAuth();
@@ -33,9 +44,10 @@ export default function PaymentsPage({ embedded = false }) {
   const yearSelectOptions = yearOptions.map((y) => ({ value: y, label: String(y) }));
 
   const [year, setYear] = useState(currentYear);
-  const [fromMonth, setFromMonth] = useState(1);
-  const [toMonth, setToMonth] = useState(new Date().getMonth() + 1);
+  const [fromMonth, setFromMonth] = useState("");
+  const [toMonth, setToMonth] = useState("");
   const [grade, setGrade] = useState("");
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
 
   const [appliedFilters, setAppliedFilters] = useState(null);
   const [results, setResults] = useState([]);
@@ -43,7 +55,7 @@ export default function PaymentsPage({ embedded = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function fetchReportCards(filters, page = 1) {
+  async function fetchReportCards(filters, page = 1, limit = pageSize) {
     setLoading(true);
     setError("");
     try {
@@ -52,7 +64,7 @@ export default function PaymentsPage({ embedded = false }) {
         fromMonth: String(filters.fromMonth),
         toMonth: String(filters.toMonth),
         page: String(page),
-        limit: String(PAGE_SIZE),
+        limit: String(limit),
       });
       if (filters.grade) params.set("grade", filters.grade);
 
@@ -79,19 +91,29 @@ export default function PaymentsPage({ embedded = false }) {
 
   function handleFilter(e) {
     e?.preventDefault();
+    if (!fromMonth || !toMonth) {
+      setError("Please select both a start month and an end month.");
+      return;
+    }
     if (fromMonth > toMonth) {
       setError("Start month cannot be after end month.");
       return;
     }
     const filters = { year, fromMonth, toMonth, grade: grade.trim() };
     setAppliedFilters(filters);
-    fetchReportCards(filters, 1);
+    fetchReportCards(filters, 1, pageSize);
   }
 
   function goToPage(p) {
     if (!appliedFilters || p < 1 || p > pageInfo.totalPages || loading) return;
-    fetchReportCards(appliedFilters, p);
+    fetchReportCards(appliedFilters, p, pageSize);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function changePageSize(size) {
+    if (size === pageSize || loading) return;
+    setPageSize(size);
+    if (appliedFilters) fetchReportCards(appliedFilters, 1, size);
   }
 
   const [profileOpen, setProfileOpen] = useState(false);
@@ -266,6 +288,7 @@ export default function PaymentsPage({ embedded = false }) {
                 value={fromMonth}
                 onChange={setFromMonth}
                 options={MONTH_OPTIONS}
+                placeholder="Select month"
               />
 
               <GlassSelect
@@ -273,6 +296,7 @@ export default function PaymentsPage({ embedded = false }) {
                 value={toMonth}
                 onChange={setToMonth}
                 options={MONTH_OPTIONS}
+                placeholder="Select month"
               />
 
               <label className="flex flex-col gap-1.5">
@@ -441,30 +465,76 @@ export default function PaymentsPage({ embedded = false }) {
               </div>
 
               {/* Pagination */}
-              {pageInfo.totalPages > 1 && (
-                <nav className="mt-8 flex items-center justify-between gap-3" aria-label="Pagination">
+              <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
+                {/* Rows per page */}
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+                    Rows per page
+                  </span>
+                  <div
+                    role="group"
+                    aria-label="Rows per page"
+                    className="flex overflow-hidden rounded-xl border border-line bg-surface"
+                  >
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => changePageSize(size)}
+                        aria-pressed={pageSize === size}
+                        className={`px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${
+                          pageSize === size
+                            ? "bg-copper text-white"
+                            : "text-ink hover:bg-line/50"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Page controls */}
+                <nav className="flex items-center gap-1.5" aria-label="Pagination">
                   <button
                     type="button"
                     onClick={() => goToPage(pageInfo.page - 1)}
                     disabled={pageInfo.page <= 1}
-                    className="rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line/50 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-xl border border-line bg-surface px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:bg-line/50 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Previous
                   </button>
-                  <span className="text-sm text-ink-muted">
-                    Page <span className="font-semibold text-ink">{pageInfo.page}</span> of{" "}
-                    <span className="font-semibold text-ink">{pageInfo.totalPages}</span>
-                  </span>
+
+                  {getPageNumbers(pageInfo.page, pageInfo.totalPages).map((p, i) =>
+                    p === "..." ? (
+                      <span key={`dots-${i}`} className="px-1.5 text-sm text-ink-muted">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => goToPage(p)}
+                        aria-current={p === pageInfo.page ? "page" : undefined}
+                        className={`h-9 min-w-9 rounded-xl border px-2.5 text-sm font-medium transition-colors ${
+                          p === pageInfo.page
+                            ? "border-copper bg-copper text-white"
+                            : "border-line bg-surface text-ink hover:bg-line/50"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+
                   <button
                     type="button"
                     onClick={() => goToPage(pageInfo.page + 1)}
                     disabled={pageInfo.page >= pageInfo.totalPages}
-                    className="rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-line/50 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-xl border border-line bg-surface px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:bg-line/50 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Next
                   </button>
                 </nav>
-              )}
+              </div>
             </>
           )}
         </div>
