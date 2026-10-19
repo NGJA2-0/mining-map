@@ -16,6 +16,7 @@ const GRADE_DATA = [
   { grade: "13", students: 9 },
 ];
 
+
 function GradeStudentsChart({ data, selectedGrade, onSelect }) {
   const [mounted, setMounted] = useState(false);
 
@@ -145,6 +146,17 @@ export default function ReportCardsDashboardPage() {
 
   // state
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [searchKey, setSearchKey] = useState(0);
+
+  const handleBack = () => {
+    if (selectedRecord) {
+      // Close the summary and go back to the chart + table view
+      setSelectedRecord(null);
+      setSearchKey((k) => k + 1); // remounts the search bar so its text clears
+    } else {
+      navigate("/minisahana");
+    }
+  };
 
   // scroll to top so the summary card is visible when a row is clicked
   const handleSelectRecord = (record) => {
@@ -181,8 +193,8 @@ export default function ReportCardsDashboardPage() {
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               type="button"
-              onClick={() => navigate("/minisahana")}
-              aria-label="Back to Mini Sahana menu"
+              onClick={handleBack}
+              aria-label={selectedRecord ? "Back to report cards" : "Back to Mini Sahana menu"}
               className="flex items-center gap-1.5 rounded-md p-2 text-ink-muted transition-colors hover:bg-line/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -307,11 +319,12 @@ export default function ReportCardsDashboardPage() {
 
           {/* Search bar + Add button, with the summary card shown on selection */}
           <ReportCardDashboardSearch
+            key={searchKey}
             selectedRecord={selectedRecord}
             onSelect={setSelectedRecord}
           />
 
-           {/* Chart + table — hidden while a report card summary is displayed */}
+          {/* Chart + table — hidden while a report card summary is displayed */}
           {!selectedRecord && (
             <div className="mt-6 flex flex-col gap-6">
               <GradeStudentsChart
