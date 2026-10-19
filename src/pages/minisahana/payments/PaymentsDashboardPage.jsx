@@ -9,8 +9,9 @@ import PaymentsCharts from "./PaymentsCharts";
 
 export default function PaymentsDashboardPage() {
   const navigate = useNavigate();
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
 
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -18,6 +19,41 @@ export default function PaymentsDashboardPage() {
   const [showPay, setShowPay] = useState(location.state?.panel === "pay");
   const [showMenu, setShowMenu] = useState(false); // button card hidden until "Report and Payments" is clicked
   const split = showSummary || showPay; // true when the screen is split
+
+  const [overview, setOverview] = useState(null);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [overviewError, setOverviewError] = useState("");
+  const [overviewReloadKey, setOverviewReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (!token) return; // wait until auth is ready
+
+    const controller = new AbortController();
+    (async () => {
+      try {
+        setOverviewLoading(true);
+        setOverviewError("");
+        const res = await fetch(`${BASE_URL}/api/payments/overview`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || body.message || "Failed to load overview");
+        }
+        setOverview(await res.json());
+      } catch (err) {
+        if (err.name !== "AbortError") setOverviewError(err.message);
+      } finally {
+        if (!controller.signal.aborted) setOverviewLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [token, logout, overviewReloadKey]);
 
   // Sync state when navigating to the same route with different state parameters
   useEffect(() => {
@@ -55,6 +91,7 @@ export default function PaymentsDashboardPage() {
                 if (split) {
                   setShowSummary(false);
                   setShowPay(false);
+                  setOverviewReloadKey((k) => k + 1);
                   navigate("/minisahana/payments", { replace: true, state: null });
                 } else {
                   navigate("/minisahana");
@@ -212,11 +249,10 @@ export default function PaymentsDashboardPage() {
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className={`relative w-full max-w-lg rounded-2xl border text-center ${
-                split
-                  ? "pay-card-zoom mx-auto overflow-hidden border-line/70 bg-surface/80 p-6 backdrop-blur-md sm:p-8 lg:mx-0 lg:max-w-none"
-                  : "popup-in max-h-[90vh] overflow-y-auto border-line bg-surface p-6 sm:p-10"
-              }`}
+              className={`relative w-full max-w-lg rounded-2xl border text-center ${split
+                ? "pay-card-zoom mx-auto overflow-hidden border-line/70 bg-surface/80 p-6 backdrop-blur-md sm:p-8 lg:mx-0 lg:max-w-none"
+                : "popup-in max-h-[90vh] overflow-y-auto border-line bg-surface p-6 sm:p-10"
+                }`}
               style={{
                 boxShadow: split
                   ? "0 2px 4px rgba(0,0,0,0.05), 0 28px 60px -20px rgba(184,90,41,0.35)"
@@ -313,6 +349,7 @@ export default function PaymentsDashboardPage() {
                           setShowSummary(false);
                           setShowPay(false);
                           setShowMenu(false);
+                          setOverviewReloadKey((k) => k + 1); // re-fetch chart data
                           navigate("/minisahana/payments", { replace: true, state: null });
                         }}
                         aria-label="Refresh page"
@@ -364,6 +401,10 @@ export default function PaymentsDashboardPage() {
                 <span className="h-px flex-1 bg-gradient-to-r from-line to-transparent" />
               </div>
               <PaymentsCharts
+                monthlyData={overview?.monthly}
+                annualData={overview?.annual}
+                loading={overviewLoading}
+                error={overviewError}
                 onReportClick={() => setShowMenu((prev) => !prev)}
                 menuOpen={showMenu}
               />
