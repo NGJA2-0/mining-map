@@ -139,10 +139,18 @@ export default function ReportCardsDashboardPage() {
   const { user, logout } = useAuth();
 
   const [profileOpen, setProfileOpen] = useState(false);
-  const [showingSummary, setShowingSummary] = useState(false);
   const dropdownRef = useRef(null);
   const tableRef = useRef(null);
   const [selectedGrade, setSelectedGrade] = useState("");
+
+  // state
+  const [selectedRecord, setSelectedRecord] = useState(null);
+
+  // scroll to top so the summary card is visible when a row is clicked
+  const handleSelectRecord = (record) => {
+    setSelectedRecord(record);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Toggle the grade, and scroll down to the table only when selecting (not when clearing)
   const handleSelectGrade = (grade) => {
@@ -298,10 +306,13 @@ export default function ReportCardsDashboardPage() {
           </div>
 
           {/* Search bar + Add button, with the summary card shown on selection */}
-          <ReportCardDashboardSearch onSelectionChange={setShowingSummary} />
+          <ReportCardDashboardSearch
+            selectedRecord={selectedRecord}
+            onSelect={setSelectedRecord}
+          />
 
-          {/* Grade filter buttons + submissions table — hidden while a report card summary is displayed */}
-          {!showingSummary && (
+           {/* Chart + table — hidden while a report card summary is displayed */}
+          {!selectedRecord && (
             <div className="mt-6 flex flex-col gap-6">
               <GradeStudentsChart
                 data={GRADE_DATA}
@@ -310,7 +321,10 @@ export default function ReportCardsDashboardPage() {
               />
 
               <div ref={tableRef} className="min-w-0 scroll-mt-4">
-                <ReportCardsGradeTable grade={selectedGrade} />
+                <ReportCardsGradeTable
+                  grade={selectedGrade}
+                  onSelectRecord={handleSelectRecord}
+                />
               </div>
             </div>
           )}

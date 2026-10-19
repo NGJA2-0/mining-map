@@ -19,7 +19,7 @@ function formatAmount(value) {
   return `Rs. ${n.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function ReportCardsGradeTable({ grade }) {
+export default function ReportCardsGradeTable({ grade, onSelectRecord }) {
   const navigate = useNavigate();
   const { token, logout } = useAuth();
 
@@ -102,7 +102,19 @@ export default function ReportCardsGradeTable({ grade }) {
         {!loading && !error && records.length > 0 && (
           <ul className="divide-y divide-line md:hidden">
             {records.map((r) => (
-              <li key={r.id} className="px-5 py-4">
+              <li
+                key={r.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectRecord?.(r)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectRecord?.(r);
+                  }
+                }}
+                className="cursor-pointer px-5 py-4 transition-colors hover:bg-copper/5 focus:bg-copper/5 focus:outline-none"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-ink">{r.fullName || "—"}</p>
@@ -151,7 +163,18 @@ export default function ReportCardsGradeTable({ grade }) {
             </thead>
             <tbody>
               {records.map((r) => (
-                <tr key={r.id} className="border-b border-line last:border-0 hover:bg-copper/5">
+                <tr
+                  key={r.id}
+                  tabIndex={0}
+                  onClick={() => onSelectRecord?.(r)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelectRecord?.(r);
+                    }
+                  }}
+                  className="cursor-pointer border-b border-line transition-colors last:border-0 hover:bg-copper/5 focus:bg-copper/5 focus:outline-none"
+                >
                   <td className="px-5 py-3 font-semibold text-ink sm:px-7">{r.fullName || "—"}</td>
                   <td className="px-5 py-3 font-mono text-ink-muted sm:px-7">{r.nic || "—"}</td>
                   <td className="px-5 py-3 text-ink sm:px-7">{r.currentGrade || "—"}</td>
