@@ -243,20 +243,36 @@ export default function SideNav() {
                       </button>
                     </li>
                     <li>
-                      <button
+                      {/* Row wrapper: the ref lives here so the sub-drawer still lines up with the row */}
+                      <div
                         ref={paymentsBtnRef}
-                        type="button"
-                        onClick={() => setPaymentsExpanded((prev) => !prev)}
-                        aria-expanded={paymentsExpanded}
-                        className={`flex w-full items-center justify-between gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20
-                          ${paymentsExpanded ? "bg-line/50 text-ink" : "text-ink-muted"}`}
+                        className={`flex w-full items-center rounded-lg transition-colors hover:bg-line/50
+      ${paymentsExpanded || location.pathname === "/minisahana/payments"
+                            ? "bg-line/50 text-ink"
+                            : "text-ink-muted"}`}
                       >
-                        <span className="flex items-center gap-2.5">
+                        {/* Clicking the text goes to the Payments page */}
+                        <button
+                          type="button"
+                          onClick={() => go("/minisahana/payments")}
+                          className="flex flex-1 items-center gap-2.5 rounded-l-lg px-3 py-2.5 text-left text-sm transition-colors hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+                        >
                           <PaymentIcon />
                           Payments
-                        </span>
-                        <ChevronIcon open={paymentsExpanded} />
-                      </button>
+                        </button>
+
+                        {/* Clicking the chevron opens the Payments sub-menu */}
+                        <button
+                          type="button"
+                          onClick={() => setPaymentsExpanded((prev) => !prev)}
+                          aria-expanded={paymentsExpanded}
+                          aria-label={paymentsExpanded ? "Hide payment options" : "View payment options"}
+                          title="View payment options"
+                          className="flex h-full items-center justify-center rounded-r-lg px-3 py-2.5 transition-colors hover:bg-line focus:outline-none focus:ring-2 focus:ring-copper/20"
+                        >
+                          <ChevronIcon open={paymentsExpanded} />
+                        </button>
+                      </div>
                     </li>
                   </ul>
                 </div>
