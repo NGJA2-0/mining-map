@@ -147,6 +147,7 @@ export default function SideNav() {
           shadow-[2px_0_10px_rgba(0,0,0,0.08)] transition-all duration-200 ease-out
           hover:w-10 hover:text-copper hover:bg-line/50
           focus:outline-none focus:ring-2 focus:ring-copper/30
+          print:hidden
           ${open ? "opacity-0 pointer-events-none" : "opacity-100"}`}
       >
         <MenuIcon />
@@ -156,14 +157,14 @@ export default function SideNav() {
       <div
         onClick={closeAll}
         aria-hidden="true"
-        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300
+        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 print:hidden
           ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
       />
 
       {/* Drawer */}
       <aside
         ref={drawerRef}
-        className={`fixed inset-y-0 left-0 z-50 flex w-[82vw] max-w-[300px] flex-col
+        className={`fixed inset-y-0 left-0 z-50 flex w-[82vw] max-w-[300px] flex-col print:hidden
           bg-surface border-r border-line shadow-2xl transition-transform duration-300 ease-out
           ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
