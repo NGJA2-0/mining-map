@@ -147,6 +147,7 @@ export default function SideNav() {
           shadow-[2px_0_10px_rgba(0,0,0,0.08)] transition-all duration-200 ease-out
           hover:w-10 hover:text-copper hover:bg-line/50
           focus:outline-none focus:ring-2 focus:ring-copper/30
+          print:hidden
           ${open ? "opacity-0 pointer-events-none" : "opacity-100"}`}
       >
         <MenuIcon />
@@ -156,14 +157,14 @@ export default function SideNav() {
       <div
         onClick={closeAll}
         aria-hidden="true"
-        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300
+        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 print:hidden
           ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
       />
 
       {/* Drawer */}
       <aside
         ref={drawerRef}
-        className={`fixed inset-y-0 left-0 z-50 flex w-[82vw] max-w-[300px] flex-col
+        className={`fixed inset-y-0 left-0 z-50 flex w-[82vw] max-w-[300px] flex-col print:hidden
           bg-surface border-r border-line shadow-2xl transition-transform duration-300 ease-out
           ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
@@ -242,20 +243,36 @@ export default function SideNav() {
                       </button>
                     </li>
                     <li>
-                      <button
+                      {/* Row wrapper: the ref lives here so the sub-drawer still lines up with the row */}
+                      <div
                         ref={paymentsBtnRef}
-                        type="button"
-                        onClick={() => setPaymentsExpanded((prev) => !prev)}
-                        aria-expanded={paymentsExpanded}
-                        className={`flex w-full items-center justify-between gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-line/50 hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20
-                          ${paymentsExpanded ? "bg-line/50 text-ink" : "text-ink-muted"}`}
+                        className={`flex w-full items-center rounded-lg transition-colors hover:bg-line/50
+      ${paymentsExpanded || location.pathname === "/minisahana/payments"
+                            ? "bg-line/50 text-ink"
+                            : "text-ink-muted"}`}
                       >
-                        <span className="flex items-center gap-2.5">
+                        {/* Clicking the text goes to the Payments page */}
+                        <button
+                          type="button"
+                          onClick={() => go("/minisahana/payments")}
+                          className="flex flex-1 items-center gap-2.5 rounded-l-lg px-3 py-2.5 text-left text-sm transition-colors hover:text-ink focus:outline-none focus:ring-2 focus:ring-copper/20"
+                        >
                           <PaymentIcon />
                           Payments
-                        </span>
-                        <ChevronIcon open={paymentsExpanded} />
-                      </button>
+                        </button>
+
+                        {/* Clicking the chevron opens the Payments sub-menu */}
+                        <button
+                          type="button"
+                          onClick={() => setPaymentsExpanded((prev) => !prev)}
+                          aria-expanded={paymentsExpanded}
+                          aria-label={paymentsExpanded ? "Hide payment options" : "View payment options"}
+                          title="View payment options"
+                          className="flex h-full items-center justify-center rounded-r-lg px-3 py-2.5 transition-colors hover:bg-line focus:outline-none focus:ring-2 focus:ring-copper/20"
+                        >
+                          <ChevronIcon open={paymentsExpanded} />
+                        </button>
+                      </div>
                     </li>
                   </ul>
                 </div>

@@ -1,28 +1,7 @@
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-// ── DUMMY DATA ── replace these with your API responses later.
-// Monthly shape: [{ month: "Jan", paid: number, unpaid: number } x 12]
-// Annual shape:  [{ year: number, total: number } x 5]
-const DUMMY_MONTHLY = [
-  { month: "Jan", paid: 182000, unpaid: 24000 },
-  { month: "Feb", paid: 156000, unpaid: 31000 },
-  { month: "Mar", paid: 201000, unpaid: 18000 },
-  { month: "Apr", paid: 143000, unpaid: 42000 },
-  { month: "May", paid: 188000, unpaid: 22000 },
-  { month: "Jun", paid: 214000, unpaid: 15000 },
-  { month: "Jul", paid: 176000, unpaid: 38000 },
-  { month: "Aug", paid: 195000, unpaid: 27000 },
-  { month: "Sep", paid: 221000, unpaid: 12000 },
-  { month: "Oct", paid: 130000, unpaid: 56000 },
-  { month: "Nov", paid: 0, unpaid: 0 },
-  { month: "Dec", paid: 0, unpaid: 0 },
-];
-
 const thisYear = new Date().getFullYear();
-const DUMMY_ANNUAL = [1240000, 1385000, 1510000, 1675000, 1420000].map((total, i) => ({
-  year: thisYear - 4 + i,
-  total,
-}));
+const EMPTY_MONTHLY = MONTHS_SHORT.map((month) => ({ month, paid: 0, unpaid: 0 }));
+const EMPTY_ANNUAL = Array.from({ length: 5 }, (_, i) => ({ year: thisYear - 4 + i, total: 0 }));
 
 const DONUT_COLORS = ["#d9b79c", "#64748b", "#2f7f7a", "#e8a23c", "#b85a29"];
 
@@ -156,7 +135,8 @@ function MonthlyChart({ data }) {
 
 /* ───────────────────────── Annual (donut) ───────────────────────── */
 function AnnualChart({ data, onReportClick, menuOpen }) {
-  const total = data.reduce((s, d) => s + d.total, 0) || 1;
+  const rawTotal = data.reduce((s, d) => s + d.total, 0);
+  const total = rawTotal || 1; // only used as a divisor
   const R = 70;
   const C = 2 * Math.PI * R;
   const GAP = 3;
@@ -211,7 +191,7 @@ function AnnualChart({ data, onReportClick, menuOpen }) {
           </svg>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-muted">Total</span>
-            <span className="font-display text-xl font-bold text-ink">Rs. {compact(total)}</span>
+            <span className="font-display text-xl font-bold text-ink">Rs. {compact(rawTotal)}</span>
           </div>
         </div>
 
@@ -265,25 +245,37 @@ function AnnualChart({ data, onReportClick, menuOpen }) {
 
 /* ───────────────────────── Wrapper ───────────────────────── */
 export default function PaymentsCharts({
-  monthlyData = DUMMY_MONTHLY,
-  annualData = DUMMY_ANNUAL,
+  monthlyData,
+  annualData,
+  loading = false,
+  error = "",
   onReportClick,
   menuOpen,
 }) {
   return (
-    <section className="grid w-full min-w-0 items-stretch gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] xl:gap-8">
+    <section
+      className={`grid w-full min-w-0 items-stretch gap-6 transition-opacity xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] xl:gap-8 ${loading ? "opacity-60" : ""
+        }`}
+    >
       <style>{`
-        @keyframes barGrow {
-          from { transform: scaleY(0); }
-          to   { transform: scaleY(1); }
-        }
-        @keyframes donutFade {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-      `}</style>
-      <MonthlyChart data={monthlyData} />
-      <AnnualChart data={annualData} onReportClick={onReportClick} menuOpen={menuOpen} />
+  @keyframes barGrow {
+    from { transform: scaleY(0); }
+    to   { transform: scaleY(1); }
+  }
+  @keyframes donutFade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+`}</style>
+
+      {error && (
+        <p className="xl:col-span-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Couldn't load payment data: {error}
+        </p>
+      )}
+
+      <MonthlyChart data={monthlyData ?? EMPTY_MONTHLY} />
+      <AnnualChart data={annualData ?? EMPTY_ANNUAL} onReportClick={onReportClick} menuOpen={menuOpen} />
     </section>
   );
 }
