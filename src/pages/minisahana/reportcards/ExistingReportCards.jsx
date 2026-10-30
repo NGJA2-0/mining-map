@@ -35,6 +35,43 @@ export default function ExistingReportCards({ applicationId, onLoaded, onAddNew,
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [openingId, setOpeningId] = useState(null);
+
+  const handleViewPdf = async (r) => {
+    // Open the tab synchronously so popup blockers don't stop it
+    const win = window.open("", "_blank");
+    setOpeningId(r.id);
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/report-cards/pdf/${encodeURIComponent(r.refNumber)}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+
+      if (res.status === 401) {
+        win?.close();
+        logout();
+        navigate("/login", { replace: true });
+        return;
+      }
+      if (!res.ok) throw new Error("PDF not found");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+
+      if (win) win.location.href = url;
+      else window.open(url, "_blank");
+
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      console.error(err);
+      win?.close();
+      alert("Couldn't open the PDF. Please try again.");
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
   useEffect(() => {
     if (!applicationId) return;
 
@@ -249,19 +286,19 @@ export default function ExistingReportCards({ applicationId, onLoaded, onAddNew,
                       </span>
                     </span>
 
-                    {r.pdfUrl && (
-                      <a
-                        href={`${API_BASE_URL}/${r.pdfUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-page px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-copper/40 hover:text-copper"
+                    {r.refNumber && (
+                      <button
+                        type="button"
+                        onClick={() => handleViewPdf(r)}
+                        disabled={openingId === r.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-page px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-copper/40 hover:text-copper disabled:cursor-wait disabled:opacity-60"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                           <polyline points="14 2 14 8 20 8" />
                         </svg>
-                        View PDF
-                      </a>
+                        {openingId === r.id ? "Opening…" : "View PDF"}
+                      </button>
                     )}
                   </div>
                 </div>
